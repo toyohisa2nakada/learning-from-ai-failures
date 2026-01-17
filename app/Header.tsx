@@ -1,10 +1,12 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
 import { CHAPTERS } from "@/constants/chapters";
 
 export default function Header() {
+    const [isSectionListOpen, setIsSectionListOpen] = useState(false);
     const pathname = usePathname();
     const currentId = pathname.split("/").pop();
     const basePath = pathname.substring(0, pathname.lastIndexOf("/"));
@@ -13,12 +15,38 @@ export default function Header() {
     const isFirst = currentIndex === 0;
     const isLast = currentIndex === CHAPTERS.length - 1;
 
+    const handleSelect = (chapter: string) => {
+        console.log(`${chapter} が選択されました`);
+        setIsSectionListOpen(false);
+    };
+
     return (
         <header className="bg-panel border border-line rounded-xl px-4 py-3 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-                <span className="text-xs px-3 py-1 rounded-full border border-line text-slate-300">
+            <div className="flex items-center gap-3 relative">
+                <button
+                    onClick={() => setIsSectionListOpen(!isSectionListOpen)}
+                    className="text-xs px-3 py-1 rounded-full border border-line text-slate-300 hover:bg-slate-800 transition-colors"
+                >
                     NN Basic Lesson
-                </span>
+                </button>
+
+                {isSectionListOpen && (
+                    <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-line rounded-lg shadow-xl z-10 py-1">
+                        {CHAPTERS.map((chapter) => (
+                            <button
+                                key={chapter}
+                                onClick={() => handleSelect(chapter)}
+                                className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                            >
+                                {chapter}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {/* <span className="text-xs px-3 py-1 rounded-full border border-line text-slate-300">
+                    NN Basic Lesson
+                </span> */}
                 <div className="text-sm text-slate-400">
                     トップ / Chapter 1 / <span className="text-slate-100 font-semibold">1-1 手で重みを動かす</span>
                 </div>
