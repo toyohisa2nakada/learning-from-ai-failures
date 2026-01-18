@@ -31,17 +31,23 @@ export default function Header() {
                 </button>
 
                 {isSectionListOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-line rounded-lg shadow-xl z-10 py-1">
-                        {CHAPTERS.map((chapter) => (
-                            <button
-                                key={chapter}
-                                onClick={() => handleSelect(chapter)}
-                                className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-                            >
-                                {chapter}
-                            </button>
-                        ))}
-                    </div>
+                    <>
+                        <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setIsSectionListOpen(false)}
+                        />
+                        <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-line rounded-lg shadow-xl z-10 py-1">
+                            {CHAPTERS.map((chapter) => (
+                                <button
+                                    key={chapter}
+                                    onClick={() => handleSelect(chapter)}
+                                    className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                                >
+                                    {chapter}
+                                </button>
+                            ))}
+                        </div>
+                    </>
                 )}
 
                 {/* <span className="text-xs px-3 py-1 rounded-full border border-line text-slate-300">
