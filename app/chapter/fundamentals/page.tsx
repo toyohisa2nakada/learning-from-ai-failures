@@ -8,19 +8,15 @@ export default function Home() {
     const DATA_POINTS = 300;
 
     // プロットする散布図データ（目標点データセット）
-    const TARGET_POINT_DATASETS = [
-      // 0: 原点通る直線
-      [[-1, -1], [0, 0], [1, 1], [2, 2]],
-      // 1: 原点通る折れ線
-      [[-1, -2], [0, 0], [1, 2], [2, 1]],
-      // 2: 原点通らない直線
-      [[-1, -2], [0, -1], [1, 0], [2, 1]],
-      // 3: 原点通らない折れ線
-      [[-1, -3], [0, -1], [1, 1], [2, 0]]
-    ];
+    const TARGET_POINT_DATASETS: Record<string, [number, number][]> = {
+      原点通る直線: [[-1, -1], [0, 0], [1, 1], [2, 2]],
+      原点通る折れ線: [[-1, -2], [0, 0], [1, 2], [2, 1]],
+      原点通らない直線: [[-1, -2], [0, -1], [1, 0], [2, 1]],
+      原点通らない折れ線: [[-1, -3], [0, -1], [1, 1], [2, 0]],
+    };
 
     // 選択された目標点データ (初期値は「原点通る直線」)
-    let currentScatterPoints = TARGET_POINT_DATASETS[0].map(p => ({ x: p[0], y: p[1] }));
+    let currentScatterPoints = TARGET_POINT_DATASETS['原点通る直線'].map(p => ({ x: p[0], y: p[1] }));
 
     // 目標点選択ドロップダウンのID
     const TARGET_SELECT_ID = 'target-select';
@@ -376,11 +372,11 @@ export default function Home() {
       // 4. 目標点選択ドロップダウンのイベントリスナー
       const targetSelect = document.getElementById(TARGET_SELECT_ID) as HTMLSelectElement;
       targetSelect?.addEventListener('change', () => {
-  // console.log(targetSelect.value)
-        const selectedIndex = parseInt(targetSelect.value, 10);
+        console.log(targetSelect.value)
+        // const selectedIndex = parseInt(targetSelect.value, 10);
 
         // 新しい目標点データを選択し、Chart.jsが期待する {x, y} 形式に変換
-        const newRawData = TARGET_POINT_DATASETS[selectedIndex];
+        const newRawData = TARGET_POINT_DATASETS[targetSelect.value];
         currentScatterPoints = newRawData.map(p => ({ x: p[0], y: p[1] }));
 
         // 合成グラフのデータセット (インデックス1が目標点) を更新
