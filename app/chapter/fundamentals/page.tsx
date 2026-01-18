@@ -1,8 +1,407 @@
 "use client"
 import { useEffect } from "react";
+import { Chart, ChartConfiguration } from 'chart.js/auto';
 
 export default function Home() {
-  useEffect(() => { }, []);
+  useEffect(() => {
+    // グラフ描画の設定
+    const DATA_POINTS = 300;
+
+    // プロットする散布図データ（目標点データセット）
+    const TARGET_POINT_DATASETS = [
+      // 0: 原点通る直線
+      [[-1, -1], [0, 0], [1, 1], [2, 2]],
+      // 1: 原点通る折れ線
+      [[-1, -2], [0, 0], [1, 2], [2, 1]],
+      // 2: 原点通らない直線
+      [[-1, -2], [0, -1], [1, 0], [2, 1]],
+      // 3: 原点通らない折れ線
+      [[-1, -3], [0, -1], [1, 1], [2, 0]]
+    ];
+
+    // 選択された目標点データ (初期値は「原点通る直線」)
+    let currentScatterPoints = TARGET_POINT_DATASETS[0].map(p => ({ x: p[0], y: p[1] }));
+
+    // 目標点選択ドロップダウンのID
+    const TARGET_SELECT_ID = 'target-select';
+
+    // パラメータ取得関数を修正し、グラフ範囲を取得するようにする
+    function getRangeParams(): Record<string, number> {
+      const xMin = parseFloat((document.getElementById('x-min') as HTMLInputElement)?.value) || -1.5;
+      const xMax = parseFloat((document.getElementById('x-max') as HTMLInputElement)?.value) || 2.5;
+      const yMin = parseFloat((document.getElementById('y-min') as HTMLInputElement)?.value) || -5;
+      const yMax = parseFloat((document.getElementById('y-max') as HTMLInputElement)?.value) || 4;
+
+      // X_minがX_maxより大きい場合は入れ替える（グラフが破綻しないように）
+      return {
+        X_MIN: Math.min(xMin, xMax),
+        X_MAX: Math.max(xMin, xMax),
+        Y_MIN: Math.min(yMin, yMax),
+        Y_MAX: Math.max(yMin, yMax)
+      };
+    }
+
+    // グラフデータ生成のためのX座標データ
+    function generateXData(X_MIN: number, X_MAX: number): number[] {
+      const xData = [];
+      const step = (X_MAX - X_MIN) / DATA_POINTS;
+      for (let i = 0; i < DATA_POINTS; i++) {
+        xData.push(X_MIN + i * step);
+      }
+      return xData;
+    }
+
+    // 関数の定義: y = w_out * tanh(w_in * x + b)
+    function func(x: number, w_in: number, b: number, w_out: number) {
+      return w_out * Math.tanh(w_in * x + b);
+    }
+
+    // パラメータの現在値を取得 (重みとバイアス)
+    function getParams(): Record<string, number> {
+      // 値を input type="number" のID (e.g., a1-value) から取得
+      return {
+        // グラフ1 (G1)
+        w_in1: parseFloat((document.getElementById('a1-value') as HTMLInputElement)?.value) || 0,
+        b1: parseFloat((document.getElementById('b1-value') as HTMLInputElement)?.value) || 0,
+        w_out1: parseFloat((document.getElementById('c1-value') as HTMLInputElement)?.value) || 0,
+        // グラフ2 (G2)
+        w_in2: parseFloat((document.getElementById('a2-value') as HTMLInputElement)?.value) || 0,
+        b2: parseFloat((document.getElementById('b2-value') as HTMLInputElement)?.value) || 0,
+        w_out2: parseFloat((document.getElementById('c2-value') as HTMLInputElement)?.value) || 0
+      };
+    }
+
+    // Y軸データを計算 (X軸データも依存するため引数に追加)
+    function generateYData(params: Record<string, number>, xData: number[]): {
+      y1Data: number[],
+      y2Data: number[],
+      ySumData: { x: number, y: number }[]
+    } {
+      // y = w2 * tanh(w1 * x + b) を計算
+      const y1Data = xData.map(x => func(x, params.w_in1, params.b1, params.w_out1));
+      const y2Data = xData.map(x => func(x, params.w_in2, params.b2, params.w_out2));
+
+      // 合成グラフ (y1 + y2)
+      const ySumData = y1Data.map((y1, i) => y1 + y2Data[i]);
+
+      // Chart.jsはX軸をラベルとして扱えないため、X-Yペアの形式に変換
+      const ySumChartData = xData.map((x, i) => ({ x: x, y: ySumData[i] }));
+
+      return { y1Data, y2Data, ySumData: ySumChartData };
+    }
+
+    // 合成グラフと目標点の平均二乗誤差（MSE）を計算
+    function calculateMSE(params: Record<string, number>) {
+      if (!currentScatterPoints.length) return 0;
+
+      const totalSquaredError = currentScatterPoints.reduce((acc, point) => {
+        const predicted = func(point.x, params.w_in1, params.b1, params.w_out1)
+          + func(point.x, params.w_in2, params.b2, params.w_out2);
+        const diff = predicted - point.y;
+        return acc + diff * diff;
+      }, 0);
+
+      return totalSquaredError / currentScatterPoints.length;
+    }
+
+    function updateMSEDisplay(params: Record<string, number>) {
+      const mseElement = document.getElementById('mse-value');
+      if (!mseElement) return;
+      const mse = calculateMSE(params);
+      mseElement.textContent = mse.toFixed(4);
+
+      // 学習するデータは折れ線の場合にはy軸の幅が 2 , 直線では 3 あります。その小さい方の 5% の誤差を許容すると仮定すると 損失関数である mse(平均二乗誤差)は、(2 * 0.05)^2 = 0.01となります。そこで、今回は 0.01 よりも平均二乗誤差が小さい場合には学習できた、としています。
+      if (mse < 0.01) {
+        mseElement.classList.add('text-green-600');
+      } else {
+        mseElement.classList.remove('text-green-600');
+      }
+    }
+
+    // Chart.jsの共通設定を取得する関数（範囲設定を動的に反映）
+    function getCommonChartOptions(range: Record<string, number>): ChartConfiguration['options'] {
+      return {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            type: 'linear',
+            position: 'bottom',
+            min: range.X_MIN,
+            max: range.X_MAX,
+            title: { display: true, text: 'x', color: '#cbd5e1' },
+            // X軸のティックを調整（0.1単位で表示）
+            ticks: { callback: (val: string | number) => Number(val).toFixed(1), color: '#cbd5e1' },
+            grid: { color: 'rgba(148, 163, 184, 0.25)' }
+          },
+          y: {
+            min: range.Y_MIN,
+            max: range.Y_MAX,
+            title: { display: true, text: 'y', color: '#cbd5e1' },
+            ticks: { color: '#cbd5e1' },
+            grid: { color: 'rgba(148, 163, 184, 0.25)' }
+          }
+        },
+        plugins: {
+          legend: { display: true, labels: { color: '#e2e8f0' } },
+          tooltip: { enabled: false }
+        },
+        elements: {
+          point: { radius: 0 }
+        }
+      };
+    }
+
+    // グラフの初期化と更新
+    let individualChart: Chart;
+    let sumChart: Chart;
+
+    function initCharts() {
+      const range: Record<string, number> = getRangeParams();
+      const xData = generateXData(range.X_MIN, range.X_MAX);
+      const params: Record<string, number> = getParams();
+      console.log(params)
+      // 合成グラフのデータ形式をX-Yペアに修正
+      const { y1Data, y2Data, ySumData } = generateYData(params, xData);
+      const commonOptions: ChartConfiguration['options'] = getCommonChartOptions(range);
+
+      // Chart.jsではLine Chartのデータラベル（xData）とデータポイントのインデックスが紐づくため、
+      // 個別グラフはこれまで通りの配列形式を維持
+      const y1Only: number[] = y1Data.map((d: number) => d);
+      const y2Only: number[] = y2Data.map((d: number) => d);
+
+
+      // 上部の個別グラフ
+      const ctxIndividual: CanvasRenderingContext2D = (document.getElementById('individual-graphs-canvas') as HTMLCanvasElement)?.getContext('2d')!;
+      individualChart = new Chart(ctxIndividual, {
+        type: 'line',
+        data: {
+          labels: xData.map(x => x.toFixed(2)), // X軸ラベルは表示用に固定
+          datasets: [
+            {
+              label: 'グラフ1 (G1)',
+              data: y1Only, // Y値の配列
+              borderColor: '#f472b6',
+              tension: 0.2,
+              borderWidth: 2,
+              fill: false
+            },
+            {
+              label: 'グラフ2 (G2)',
+              data: y2Only, // Y値の配列
+              borderColor: '#38bdf8',
+              tension: 0.2,
+              borderWidth: 2,
+              fill: false
+            }
+          ]
+        },
+        options: commonOptions
+      });
+
+      // 下部の合成グラフ
+      const ctxSum: CanvasRenderingContext2D = (document.getElementById('sum-graph-canvas') as HTMLCanvasElement).getContext('2d')!;
+      sumChart = new Chart(ctxSum, {
+        type: 'line', // 合成関数はLine Chart
+        data: {
+          // 合成関数のLine Chartデータセット
+          datasets: [
+            {
+              label: '加算結果 (G1 + G2)',
+              data: ySumData, // {x: X, y: Y} の配列
+              borderColor: '#22c55e',
+              borderWidth: 3,
+              tension: 0.2,
+              fill: false,
+              // Line Chartでもx-y形式のデータを扱うために'x'の型を指定
+              parsing: false,
+            },
+            // Scatterプロットのデータセット
+            {
+              label: '教師データ',
+              data: currentScatterPoints, // 動的に更新される変数を使用
+              type: 'scatter', // 散布図として描画
+              backgroundColor: '#facc15', // オレンジ色
+              pointRadius: 5, // 点のサイズ
+              pointBorderWidth: 1,
+              // pointBorderColor: '#0f172a',
+              showLine: false, // 線は描画しない
+            }
+          ]
+        },
+        options: commonOptions
+      });
+
+      // 制御のセットアップとイベントリスナーの設定
+      setupControls();
+
+      updateMSEDisplay(params);
+    }
+
+    // グラフ全体を更新する関数
+    function updateCharts() {
+      const range: Record<string, number> = getRangeParams();
+      const xData = generateXData(range.X_MIN, range.X_MAX);
+      const params: Record<string, number> = getParams();
+      const { y1Data, y2Data, ySumData } = generateYData(params, xData);
+
+      // X軸データの更新と再計算が必要なため、グラフデータをすべて更新
+
+      // Individual Chart (Line Chart): labelsとy-value配列で更新
+      individualChart.data.labels = xData.map(x => x.toFixed(2));
+      individualChart.data.datasets[0].data = y1Data.map(d => d);
+      individualChart.data.datasets[1].data = y2Data.map(d => d);
+
+      // Sum Chart (Line + Scatter): x-yペアで更新
+      sumChart.data.datasets[0].data = ySumData;
+      // Scatterデータ (目標点) は currentScatterPoints を参照しているため、別途更新する必要はない
+
+      // 範囲の更新 (両方のグラフに適用)
+      const updateScales = (chart: Chart) => {
+        chart.options.scales!.x!.min = range.X_MIN;
+        chart.options.scales!.x!.max = range.X_MAX;
+        chart.options.scales!.y!.min = range.Y_MIN;
+        chart.options.scales!.y!.max = range.Y_MAX;
+      };
+
+      updateScales(individualChart);
+      updateScales(sumChart);
+
+      // グラフを更新
+      individualChart.update();
+      sumChart.update();
+
+      updateMSEDisplay(params);
+    }
+
+    // スライダーと数値入力の双方向同期をセットアップする関数
+    const GRAPH1_PARAM_IDS = ['a1', 'b1', 'c1'];
+    const GRAPH2_PARAM_IDS = ['a2', 'b2', 'c2'];
+    // 個別の配列から結合して全パラメータ一覧を生成
+    const paramIds = [...GRAPH1_PARAM_IDS, ...GRAPH2_PARAM_IDS];
+    const rangeIds = ['x-min', 'x-max', 'y-min', 'y-max'];
+    const DEFAULT_PARAMS: Record<string, number> = {
+      a1: 1.0,
+      b1: 0.0,
+      c1: 1.0,
+      a2: 1.0,
+      b2: 0.0,
+      c2: -1.0,
+    };
+
+    function resetParams(paramKeys = paramIds) {
+      paramKeys.forEach(key => {
+        const defaultValue = DEFAULT_PARAMS[key];
+        if (defaultValue === undefined) return;
+        const rangeInput = document.getElementById(key) as HTMLInputElement;
+        const numberInput = document.getElementById(`${key}-value`) as HTMLInputElement;
+        if (rangeInput && numberInput) {
+          const formatted = defaultValue.toFixed(3);
+          rangeInput.value = formatted;
+          numberInput.value = formatted;
+        }
+      });
+      updateCharts();
+    }
+
+    function setupControls() {
+      // 1. 重みとバイアス (スライダー/数値入力) の設定
+      paramIds.forEach(id => {
+        const rangeInput = document.getElementById(id) as HTMLInputElement;
+        const numberInput = document.getElementById(`${id}-value`) as HTMLInputElement;
+
+        if (!numberInput || !rangeInput) return;
+
+        // スライダー操作時
+        rangeInput.addEventListener('input', () => {
+          numberInput.value = parseFloat(rangeInput.value).toFixed(3);
+          updateCharts();
+        });
+
+        // 数値入力変更時
+        numberInput.addEventListener('change', () => {
+          let val = parseFloat(numberInput.value);
+          const min = parseFloat(numberInput.min);
+          const max = parseFloat(numberInput.max);
+
+          if (isNaN(val)) val = 0.0;
+          // 値が範囲外の場合はクリップ処理を行う
+          if (val < min) val = min;
+          if (val > max) val = max;
+
+          // toFixed(3)で丸め、UIに表示
+          numberInput.value = val.toFixed(3);
+          rangeInput.value = val.toFixed(3); // スライダーの値も同期
+
+          updateCharts();
+        });
+
+        // 初期値の同期
+        numberInput.value = parseFloat(rangeInput.value).toFixed(3);
+      });
+
+      // 2. グラフ範囲設定のイベントリスナー
+      rangeIds.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+          input.addEventListener('change', () => {
+            updateCharts();
+          });
+        }
+      });
+
+      // 3. 範囲設定パネルの折りたたみ機能
+      const toggleButton = document.getElementById('toggle-range-settings');
+      const contentDiv = document.getElementById('range-settings-content');
+      const toggleIcon = document.getElementById('toggle-icon');
+
+      toggleButton?.addEventListener('click', () => {
+        // aria-expanded属性で現在の状態をチェック
+        const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
+
+        if (isExpanded) {
+          // 閉じる
+          contentDiv?.classList.add('hidden');
+          if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
+          toggleButton.setAttribute('aria-expanded', 'false');
+        } else {
+          // 開く
+          contentDiv?.classList.remove('hidden');
+          if (toggleIcon) toggleIcon.style.transform = 'rotate(90deg)'; // 90度回転させて下向きにする
+          toggleButton.setAttribute('aria-expanded', 'true');
+        }
+      });
+
+      // 4. 目標点選択ドロップダウンのイベントリスナー
+      const targetSelect = document.getElementById(TARGET_SELECT_ID) as HTMLSelectElement;
+      targetSelect?.addEventListener('change', () => {
+  // console.log(targetSelect.value)
+        const selectedIndex = parseInt(targetSelect.value, 10);
+
+        // 新しい目標点データを選択し、Chart.jsが期待する {x, y} 形式に変換
+        const newRawData = TARGET_POINT_DATASETS[selectedIndex];
+        currentScatterPoints = newRawData.map(p => ({ x: p[0], y: p[1] }));
+
+        // 合成グラフのデータセット (インデックス1が目標点) を更新
+        if (sumChart && sumChart.data.datasets.length > 1) {
+          sumChart.data.datasets[1].data = currentScatterPoints;
+          sumChart.update();
+        }
+
+        updateMSEDisplay(getParams());
+      });
+
+      const resetGraph1Button = document.getElementById('reset-graph1') as HTMLButtonElement;
+      const resetGraph2Button = document.getElementById('reset-graph2') as HTMLButtonElement;
+
+      resetGraph1Button.addEventListener('click', () => resetParams(GRAPH1_PARAM_IDS));
+      resetGraph2Button.addEventListener('click', () => resetParams(GRAPH2_PARAM_IDS));
+    }
+
+    initCharts();
+
+  }, []);
   return (
     <>
       {/* 指令エリア */}
