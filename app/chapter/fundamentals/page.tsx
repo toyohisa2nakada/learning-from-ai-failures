@@ -396,18 +396,33 @@ export default function Home() {
     }
 
     initCharts();
-
   }, []);
+
+  // 重み部分のinput
+  const weight_input_css = "no-spin font-bold w-12 text-right p-0 bg-transparent text-sm rounded border border-[#1f2a44] border-solid";
+  // panel
+  const panel_css = "p-3 rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent h-full";
+
   return (
     <>
       <style>{`
         .no-spin::-webkit-inner-spin-button,
         .no-spin::-webkit-outer-spin-button {
           -webkit-appearance: none;
-          margin: 0;
         }
         .no-spin {
           -moz-appearance: textfield;
+        }
+        .range-input {
+            width: 50px;
+            font-size: 0.75rem;
+            background: #0d162d;
+            border: 1px solid #1f2a44;
+        }
+        .auto-inherit {
+          appearance: none;
+          background: inherit;
+          color: inherit;
         }
       `}</style>
 
@@ -416,13 +431,13 @@ export default function Home() {
         指令：パラメータを変更して、グラフの可算結果が教師データを通るようにする
       </section>
       {/* 操作と可視化 */}
-      <main className="flex-1 flex items-center justify-center">
-        <div id="container" className="max-w-7xl mx-auto shadow-2xl rounded-xl border border-slate-800/80">
-          <div id="main-layout" className="flex flex-col p-6 gap-6">
+      <main className="flex-1 flex items-center justify-center bg-inherit">
+        <div id="container" className="max-w-7xl mx-auto shadow-2xl rounded-xl border border-slate-800/80 bg-inherit">
+          <div id="main-layout" className="flex flex-col p-6 gap-6 bg-inherit">
             <div id="upper-panel" className="flex flex-col md:flex-row gap-6">
               <div className="md:w-1/2">
                 <div id="parameter-control"
-                  className="p-3 rounded-lg shadow-xl ring-1 ring-offset-2 ring-indigo-400/10 ring-offset-transparent h-full">
+                  className={panel_css}>
                   <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
 
                   <div className="mb-3 p-2 border-8 border-red-300 rounded-lg bg-red-400/5">
@@ -440,7 +455,7 @@ export default function Home() {
                             <span className="flex-shrink">重み w1:</span>
                             <input type="number" id="a1-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="1.000"
-                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-red-400 rounded" />
+                              className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`} />
                           </div>
                         </label>
                         <input type="range" id="a1" min="-10.0" max="10.0" step="0.001" defaultValue="1.0"
@@ -453,7 +468,7 @@ export default function Home() {
                             <span className="flex-shrink">バイアス b:</span>
                             <input type="number" id="b1-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="0.000"
-                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-red-400 rounded" />
+                              className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`} />
                           </div>
                         </label>
                         <input type="range" id="b1" min="-10.0" max="10.0" step="0.001" defaultValue="0.0"
@@ -466,7 +481,7 @@ export default function Home() {
                             <span className="flex-shrink">重み w2:</span>
                             <input type="number" id="c1-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="1.000"
-                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-red-400 rounded" />
+                              className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`} />
                           </div>
                         </label>
                         <input type="range" id="c1" min="-10.0" max="10.0" step="0.001" defaultValue="1.0"
@@ -490,7 +505,7 @@ export default function Home() {
                             <span className="flex-shrink">重み w1:</span>
                             <input type="number" id="a2-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="1.000"
-                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded" />
+                              className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`} />
                           </div>
                         </label>
                         <input type="range" id="a2" min="-10.0" max="10.0" step="0.001" defaultValue="1.0"
@@ -503,7 +518,7 @@ export default function Home() {
                             <span className="flex-shrink">バイアス b:</span>
                             <input type="number" id="b2-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="0.000"
-                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded" />
+                              className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`} />
                           </div>
                         </label>
                         <input type="range" id="b2" min="-10.0" max="10.0" step="0.001" defaultValue="0.0"
@@ -516,7 +531,7 @@ export default function Home() {
                             <span className="flex-shrink">重み w2:</span>
                             <input type="number" id="c2-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="-1.000"
-                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded" />
+                              className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`} />
                           </div>
                         </label>
                         <input type="range" id="c2" min="-10.0" max="10.0" step="0.001" defaultValue="-1.0"
@@ -529,12 +544,12 @@ export default function Home() {
 
               <div className="md:w-1/2">
                 <div id="graph-area-top"
-                  className="flex flex-col items-start justify-start bg-gray-100 p-4 rounded-lg shadow-inner w-full h-full">
+                  className={`${panel_css} w-full flex flex-col items-start justify-start`}>
                   <div className="flex items-center justify-between w-full mb-3">
-                    <h3 className="text-base font-semibold text-gray-800 m-0">個別のグラフ (G1, G2)</h3>
+                    <h3 className="text-base font-semibold m-0">個別のグラフ (G1, G2)</h3>
                   </div>
-                  <div className="chart-container mx-auto md:mx-0">
-                    <canvas id="individual-graphs-canvas"></canvas>
+                  <div className="chart-container mx-auto md:mx-0 w-full">
+                    <canvas id="individual-graphs-canvas" className="w-full h-auto block"></canvas>
                   </div>
                 </div>
               </div>
@@ -542,11 +557,11 @@ export default function Home() {
             </div>
 
 
-            <div id="lower-panel" className="flex flex-col md:flex-row gap-6">
+            <div id="lower-panel" className="flex flex-col md:flex-row gap-6 bg-inherit">
 
               <div className="md:w-1/2">
                 <div id="drawing-area"
-                  className="relative bg-gray-100 p-4 rounded-lg shadow-inner w-full min-h-[250px] flex flex-col items-center justify-center border border-dashed border-slate-600 space-y-4">
+                  className={`${panel_css} w-full min-h-[250px] flex flex-col items-center justify-center space-y-4 relative`}>
                   <div>
                     <h2 className="text-base font-semibold text-gray-800 m-0">ニューラルネットワークの構造</h2>
                     <h3 className="text-xs">
@@ -620,24 +635,24 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="md:w-1/2">
+              <div className="md:w-1/2 bg-inherit">
                 <div id="graph-area-bottom"
-                  className="flex flex-col items-start justify-start bg-gray-100 p-4 rounded-lg shadow-inner w-full h-full">
+                  className={`${panel_css} w-full flex flex-col items-start justify-start bg-inherit`}>
                   <div className="flex items-center justify-between w-full mb-3">
-                    <h3 className="text-base font-semibold text-gray-800 m-0">グラフの可算結果 (G1 + G2)</h3>
+                    <h3 className="text-base font-semibold m-0">グラフの可算結果 (G1 + G2)</h3>
                     <div className="flex items-center gap-3">
-                      <div className="text-sm text-gray-700"><span className="font-semibold">誤差(MSE):</span> <span
+                      <div className="text-sm"><span className="font-semibold">誤差(MSE):</span> <span
                         id="mse-value">0.0000</span></div>
                     </div>
                   </div>
 
                   <div
-                    className="target-settings mb-3 p-2 border-none rounded-lg bg-opacity-50 shadow-sm text-xs w-full">
-                    <div className="flex items-center">
+                    className="target-settings mb-3 p-2 border-none rounded-lg shadow-sm text-xs bg-inherit w-full">
+                    <div className="flex items-center bg-inherit">
                       <label htmlFor="target-select"
-                        className="mr-2 font-medium text-gray-800 whitespace-nowrap">目標点データ:</label>
+                        className="mr-2 font-medium whitespace-nowrap">目標点データ:</label>
                       <select id="target-select" defaultValue="0"
-                        className="p-1 border-8 border-amber-200 rounded text-xs bg-opacity-50 ">
+                        className="p-1 border-8 border-amber-200 rounded text-xs bg-inherit text-inherit appearance-none">
                         <option defaultValue="0">原点通る直線</option>
                         <option defaultValue="1">原点通る折れ線</option>
                         <option defaultValue="2">原点通らない直線</option>
@@ -653,7 +668,7 @@ export default function Home() {
                   <div
                     className="range-settings mt-3 p-2 border border-gray-300 rounded-lg bg-opacity-50 shadow-sm text-xs w-full">
                     <div className="flex justify-between items-center mb-1">
-                      <h4 className="font-semibold text-gray-700 text-sm m-0">グラフ表示範囲設定</h4>
+                      <h4 className="font-semibold text-sm m-0">グラフ表示範囲設定</h4>
                       <button id="toggle-range-settings"
                         className="p-1 rounded-full text-gray-600 hover:bg-gray-200 transition"
                         aria-expanded="false" aria-controls="range-settings-content">
