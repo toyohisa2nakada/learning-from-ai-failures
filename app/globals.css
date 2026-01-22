@@ -1,9 +1,23 @@
 @import "tailwindcss";
 
-@theme {
-  --color-bg: #0b0d12;
-  --color-panel: #121622;
-  --color-line: #222a3a;
+/* @theme inline{
+  --color-bg: #0b0d12;    slate-950
+  --color-panel: #121622; slate-900
+  --color-line: #222a3a;  slate-800
+
+--color-accent: #6aa6ff; .... blue-400
+--color-bg-deep: #0a1224; .... slate-950
+--color-bg-surface: #0b1930; .... blue-950
+--color-bg-accent-red: rgba(248, 113, 113, 0.12); .... red-400/15
+--color-bg-accent-blue: rgba(56, 189, 248, 0.12); .... sky-400/15
+--color-bg-card: #111827; .... gray-900
+--color-muted: #94a3b8; .... slate-400
+--color-text-main: #e2e8f0; .... slate-200
+--color-accent-amber: #f59e0b; .... amber-500
+--color-accent-cyan: #38bdf8; .... sky-400
+--color-accent-green: #22c55e; .... green-500
+--color-accent-yellow: #facc15; .... yellow-400
+
   --color-accent: #6aa6ff;
   --color-bg-deep: #0a1224;
   --color-bg-surface: #0b1930;
@@ -16,5 +30,4 @@
   --color-accent-cyan: #38bdf8;
   --color-accent-green: #22c55e;
   --color-accent-yellow: #facc15;
-}
-
+} */

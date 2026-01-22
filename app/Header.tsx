@@ -21,11 +21,11 @@ export default function Header() {
     };
 
     return (
-        <header className="bg-panel border border-line rounded-xl px-4 py-3 flex justify-between items-center">
+        <header className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex justify-between items-center">
             <div className="flex items-center gap-3 relative">
                 <button
                     onClick={() => setIsSectionListOpen(!isSectionListOpen)}
-                    className="text-xs px-3 py-1 rounded-full border border-line text-slate-300 hover:bg-slate-800 transition-colors"
+                    className="text-xs px-3 py-1 rounded-full border border-slate-800 text-slate-300 hover:bg-slate-800 transition-colors"
                 >
                     NN Basic Lesson
                 </button>
@@ -36,7 +36,7 @@ export default function Header() {
                             className="fixed inset-0 z-10"
                             onClick={() => setIsSectionListOpen(false)}
                         />
-                        <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-line rounded-lg shadow-xl z-10 py-1">
+                        <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-xl z-10 py-1">
                             {CHAPTERS.map((chapter) => (
                                 <button
                                     key={chapter}
@@ -50,7 +50,7 @@ export default function Header() {
                     </>
                 )}
 
-                {/* <span className="text-xs px-3 py-1 rounded-full border border-line text-slate-300">
+                {/* <span className="text-xs px-3 py-1 rounded-full border border-slate-800 text-slate-300">
                     NN Basic Lesson
                 </span> */}
                 <div className="text-sm text-slate-400">
@@ -59,19 +59,19 @@ export default function Header() {
             </div>
 
             <div className="flex items-center gap-3">
-                <span className="text-xs px-2 py-1 rounded-full border border-line text-slate-400">
+                <span className="text-xs px-2 py-1 rounded-full border border-slate-800 text-slate-400">
                     進捗 3/8
                 </span>
                 <div className="w-40 h-2 bg-slate-800 rounded-full overflow-hidden">
                     <div className="h-full w-1/3 bg-accent"></div>
                 </div>
-                {/* <Link href="/chapter/fundamentals" className="px-3 py-1 text-sm rounded-lg border border-line">前へ</Link>
+                {/* <Link href="/chapter/fundamentals" className="px-3 py-1 text-sm rounded-lg border border-slate-800">前へ</Link>
                 <Link href="/chapter/image-generation" className="px-3 py-1 text-sm rounded-lg border border-accent bg-accent/20">次へ</Link> */}
 
                 <Link href={isFirst ? "#" : `${basePath}/${CHAPTERS[currentIndex - 1]}`}
                     onClick={(e) => isFirst && e.preventDefault()} // JSでクリックを完全防止
                     title={isFirst ? "前のセクションはありません" : ""}
-                    className={`px-3 py-1 text-sm rounded-lg border border-line 
+                    className={`px-3 py-1 text-sm rounded-lg border border-slate-800 
                         ${isFirst
                             ? "opacity-30 cursor-not-allowed"
                             : "hover:bg-slate-800"
@@ -80,7 +80,7 @@ export default function Header() {
                 <Link href={isLast ? "#" : `${basePath}/${CHAPTERS[currentIndex + 1]}`}
                     onClick={(e) => isLast && e.preventDefault()} // JSでクリックを完全防止
                     title={isLast ? "次のセクションはありません" : ""}
-                    className={`px-3 py-1 text-sm rounded-lg border border-line 
+                    className={`px-3 py-1 text-sm rounded-lg border border-slate-800 
                         ${isLast
                             ? "opacity-30 cursor-not-allowed"
                             : "hover:bg-slate-800"

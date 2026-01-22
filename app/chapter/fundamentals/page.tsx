@@ -400,123 +400,127 @@ export default function Home() {
   }, []);
   return (
     <>
-      {/* 指令エリア */}
-      <section className="bg-panel border border-line rounded-xl px-4 py-3 flex gap-4 items-start">
-        指令エリア
-      </section>
+      <style>{`
+        .no-spin::-webkit-inner-spin-button,
+        .no-spin::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        .no-spin {
+          -moz-appearance: textfield;
+        }
+      `}</style>
 
+      {/* 指令エリア */}
+      <section className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex gap-4 items-start">
+        指令：パラメータを変更して、グラフの可算結果が教師データを通るようにする
+      </section>
       {/* 操作と可視化 */}
       <main className="flex-1 flex items-center justify-center">
         <div id="container" className="max-w-7xl mx-auto shadow-2xl rounded-xl border border-slate-800/80">
-          <h1 className="text-gray-800 text-2xl font-bold py-2 px-6 border-b border-slate-800/60">
-            パラメータを変更して、グラフの可算結果が教師データを通るようにする
-          </h1>
-
           <div id="main-layout" className="flex flex-col p-6 gap-6">
-
             <div id="upper-panel" className="flex flex-col md:flex-row gap-6">
-
               <div className="md:w-1/2">
                 <div id="parameter-control"
-                  className="p-3 rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/30 ring-offset-transparent h-full">
-                  <h3 className="text-gray-800 text-base font-bold mb-3">パラメータ設定</h3>
+                  className="p-3 rounded-lg shadow-xl ring-1 ring-offset-2 ring-indigo-400/10 ring-offset-transparent h-full">
+                  <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
 
                   <div className="mb-3 p-2 border-8 border-red-300 rounded-lg bg-red-400/5">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-base font-semibold text-pink-400">グラフ1: <span className="text-gray-800">y =
+                      <h3 className="text-base font-semibold text-pink-400">グラフ1: <span className="text-gray-300">y =
                         w2 * tanh(w1 * x + b)</span></h3>
                       <button id="reset-graph1"
                         className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700">リセット</button>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 text-gray-300">
                       <div className="w-1/3 pr-1">
-                        <label htmlFor="a1" className="text-xs font-medium text-gray-700 block">
+                        <label htmlFor="a1" className="text-xs font-medium block">
                           <div className="flex items-center whitespace-nowrap">
                             <span className="flex-shrink">重み w1:</span>
                             <input type="number" id="a1-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="1.000"
-                              className="font-bold text-red-600 w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-red-400 rounded" />
+                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-red-400 rounded" />
                           </div>
                         </label>
                         <input type="range" id="a1" min="-10.0" max="10.0" step="0.001" defaultValue="1.0"
-                          className="accent-pink-400" />
+                          className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400" />
                       </div>
 
                       <div className="w-1/3 pr-1">
-                        <label htmlFor="b1" className="text-xs font-medium text-gray-700 block">
+                        <label htmlFor="b1" className="text-xs font-medium block">
                           <div className="flex items-center whitespace-nowrap">
                             <span className="flex-shrink">バイアス b:</span>
                             <input type="number" id="b1-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="0.000"
-                              className="font-bold text-red-600 w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-red-400 rounded" />
+                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-red-400 rounded" />
                           </div>
                         </label>
                         <input type="range" id="b1" min="-10.0" max="10.0" step="0.001" defaultValue="0.0"
-                          className="accent-pink-400" />
+                          className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400" />
                       </div>
 
                       <div className="w-1/3 pr-1">
-                        <label htmlFor="c1" className="text-xs font-medium text-gray-700 block">
+                        <label htmlFor="c1" className="text-xs font-medium block">
                           <div className="flex items-center whitespace-nowrap">
                             <span className="flex-shrink">重み w2:</span>
                             <input type="number" id="c1-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="1.000"
-                              className="font-bold text-red-600 w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-red-400 rounded" />
+                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-red-400 rounded" />
                           </div>
                         </label>
                         <input type="range" id="c1" min="-10.0" max="10.0" step="0.001" defaultValue="1.0"
-                          className="accent-pink-400" />
+                          className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400" />
                       </div>
                     </div>
                   </div>
 
                   <div className="mb-4 p-2 border-8 border-blue-300 rounded-lg bg-blue-400/5">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-base font-semibold text-sky-400">グラフ2: <span className="text-gray-800">y =
+                      <h3 className="text-base font-semibold">グラフ2: <span className="text-gray-300">y =
                         w2 * tanh(w1 * x + b)</span></h3>
                       <button id="reset-graph2"
-                        className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700">リセット</button>
+                        className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700">リセット</button>
                     </div>
 
                     <div className="flex gap-3">
                       <div className="w-1/3 pr-1">
-                        <label htmlFor="a2" className="text-xs font-medium text-gray-700 block">
+                        <label htmlFor="a2" className="text-xs font-medium block">
                           <div className="flex items-center whitespace-nowrap">
                             <span className="flex-shrink">重み w1:</span>
                             <input type="number" id="a2-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="1.000"
-                              className="font-bold text-blue-600 w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded" />
+                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded" />
                           </div>
                         </label>
                         <input type="range" id="a2" min="-10.0" max="10.0" step="0.001" defaultValue="1.0"
-                          className="accent-sky-400" />
+                          className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400" />
                       </div>
 
                       <div className="w-1/3 pr-1">
-                        <label htmlFor="b2" className="text-xs font-medium text-gray-700 block">
+                        <label htmlFor="b2" className="text-xs font-medium block">
                           <div className="flex items-center whitespace-nowrap">
                             <span className="flex-shrink">バイアス b:</span>
                             <input type="number" id="b2-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="0.000"
-                              className="font-bold text-blue-600 w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded" />
+                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded" />
                           </div>
                         </label>
                         <input type="range" id="b2" min="-10.0" max="10.0" step="0.001" defaultValue="0.0"
-                          className="accent-sky-400" />
+                          className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400" />
                       </div>
 
                       <div className="w-1/3 pr-1">
-                        <label htmlFor="c2" className="text-xs font-medium text-gray-700 block">
+                        <label htmlFor="c2" className="text-xs font-medium block">
                           <div className="flex items-center whitespace-nowrap">
                             <span className="flex-shrink">重み w2:</span>
                             <input type="number" id="c2-value" min="-10.0" max="10.0" step="0.001"
                               defaultValue="-1.000"
-                              className="font-bold text-blue-600 w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded" />
+                              className="no-spin font-bold w-12 text-right border border-gray-400 p-0 bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 rounded" />
                           </div>
                         </label>
                         <input type="range" id="c2" min="-10.0" max="10.0" step="0.001" defaultValue="-1.0"
-                          className="accent-sky-400" />
+                          className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400" />
                       </div>
                     </div>
                   </div>
@@ -668,19 +672,19 @@ export default function Home() {
                         <div className="flex items-center">
                           <span className="mr-1 font-medium">X軸:</span>
                           <input type="number" id="x-min" defaultValue="-1.5" step="0.5"
-                            className="range-input text-center border border-gray-300 rounded p-1" />
+                            className="no-spin range-input text-center border border-gray-300 rounded p-1" />
                           <span className="mx-1">〜</span>
                           <input type="number" id="x-max" defaultValue="2.5" step="0.5"
-                            className="range-input text-center border border-gray-300 rounded p-1" />
+                            className="no-spin range-input text-center border border-gray-300 rounded p-1" />
                         </div>
 
                         <div className="flex items-center">
                           <span className="mr-1 font-medium">Y軸:</span>
                           <input type="number" id="y-min" defaultValue="-5" step="1"
-                            className="range-input text-center border border-gray-300 rounded p-1" />
+                            className="no-spin range-input text-center border border-gray-300 rounded p-1" />
                           <span className="mx-1">〜</span>
                           <input type="number" id="y-max" defaultValue="4" step="1"
-                            className="range-input text-center border border-gray-300 rounded p-1" />
+                            className="no-spin range-input text-center border border-gray-300 rounded p-1" />
                         </div>
                       </div>
                     </div>
@@ -696,10 +700,10 @@ export default function Home() {
       </main>
 
       {/* 解説 */}
-      <footer className="bg-panel border border-line rounded-xl px-4 py-3">
+      <footer className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3">
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-semibold text-sm">⑤ 解説</h3>
-          <span className="text-xs px-2 py-1 rounded-full border border-line text-slate-400">
+          <span className="text-xs px-2 py-1 rounded-full border border-slate-800 text-slate-400">
             操作後に開示
           </span>
         </div>
