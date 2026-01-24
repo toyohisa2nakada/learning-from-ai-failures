@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Chart, ChartConfiguration } from 'chart.js/auto';
 
+
 // グラフ描画の設定
 const DATA_POINTS = 300;
 // プロットする散布図データ（目標点データセット）
@@ -650,3 +651,4 @@ export default function Home() {
     </>
   );
 }
+
