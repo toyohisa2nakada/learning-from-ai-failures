@@ -16,7 +16,6 @@ const TARGET_SELECT_ID = 'target-select';
 
 // グラフデータ生成のためのX座標データ
 function generateXData(X_MIN: number, X_MAX: number): number[] {
-  console.log("generateXData")
   const xData = [];
   const step = (X_MAX - X_MIN) / DATA_POINTS;
   for (let i = 0; i < DATA_POINTS; i++) {
@@ -31,16 +30,14 @@ function activation(x: number, w_in: number, b: number, w_out: number) {
 }
 
 // Y軸データを計算 (X軸データも依存するため引数に追加)
-function generateYData(params: Record<string, number>, xData: number[]): {
+function generateYData(weights: Record<string, number>, xData: number[]): {
   y1Data: number[],
   y2Data: number[],
   ySumData: { x: number, y: number }[]
 } {
-  console.log("generateYData")
-
   // y = w2 * tanh(w1 * x + b) を計算
-  const y1Data = xData.map(x => activation(x, params.W_IN1, params.B1, params.W_OUT1));
-  const y2Data = xData.map(x => activation(x, params.W_IN2, params.B2, params.W_OUT2));
+  const y1Data = xData.map(x => activation(x, weights.wIn1, weights.b1, weights.wOut1));
+  const y2Data = xData.map(x => activation(x, weights.wIn2, weights.b2, weights.wOut2));
 
   // 合成グラフ (y1 + y2)
   const ySumData = y1Data.map((y1, i) => y1 + y2Data[i]);
@@ -53,8 +50,6 @@ function generateYData(params: Record<string, number>, xData: number[]): {
 
 // Chart.jsの共通設定を取得する関数（範囲設定を動的に反映）
 function getCommonChartOptions(range: Record<string, number>): ChartConfiguration['options'] {
-  console.log("getCommonChartOptions")
-
   return {
     animation: false,
     responsive: true,
@@ -90,14 +85,13 @@ function getCommonChartOptions(range: Record<string, number>): ChartConfiguratio
 
 
 // 合成グラフと目標点の平均二乗誤差（MSE）を計算
-function calculateMSE(currentScatterPoints: Record<string, number>[], params: Record<string, number>) {
-  console.log("calculateMSE")
+function calculateMSE(currentScatterPoints: Record<string, number>[], weights: Record<string, number>) {
 
   if (!currentScatterPoints.length) return 0;
 
   const totalSquaredError = currentScatterPoints.reduce((acc, point) => {
-    const predicted = activation(point.x, params.W_IN1, params.B1, params.W_OUT1)
-      + activation(point.x, params.W_IN2, params.B1, params.W_OUT2);
+    const predicted = activation(point.x, weights.wIn1, weights.b1, weights.wOut1)
+      + activation(point.x, weights.wIn2, weights.b1, weights.wOut2);
     const diff = predicted - point.y;
     return acc + diff * diff;
   }, 0);
@@ -105,12 +99,10 @@ function calculateMSE(currentScatterPoints: Record<string, number>[], params: Re
   return totalSquaredError / currentScatterPoints.length;
 }
 
-function updateMSEDisplay(currentScatterPoints: Record<string, number>[], params: Record<string, number>) {
-  console.log("updateMSEDisplay")
-
+function updateMSEDisplay(currentScatterPoints: Record<string, number>[], weights: Record<string, number>) {
   const mseElement = document.getElementById('mse-value');
   if (!mseElement) return;
-  const mse = calculateMSE(currentScatterPoints, params);
+  const mse = calculateMSE(currentScatterPoints, weights);
   mseElement.textContent = mse.toFixed(4);
 
   // 学習するデータは折れ線の場合にはy軸の幅が 2 , 直線では 3 あります。
@@ -124,9 +116,6 @@ function updateMSEDisplay(currentScatterPoints: Record<string, number>[], params
 }
 
 function updateChartScales(individualChart: Chart, sumChart: Chart, range: Record<string, number>) {
-  console.log("updateChartScales")
-  // const range: Record<string, number> = getRangeParams();
-
   // 範囲の更新 (両方のグラフに適用)
   const updateScales = (chart: Chart) => {
     chart.options.scales!.x!.min = range.X_MIN;
@@ -137,22 +126,12 @@ function updateChartScales(individualChart: Chart, sumChart: Chart, range: Recor
 
   updateScales(individualChart);
   updateScales(sumChart);
-  // temp
-  // xData = generateXData(range.X_MIN, range.X_MAX);
-  // console.log(xData)
 }
 
 // グラフ全体を更新する関数
-function updateCharts(individualChart: Chart, sumChart: Chart, params: Record<string, number>, range: Record<string, number>, currentScatterPoints: Record<string, number>[]) {
-  // console.log("updateCharts "+debug)
-  // debug++;
-  // const range: Record<string, number> = getRangeParams();
+function updateCharts(individualChart: Chart, sumChart: Chart, weights: Record<string, number>, range: Record<string, number>, currentScatterPoints: Record<string, number>[]) {
   const xData: number[] = generateXData(range.X_MIN, range.X_MAX);
-  // const params: Record<string, number> = getParams();
-  // console.log(xData)
-  const { y1Data, y2Data, ySumData } = generateYData(params, xData);
-
-  // X軸データの更新と再計算が必要なため、グラフデータをすべて更新
+  const { y1Data, y2Data, ySumData } = generateYData(weights, xData);
 
   // Individual Chart (Line Chart): labelsとy-value配列で更新
   individualChart.data.labels = xData.map(x => x.toFixed(2));
@@ -163,12 +142,11 @@ function updateCharts(individualChart: Chart, sumChart: Chart, params: Record<st
   sumChart.data.datasets[0].data = ySumData;
   // Scatterデータ (目標点) は currentScatterPoints を参照しているため、別途更新する必要はない
 
-
   // グラフを更新
   individualChart.update();
   sumChart.update();
 
-  updateMSEDisplay(currentScatterPoints, params);
+  updateMSEDisplay(currentScatterPoints, weights);
 }
 
 
@@ -180,20 +158,24 @@ export default function Home() {
   )
 
   // 重み
-  const weights = useRef({ wIn1: 1.0, b1: 0.0, wOut1: 1.0, wIn2: 1.0, b2: 0.0, wOut2: -1.0 })
-  function getParams(): Record<string, number> {
-    console.log("getParams")
-    return {
-      W_IN1: weights.current.wIn1, B1: weights.current.b1, W_OUT1: weights.current.wOut1,
-      W_IN2: weights.current.wIn2, B2: weights.current.b2, W_OUT2: weights.current.wOut2,
-    }
-  }
+  const weightInits = [{ wIn1: 1.0, b1: 0.0, wOut1: 1.0 }, { wIn2: 1.0, b2: 0.0, wOut2: -1.0 }];
+  const weights = useRef<{ [key: string]: number }>(Object.assign({}, ...weightInits));
   function onChangeWeight(id: string, value: string): void {
-    const attr = id.split('-')[0] as keyof typeof weights.current;
+    const attr = id.split('-')[0] as keyof typeof weights.current & string;
     weights.current[attr] = parseFloat(value) || 0;
     const other = id.includes('-input') ? attr : `${attr}-input`;
     (document.getElementById(other) as HTMLInputElement)!.value = weights.current[attr].toString();
-    updateCharts(individualChart.current!, sumChart.current!, getParams(), getRangeParams(), currentScatterPoints);
+    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints);
+  }
+  function onWeightInit(id: string) {
+    const no = parseInt(id.replace(/[^0-9]/g, "")) || 0;
+    Object.assign(weights.current, weightInits[no]);
+    ["wIn", "b", "wOut"].forEach(e => {
+      const attr = `${e}${no}`;
+      (document.getElementById(attr) as HTMLInputElement)!.value = weights.current[attr].toString();
+      (document.getElementById(attr + "-input") as HTMLInputElement)!.value = weights.current[attr].toString();
+    })
+    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints);
   }
 
   // Chart
@@ -206,7 +188,6 @@ export default function Home() {
   const [yMin, setYMin] = useState(-5);
   const [yMax, setYMax] = useState(4);
   function getRangeParams(): Record<string, number> {
-    console.log("getRangeParams")
     return {
       X_MIN: Math.min(xMin, xMax), X_MAX: Math.max(xMin, xMax),
       Y_MIN: Math.min(yMin, yMax), Y_MAX: Math.max(yMin, yMax)
@@ -216,7 +197,7 @@ export default function Home() {
 
   // 初期表示
   useEffect(() => {
-    (Object.keys(weights.current) as (keyof typeof weights.current)[]).forEach(e => {
+    (Object.keys(weights.current) as (keyof typeof weights.current & string)[]).forEach(e => {
       (document.getElementById(e) as HTMLInputElement)!.value = weights.current[e].toString();
       (document.getElementById(`${e}-input`) as HTMLInputElement)!.value = weights.current[e].toFixed(3);
     })
@@ -224,10 +205,10 @@ export default function Home() {
     // function initCharts() {
     const range: Record<string, number> = getRangeParams();
     const xData = generateXData(range.X_MIN, range.X_MAX);
-    const params: Record<string, number> = getParams();
+    // const params: Record<string, number> = getParams();
     // console.log(params)
     // 合成グラフのデータ形式をX-Yペアに修正
-    const { y1Data, y2Data, ySumData } = generateYData(params, xData);
+    const { y1Data, y2Data, ySumData } = generateYData(weights.current, xData);
     const commonOptions: ChartConfiguration['options'] = getCommonChartOptions(range);
 
     // Chart.jsではLine Chartのデータラベル（xData）とデータポイントのインデックスが紐づくため、
@@ -296,12 +277,6 @@ export default function Home() {
       },
       options: commonOptions
     });
-
-    // 制御のセットアップとイベントリスナーの設定
-    // setupControls();
-
-    // updateMSEDisplay(params);
-    // }
 
 
     // スライダーと数値入力の双方向同期をセットアップする関数
@@ -433,7 +408,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    console.log("update currentScatterPoints")
     if (sumChart.current!.data.datasets.length > 1) {
       sumChart.current!.data.datasets[1].data = currentScatterPoints;
       sumChart.current!.update();
@@ -441,7 +415,6 @@ export default function Home() {
   }, [currentScatterPoints]);
 
   useEffect(() => {
-    console.log("update scale")
     updateChartScales(individualChart.current!, sumChart.current!, getRangeParams());
   }, [xMin, xMax, yMin, yMax]);
 
@@ -498,8 +471,9 @@ export default function Home() {
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-base font-semibold text-pink-400">グラフ1: <span className="text-gray-300">y =
                         w2 * tanh(w1 * x + b)</span></h3>
-                      <button id="reset-graph1"
-                        className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700">リセット</button>
+                      <button id="weight0-init"
+                        className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
+                        onClick={e => onWeightInit(e.currentTarget.id)}>リセット</button>
                     </div>
 
                     <div className="flex gap-3 text-gray-300">
@@ -551,8 +525,9 @@ export default function Home() {
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-base font-semibold">グラフ2: <span className="text-gray-300">y =
                         w2 * tanh(w1 * x + b)</span></h3>
-                      <button id="reset-graph2"
-                        className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700">リセット</button>
+                      <button id="weight1-init"
+                        className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
+                        onClick={e => onWeightInit(e.currentTarget.id)}>リセット</button>
                     </div>
 
                     <div className="flex gap-3">
