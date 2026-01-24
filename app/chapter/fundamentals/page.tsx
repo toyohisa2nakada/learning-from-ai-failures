@@ -153,9 +153,17 @@ function updateCharts(individualChart: Chart, sumChart: Chart, weights: Record<s
 export default function Home() {
   console.log("HOME")
   // 教師データ
-  const [currentScatterPoints, setCurrentScatterPoints] = useState(() =>
+  const currentScatterPoints = useRef<{ x: number; y: number }[]>(
     TARGET_POINT_DATASETS['原点通る直線'].map(p => ({ x: p[0], y: p[1] }))
-  )
+  );
+  function onChangeScatterPoints(index: number) {
+    console.log(index);
+    currentScatterPoints.current = Object.values(TARGET_POINT_DATASETS)[index].map(p => ({ x: p[0], y: p[1] }));
+    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current);
+    sumChart.current!.data.datasets[1].data = currentScatterPoints.current;
+    sumChart.current!.update();
+    updateMSEDisplay(currentScatterPoints.current, weights.current);
+  }
 
   // 重み
   const weightInits = [{ wIn1: 1.0, b1: 0.0, wOut1: 1.0 }, { wIn2: 1.0, b2: 0.0, wOut2: -1.0 }];
@@ -164,18 +172,18 @@ export default function Home() {
     const attr = id.split('-')[0] as keyof typeof weights.current & string;
     weights.current[attr] = parseFloat(value) || 0;
     const other = id.includes('-input') ? attr : `${attr}-input`;
-    (document.getElementById(other) as HTMLInputElement)!.value = weights.current[attr].toString();
-    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints);
+    (document.getElementById(other) as HTMLInputElement)!.value = weights.current[attr].toFixed(3);
+    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current);
   }
   function onWeightInit(id: string) {
     const no = parseInt(id.replace(/[^0-9]/g, "")) || 0;
-    Object.assign(weights.current, weightInits[no]);
+    Object.assign(weights.current, weightInits[no - 1]);
     ["wIn", "b", "wOut"].forEach(e => {
       const attr = `${e}${no}`;
       (document.getElementById(attr) as HTMLInputElement)!.value = weights.current[attr].toString();
-      (document.getElementById(attr + "-input") as HTMLInputElement)!.value = weights.current[attr].toString();
+      (document.getElementById(attr + "-input") as HTMLInputElement)!.value = weights.current[attr].toFixed(3);
     })
-    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints);
+    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current);
   }
 
   // Chart
@@ -183,15 +191,31 @@ export default function Home() {
   const sumChart = useRef<Chart>(null);
 
   // グラフの可算結果のグラフ表示範囲設定
-  const [xMin, setXMin] = useState(-1.5);
-  const [xMax, setXMax] = useState(2.5);
-  const [yMin, setYMin] = useState(-5);
-  const [yMax, setYMax] = useState(4);
+  const rangeParams = useRef<{ x0: number; x1: number; y0: number, y1: number }>({ x0: -1.5, x1: 2.5, y0: -5, y1: 4 });
   function getRangeParams(): Record<string, number> {
     return {
-      X_MIN: Math.min(xMin, xMax), X_MAX: Math.max(xMin, xMax),
-      Y_MIN: Math.min(yMin, yMax), Y_MAX: Math.max(yMin, yMax)
+      X_MIN: Math.min(rangeParams.current.x0, rangeParams.current.x1), X_MAX: Math.max(rangeParams.current.x0, rangeParams.current.x1),
+      Y_MIN: Math.min(rangeParams.current.y0, rangeParams.current.y1), Y_MAX: Math.max(rangeParams.current.y0, rangeParams.current.y1)
     };
+  }
+  function onToggleGraphSetting(elem: HTMLButtonElement) {
+    const isExpanded = elem.getAttribute('aria-expanded') === 'true';
+    const contentDiv = document.getElementById('range-settings-content');
+    const toggleIcon = document.getElementById('toggle-icon');
+    if (isExpanded) {
+      contentDiv?.classList.add('hidden');
+      if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
+      elem.setAttribute('aria-expanded', 'false');
+    } else {
+      contentDiv?.classList.remove('hidden');
+      if (toggleIcon) toggleIcon.style.transform = 'rotate(90deg)'; // 90度回転させて下向きにする
+      elem.setAttribute('aria-expanded', 'true');
+    }
+  }
+  function onChangeGraphSetting(id: keyof typeof rangeParams.current, value: string): void {
+    rangeParams.current[id] = parseFloat(value) || 0.0;
+    updateChartScales(individualChart.current!, sumChart.current!, getRangeParams());
+    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current);
   }
 
 
@@ -200,7 +224,8 @@ export default function Home() {
     (Object.keys(weights.current) as (keyof typeof weights.current & string)[]).forEach(e => {
       (document.getElementById(e) as HTMLInputElement)!.value = weights.current[e].toString();
       (document.getElementById(`${e}-input`) as HTMLInputElement)!.value = weights.current[e].toFixed(3);
-    })
+    });
+    updateMSEDisplay(currentScatterPoints.current, weights.current);
 
     // function initCharts() {
     const range: Record<string, number> = getRangeParams();
@@ -219,6 +244,9 @@ export default function Home() {
 
     // 上部の個別グラフ
     const ctxIndividual: CanvasRenderingContext2D = (document.getElementById('individual-graphs-canvas') as HTMLCanvasElement)?.getContext('2d')!;
+    if (individualChart.current) {
+      individualChart.current.destroy();
+    }
     individualChart.current = new Chart(ctxIndividual, {
       type: 'line',
       data: {
@@ -247,6 +275,9 @@ export default function Home() {
 
     // 下部の合成グラフ
     const ctxSum: CanvasRenderingContext2D = (document.getElementById('sum-graph-canvas') as HTMLCanvasElement).getContext('2d')!;
+    if (sumChart.current) {
+      sumChart.current.destroy();
+    }
     sumChart.current = new Chart(ctxSum, {
       type: 'line', // 合成関数はLine Chart
       data: {
@@ -265,7 +296,7 @@ export default function Home() {
           // Scatterプロットのデータセット
           {
             label: '教師データ',
-            data: currentScatterPoints, // 動的に更新される変数を使用
+            data: currentScatterPoints.current, // 動的に更新される変数を使用
             type: 'scatter', // 散布図として描画
             backgroundColor: '#facc15', // オレンジ色
             pointRadius: 5, // 点のサイズ
@@ -277,158 +308,12 @@ export default function Home() {
       },
       options: commonOptions
     });
-
-
-    // スライダーと数値入力の双方向同期をセットアップする関数
-    // const GRAPH1_PARAM_IDS = ['a1', 'b1', 'c1'];
-    // const GRAPH2_PARAM_IDS = ['a2', 'b2', 'c2'];
-    // 個別の配列から結合して全パラメータ一覧を生成
-    // const paramIds = [...GRAPH1_PARAM_IDS, ...GRAPH2_PARAM_IDS];
-    // const rangeIds = ['x-min', 'x-max', 'y-min', 'y-max'];
-    // const DEFAULT_PARAMS: Record<string, number> = {
-    //   a1: 1.0,
-    //   b1: 0.0,
-    //   c1: 1.0,
-    //   a2: 1.0,
-    //   b2: 0.0,
-    //   c2: -1.0,
-    // };
-
-    // function resetParams(paramKeys = paramIds) {
-    //   paramKeys.forEach(key => {
-    //     const defaultValue = DEFAULT_PARAMS[key];
-    //     if (defaultValue === undefined) return;
-    //     const rangeInput = document.getElementById(key) as HTMLInputElement;
-    //     const numberInput = document.getElementById(`${key}-value`) as HTMLInputElement;
-    //     if (rangeInput && numberInput) {
-    //       const formatted = defaultValue.toFixed(3);
-    //       rangeInput.value = formatted;
-    //       numberInput.value = formatted;
-    //     }
-    //   });
-    //   updateCharts();
-    // }
-
-    // function setupControls() {
-    //   // 1. 重みとバイアス (スライダー/数値入力) の設定
-    //   paramIds.forEach(id => {
-    //     const rangeInput = document.getElementById(id) as HTMLInputElement;
-    //     const numberInput = document.getElementById(`${id}-value`) as HTMLInputElement;
-
-    //     if (!numberInput || !rangeInput) return;
-
-    //     // スライダー操作時
-    //     rangeInput.addEventListener('input', () => {
-    //       numberInput.value = parseFloat(rangeInput.value).toFixed(3);
-    //       updateCharts();
-    //     });
-
-    //     // 数値入力変更時
-    //     numberInput.addEventListener('change', () => {
-    //       let val = parseFloat(numberInput.value);
-    //       const min = parseFloat(numberInput.min);
-    //       const max = parseFloat(numberInput.max);
-
-    //       if (isNaN(val)) val = 0.0;
-    //       // 値が範囲外の場合はクリップ処理を行う
-    //       if (val < min) val = min;
-    //       if (val > max) val = max;
-
-    //       // toFixed(3)で丸め、UIに表示
-    //       numberInput.value = val.toFixed(3);
-    //       rangeInput.value = val.toFixed(3); // スライダーの値も同期
-
-    //       updateCharts();
-    //     });
-
-    //     // 初期値の同期
-    //     numberInput.value = parseFloat(rangeInput.value).toFixed(3);
-    //   });
-
-    // 2. グラフ範囲設定のイベントリスナー
-    // rangeIds.forEach(id => {
-    //   const input = document.getElementById(id);
-    //   if (input) {
-    //     input.addEventListener('change', () => {
-    //       updateCharts();
-    //     });
-    //   }
-    // });
-
-    // // 3. 範囲設定パネルの折りたたみ機能
-    // const toggleButton = document.getElementById('toggle-range-settings');
-    // const contentDiv = document.getElementById('range-settings-content');
-    // const toggleIcon = document.getElementById('toggle-icon');
-
-    // toggleButton?.addEventListener('click', () => {
-    //   // aria-expanded属性で現在の状態をチェック
-    //   const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
-
-    //   if (isExpanded) {
-    //     // 閉じる
-    //     contentDiv?.classList.add('hidden');
-    //     if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
-    //     toggleButton.setAttribute('aria-expanded', 'false');
-    //   } else {
-    //     // 開く
-    //     contentDiv?.classList.remove('hidden');
-    //     if (toggleIcon) toggleIcon.style.transform = 'rotate(90deg)'; // 90度回転させて下向きにする
-    //     toggleButton.setAttribute('aria-expanded', 'true');
-    //   }
-    // });
-
-    // // 4. 目標点選択ドロップダウンのイベントリスナー
-    // const targetSelect = document.getElementById(TARGET_SELECT_ID) as HTMLSelectElement;
-    // targetSelect?.addEventListener('change', () => {
-    //   console.log(targetSelect.value)
-    //   // const selectedIndex = parseInt(targetSelect.value, 10);
-
-    //   // 新しい目標点データを選択し、Chart.jsが期待する {x, y} 形式に変換
-    //   const newRawData = TARGET_POINT_DATASETS[targetSelect.value];
-    //   // currentScatterPoints = newRawData.map(p => ({ x: p[0], y: p[1] }));
-    //   setCurrentScatterPoints(newRawData.map(p => ({ x: p[0], y: p[1] })))
-
-    //   // 合成グラフのデータセット (インデックス1が目標点) を更新
-    //   // if (sumChart && sumChart.data.datasets.length > 1) {
-    //   //   sumChart.data.datasets[1].data = currentScatterPoints;
-    //   //   sumChart.update();
-    //   // }
-
-    //   updateMSEDisplay(getParams());
-    // });
-
-    //   const resetGraph1Button = document.getElementById('reset-graph1') as HTMLButtonElement;
-    //   const resetGraph2Button = document.getElementById('reset-graph2') as HTMLButtonElement;
-
-    //   resetGraph1Button.addEventListener('click', () => resetParams(GRAPH1_PARAM_IDS));
-    //   resetGraph2Button.addEventListener('click', () => resetParams(GRAPH2_PARAM_IDS));
-    // }
-
-    // initCharts();
   }, []);
-
-  useEffect(() => {
-    if (sumChart.current!.data.datasets.length > 1) {
-      sumChart.current!.data.datasets[1].data = currentScatterPoints;
-      sumChart.current!.update();
-    }
-  }, [currentScatterPoints]);
-
-  useEffect(() => {
-    updateChartScales(individualChart.current!, sumChart.current!, getRangeParams());
-  }, [xMin, xMax, yMin, yMax]);
-
-  // useEffect(() => {
-  //   updateCharts(individualChart.current!, sumChart.current!, getParams(), currentScatterPoints);
-  // }, [wIn1, b1, wOut1, wIn2, b2, wOut2])
-
 
   // 重み部分のinput
   const weight_input_css = "no-spin font-bold w-12 text-right p-0 bg-transparent text-sm rounded border border-[#1f2a44] border-solid";
   // panel
   const panel_css = "p-3 rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent h-full";
-
-
 
   return (
     <>
@@ -471,7 +356,7 @@ export default function Home() {
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-base font-semibold text-pink-400">グラフ1: <span className="text-gray-300">y =
                         w2 * tanh(w1 * x + b)</span></h3>
-                      <button id="weight0-init"
+                      <button id="weight1-init"
                         className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
                         onClick={e => onWeightInit(e.currentTarget.id)}>リセット</button>
                     </div>
@@ -525,7 +410,7 @@ export default function Home() {
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-base font-semibold">グラフ2: <span className="text-gray-300">y =
                         w2 * tanh(w1 * x + b)</span></h3>
-                      <button id="weight1-init"
+                      <button id="weight2-init"
                         className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
                         onClick={e => onWeightInit(e.currentTarget.id)}>リセット</button>
                     </div>
@@ -588,9 +473,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-
             </div>
-
 
             <div id="lower-panel" className="flex flex-col md:flex-row gap-6 bg-inherit">
 
@@ -598,7 +481,7 @@ export default function Home() {
                 <div id="drawing-area"
                   className={`${panel_css} w-full min-h-[250px] flex flex-col items-center justify-center space-y-4 relative`}>
                   <div>
-                    <h2 className="text-base font-semibold text-gray-800 m-0">ニューラルネットワークの構造</h2>
+                    <h2 className="text-base font-semibold m-0">ニューラルネットワークの構造</h2>
                     <h3 className="text-xs">
                       入力xに値がセットされ、バイアスには常に1が設定されます。各ニューロンは、その値を使って指定された計算式で値を求め、それらをすべて足し合わせたものが出力yとなります。</h3>
                   </div>
@@ -687,11 +570,12 @@ export default function Home() {
                       <label htmlFor="target-select"
                         className="mr-2 font-medium whitespace-nowrap">目標点データ:</label>
                       <select id="target-select" defaultValue="0"
-                        className="p-1 border-8 border-amber-200 rounded text-xs bg-inherit text-inherit appearance-none">
-                        <option defaultValue="0">原点通る直線</option>
-                        <option defaultValue="1">原点通る折れ線</option>
-                        <option defaultValue="2">原点通らない直線</option>
-                        <option defaultValue="3">原点通らない折れ線</option>
+                        className="p-1 border-8 border-amber-200 rounded text-xs bg-inherit text-inherit appearance-none"
+                        onChange={e => onChangeScatterPoints(parseInt(e.target.value) || 0)}>
+                        <option value="0">原点通る直線</option>
+                        <option value="1">原点通る折れ線</option>
+                        <option value="2">原点通らない直線</option>
+                        <option value="3">原点通らない折れ線</option>
                       </select>
                     </div>
                   </div>
@@ -706,7 +590,8 @@ export default function Home() {
                       <h4 className="font-semibold text-sm m-0">グラフ表示範囲設定</h4>
                       <button id="toggle-range-settings"
                         className="p-1 rounded-full text-gray-600 hover:bg-gray-200 transition"
-                        aria-expanded="false" aria-controls="range-settings-content">
+                        aria-expanded="false" aria-controls="range-settings-content"
+                        onClick={e => onToggleGraphSetting(e.currentTarget)}>
                         <svg id="toggle-icon"
                           className="w-4 h-4 transform rotate-0 transition-transform duration-300" fill="none"
                           stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -721,24 +606,24 @@ export default function Home() {
 
                         <div className="flex items-center">
                           <span className="mr-1 font-medium">X軸:</span>
-                          <input type="number" id="x-min" defaultValue="-1.5" step="0.5"
+                          <input type="number" id="x0" defaultValue="-1.5" step="0.5"
                             className="no-spin range-input text-center border border-gray-300 rounded p-1"
-                            onChange={e => setXMin(parseFloat(e.target.value) || 0)} />
+                            onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
                           <span className="mx-1">〜</span>
-                          <input type="number" id="x-max" defaultValue="2.5" step="0.5"
+                          <input type="number" id="x1" defaultValue="2.5" step="0.5"
                             className="no-spin range-input text-center border border-gray-300 rounded p-1"
-                            onChange={e => setXMax(parseFloat(e.target.value) || 0)} />
+                            onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
                         </div>
 
                         <div className="flex items-center">
                           <span className="mr-1 font-medium">Y軸:</span>
-                          <input type="number" id="y-min" defaultValue="-5" step="1"
+                          <input type="number" id="y0" defaultValue="-5" step="1"
                             className="no-spin range-input text-center border border-gray-300 rounded p-1"
-                            onChange={e => setYMin(parseFloat(e.target.value) || 0)} />
+                            onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
                           <span className="mx-1">〜</span>
-                          <input type="number" id="y-max" defaultValue="4" step="1"
+                          <input type="number" id="y1" defaultValue="4" step="1"
                             className="no-spin range-input text-center border border-gray-300 rounded p-1"
-                            onChange={e => setYMax(parseFloat(e.target.value) || 0)} />
+                            onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
                         </div>
                       </div>
                     </div>
