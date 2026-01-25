@@ -317,7 +317,7 @@ export default function Home() {
   const panel_css = "p-3 rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent h-full";
 
   return (
-    <>
+    <div className="h-full grid grid-rows-[auto_1fr_auto] gap-1">
       <style>{`
         .no-spin::-webkit-inner-spin-button,
         .no-spin::-webkit-outer-spin-button {
@@ -340,20 +340,18 @@ export default function Home() {
       `}</style>
 
       {/* 指令エリア */}
-      <section className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex gap-4 items-start">
+      <section className="border border-slate-800 rounded-xl px-4 py-3 flex gap-4 items-start">
         指令：パラメータを変更して、グラフの可算結果が教師データを通るようにする
       </section>
       {/* 操作と可視化 */}
       <main className="flex-1 flex items-center justify-center bg-inherit">
-        <div id="container" className="max-w-7xl mx-auto shadow-2xl rounded-xl border border-slate-800/80 bg-inherit">
-          <div id="main-layout" className="flex flex-col p-6 gap-6 bg-inherit">
+        <div id="container" className="flex flex-col p-0 gap-4 max-w-7xl mx-auto shadow-2xl rounded-xl border border-slate-800/80 bg-inherit">
             <div id="upper-panel" className="flex flex-col md:flex-row gap-6">
-              <div className="md:w-1/2">
-                <div id="parameter-control"
-                  className={panel_css}>
+              <div className="md:w-[55%]">
+                <div id="parameter-control" className={panel_css}>
                   <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
 
-                  <div className="mb-3 p-2 border-8 border-red-300 rounded-lg bg-red-400/5">
+                  <div className="mb-2 p-2 border-8 border-red-300 rounded-lg bg-red-400/5">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-base font-semibold text-pink-400">グラフ1: <span className="text-gray-300">y =
                         w2 * tanh(w1 * x + b)</span></h3>
@@ -407,7 +405,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="mb-4 p-2 border-8 border-blue-300 rounded-lg bg-blue-400/5">
+                  <div className="mb-1 p-2 border-8 border-blue-300 rounded-lg bg-blue-400/5">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-base font-semibold">グラフ2: <span className="text-gray-300">y =
                         w2 * tanh(w1 * x + b)</span></h3>
@@ -463,9 +461,8 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="md:w-1/2">
-                <div id="graph-area-top"
-                  className={`${panel_css} w-full flex flex-col items-start justify-start`}>
+              <div className="flex-1">
+                <div id="graph-area-top" className={`${panel_css} w-full flex flex-col items-start justify-start`}>
                   <div className="flex items-center justify-between w-full mb-3">
                     <h3 className="text-base font-semibold m-0">個別のグラフ (G1, G2)</h3>
                   </div>
@@ -478,17 +475,15 @@ export default function Home() {
 
             <div id="lower-panel" className="flex flex-col md:flex-row gap-6 bg-inherit">
 
-              <div className="md:w-1/2">
-                <div id="drawing-area"
-                  className={`${panel_css} w-full min-h-[250px] flex flex-col items-center justify-center space-y-4 relative`}>
+              <div className="md:w-[55%]">
+                <div id="drawing-area" className={`${panel_css} flex flex-col gap-4 relative`}>
                   <div>
-                    <h2 className="text-base font-semibold m-0">ニューラルネットワークの構造</h2>
-                    <h3 className="text-xs">
-                      入力xに値がセットされ、バイアスには常に1が設定されます。各ニューロンは、その値を使って指定された計算式で値を求め、それらをすべて足し合わせたものが出力yとなります。</h3>
+                    <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
+                    <div className="text-xs">
+                      入力xに値がセットされ、バイアスには常に1が設定されます。各ニューロンは、その値を使って指定された計算式で値を求め、それらをすべて足し合わせたものが出力yとなります。
+                    </div>
                   </div>
-                  <svg id="circleSvg" viewBox="0 0 300 100" className="inset-0 w-full h-full"
-                    xmlns="http://www.w3.org/2000/svg">
-
+                  <svg id="circleSvg" viewBox="0 0 300 100" className="inset-0 w-full" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                       <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5"
                         markerHeight="5" orient="auto-start-reverse">
@@ -547,20 +542,19 @@ export default function Home() {
                       y</text>
                   </svg>
                   <div>
-                    <h3 className="text-xs">
+                    <div className="text-xs">
                       AIは、この出力yが教師データと一致するように、自動的に重みwとバイアスの重みbを調整して決定します。なお、このツールの目的は、ユーザーがこれらの重みを直感的に試して手動で求めることです。
-                    </h3>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="md:w-1/2 bg-inherit">
-                <div id="graph-area-bottom"
-                  className={`${panel_css} w-full flex flex-col items-start justify-start bg-inherit`}>
+              <div className="flex-1 bg-inherit">
+                <div id="graph-area-bottom" className={`${panel_css} w-full flex flex-col items-start justify-start bg-inherit`}>
                   <div className="flex items-center justify-between w-full mb-3">
-                    <h3 className="text-base font-semibold m-0">グラフの可算結果 (G1 + G2)</h3>
+                    <h3 className="text-base font-semibold m-0">グラフの可算結果 (G1+G2)</h3>
                     <div className="flex items-center gap-3">
-                      <div className="text-sm"><span className="font-semibold">誤差(MSE):</span> <span
+                      <div className="text-xs"><span className="font-semibold">誤差(MSE):</span> <span
                         id="mse-value">0.0000</span></div>
                     </div>
                   </div>
@@ -585,10 +579,9 @@ export default function Home() {
                     <canvas id="sum-graph-canvas"></canvas>
                   </div>
 
-                  <div
-                    className="range-settings mt-3 p-2 border border-gray-300 rounded-lg bg-opacity-50 shadow-sm text-xs w-full">
+                  <div className="range-settings mt-3 p-1 border border-gray-300/20 rounded-lg bg-opacity-50 shadow-sm text-xs w-full">
                     <div className="flex justify-between items-center mb-1">
-                      <h4 className="font-semibold text-sm m-0">グラフ表示範囲設定</h4>
+                      <div className="font-semibold m-0">グラフ表示範囲設定</div>
                       <button id="toggle-range-settings"
                         className="p-1 rounded-full text-gray-600 hover:bg-gray-200 transition"
                         aria-expanded="false" aria-controls="range-settings-content"
@@ -632,12 +625,11 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
         </div>
       </main>
 
       {/* 解説 */}
-      <footer className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3">
+      <footer className="border border-slate-800 rounded-xl px-4 py-3">
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-semibold text-sm">⑤ 解説</h3>
           <span className="text-xs px-2 py-1 rounded-full border border-slate-800 text-slate-400">
@@ -648,7 +640,7 @@ export default function Home() {
           ここに「なぜそうなるか」の説明を表示します。
         </div>
       </footer>
-    </>
+    </div>
   );
 }
 
