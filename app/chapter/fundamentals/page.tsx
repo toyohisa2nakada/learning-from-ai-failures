@@ -92,7 +92,7 @@ function calculateMSE(currentScatterPoints: Record<string, number>[], weights: R
 
   const totalSquaredError = currentScatterPoints.reduce((acc, point) => {
     const predicted = activation(point.x, weights.wIn1, weights.b1, weights.wOut1)
-      + activation(point.x, weights.wIn2, weights.b1, weights.wOut2);
+      + activation(point.x, weights.wIn2, weights.b2, weights.wOut2);
     const diff = predicted - point.y;
     return acc + diff * diff;
   }, 0);
