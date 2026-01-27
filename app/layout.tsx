@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100`}>
-        <div className="w-full px-3 py-3 min-h-screen grid grid-rows-[auto_1fr] gap-1 bg-inherit">
+        <div className="w-full px-3 py-3 h-screen grid grid-rows-[auto_1fr] gap-1 bg-inherit">
           <Header />
           {children}
         </div>

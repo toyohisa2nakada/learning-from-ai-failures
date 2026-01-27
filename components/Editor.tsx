@@ -8,8 +8,6 @@ export default function App() {
     }
     return (
         <>
-            <button className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
-                onClick={e => onStartLearn()}>AIが学習する</button>
             <Editor
                 height="80%"
                 defaultLanguage="javascript"
@@ -43,6 +41,8 @@ async function setup() {
 }
 document.addEventListener("DOMContentLoaded", setup);`}
             />
+            <button className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
+                onClick={e => onStartLearn()}>AIが学習する</button>
         </>
     );
 }

@@ -319,7 +319,7 @@ export default function Home() {
   const panel_css = "p-3 rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent h-full";
 
   return (
-    <div className="h-full grid grid-rows-[auto_1fr_auto] gap-1">
+    <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1">
       <style>{`
         .no-spin::-webkit-inner-spin-button,
         .no-spin::-webkit-outer-spin-button {
@@ -347,7 +347,7 @@ export default function Home() {
       </section>
       {/* 操作と可視化 */}
       <main className="flex-1 flex items-center justify-center bg-inherit">
-        <div id="container" className="flex flex-col p-0 gap-4 max-w-7xl mx-auto shadow-2xl rounded-xl border border-slate-800/80 bg-inherit">
+        <div id="container" className="flex flex-col p-1 gap-4 w-full shadow-2xl rounded-xl border border-slate-800/80 bg-inherit">
           <div id="upper-panel" className="flex flex-col md:flex-row gap-6">
             <div className="md:w-[55%]">
               <div id="parameter-control" className={panel_css}>
@@ -468,8 +468,8 @@ export default function Home() {
                 <div className="flex items-center justify-between w-full mb-3">
                   <h3 className="text-base font-semibold m-0">個別のグラフ (G1, G2)</h3>
                 </div>
-                <div className="chart-container mx-auto md:mx-0 w-full">
-                  <canvas id="individual-graphs-canvas" className="w-full h-auto block"></canvas>
+                <div className="chart-container mx-auto md:mx-0 w-full flex-1 min-h-0">
+                  <canvas id="individual-graphs-canvas" className="w-full h-full min-h-0 block"></canvas>
                 </div>
               </div>
             </div>
@@ -510,8 +510,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="chart-container mx-auto md:mx-0">
-                  <canvas id="sum-graph-canvas"></canvas>
+                <div className="chart-container mx-auto md:mx-0 w-full flex-1 min-h-0">
+                  <canvas id="sum-graph-canvas" className="w-full h-full min-h-0 block"></canvas>
                 </div>
 
                 <div className="range-settings mt-3 p-1 border border-gray-300/20 rounded-lg bg-opacity-50 shadow-sm text-xs w-full">
