@@ -319,7 +319,7 @@ export default function Home() {
   const panel_css = "p-3 rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent h-full";
 
   return (
-    <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1">
+    <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
       <style>{`
         .no-spin::-webkit-inner-spin-button,
         .no-spin::-webkit-outer-spin-button {
@@ -479,8 +479,8 @@ export default function Home() {
 
             <div className="md:w-[55%]">
               <div id="drawing-area" className={`${panel_css} flex flex-col gap-4 relative`}>
-                <Editor />
-                {/* <NeuralNetGraph /> */}
+                {/* <Editor /> */}
+                <NeuralNetGraph />
               </div>
             </div>
 
