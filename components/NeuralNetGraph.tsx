@@ -4,11 +4,8 @@
 export default function NeuralNetGraph() {
     return (
         <>
-            <div>
-                <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
-                <div className="text-xs">
-                    入力xに値がセットされ、バイアスには常に1が設定されます。各ニューロンは、その値を使って指定された計算式で値を求め、それらをすべて足し合わせたものが出力yとなります。
-                </div>
+            <div className="text-xs">
+                入力xに値がセットされ、バイアスには常に1が設定されます。各ニューロンは、その値を使って指定された計算式で値を求め、それらをすべて足し合わせたものが出力yとなります。
             </div>
             <svg id="circleSvg" viewBox="0 0 300 100" className="inset-0 w-full" xmlns="http://www.w3.org/2000/svg">
                 <defs>

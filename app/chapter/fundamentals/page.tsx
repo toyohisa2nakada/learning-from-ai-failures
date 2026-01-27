@@ -221,21 +221,17 @@ export default function Home() {
     updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current);
   }
 
+  // 手動学習、自動（プログラム）学習の切り替え (manual / programming)
+  const [programmingMode, setProgrammingMode] = useState('manual');
+  const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
+  const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
+
 
   // 初期表示
   useEffect(() => {
-    (Object.keys(weights.current) as (keyof typeof weights.current & string)[]).forEach(e => {
-      (document.getElementById(e) as HTMLInputElement)!.value = weights.current[e].toString();
-      (document.getElementById(`${e}-input`) as HTMLInputElement)!.value = weights.current[e].toFixed(3);
-    });
-    updateMSEDisplay(currentScatterPoints.current, weights.current);
 
-    // function initCharts() {
     const range: Record<string, number> = getRangeParams();
     const xData = generateXData(range.X_MIN, range.X_MAX);
-    // const params: Record<string, number> = getParams();
-    // console.log(params)
-    // 合成グラフのデータ形式をX-Yペアに修正
     const { y1Data, y2Data, ySumData } = generateYData(weights.current, xData);
     const commonOptions: ChartConfiguration['options'] = getCommonChartOptions(range);
 
@@ -243,7 +239,6 @@ export default function Home() {
     // 個別グラフはこれまで通りの配列形式を維持
     const y1Only: number[] = y1Data.map((d: number) => d);
     const y2Only: number[] = y2Data.map((d: number) => d);
-
 
     // 上部の個別グラフ
     const ctxIndividual: CanvasRenderingContext2D = (document.getElementById('individual-graphs-canvas') as HTMLCanvasElement)?.getContext('2d')!;
@@ -311,6 +306,12 @@ export default function Home() {
       },
       options: commonOptions
     });
+
+    (Object.keys(weights.current) as (keyof typeof weights.current & string)[]).forEach(e => {
+      (document.getElementById(e) as HTMLInputElement)!.value = weights.current[e].toString();
+      (document.getElementById(`${e}-input`) as HTMLInputElement)!.value = weights.current[e].toFixed(3);
+    });
+    updateMSEDisplay(currentScatterPoints.current, weights.current);
   }, []);
 
   // 重み部分のinput
@@ -346,9 +347,11 @@ export default function Home() {
         指令：パラメータを変更して、グラフの可算結果が教師データを通るようにする
       </section>
       {/* 操作と可視化 */}
-      <main className="flex-1 flex items-center justify-center bg-inherit">
+      <main className="flex bg-inherit">
+        {/* 上部パネル */}
         <div id="container" className="flex flex-col p-1 gap-4 w-full shadow-2xl rounded-xl border border-slate-800/80 bg-inherit">
           <div id="upper-panel" className="flex flex-col md:flex-row gap-6">
+            {/* パラメータ設定 */}
             <div className="md:w-[55%]">
               <div id="parameter-control" className={panel_css}>
                 <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
@@ -463,6 +466,7 @@ export default function Home() {
               </div>
             </div>
 
+            {/* 個別のグラフ */}
             <div className="flex-1">
               <div id="graph-area-top" className={`${panel_css} w-full flex flex-col items-start justify-start`}>
                 <div className="flex items-center justify-between w-full mb-3">
@@ -475,19 +479,27 @@ export default function Home() {
             </div>
           </div>
 
-          <div id="lower-panel" className="flex flex-col md:flex-row gap-6 bg-inherit">
-
+          {/* 下部パネル */}
+          <div id="lower-panel" className="flex flex-col md:flex-row flex-1 gap-6 bg-inherit">
+            {/* ニューラルネットワークの構造 */}
             <div className="md:w-[55%]">
-              <div id="drawing-area" className={`${panel_css} flex flex-col gap-4 relative`}>
-                {/* <Editor /> */}
-                <NeuralNetGraph />
+              <div id="drawing-area" className={`${panel_css} flex flex-col relative`}>
+                <div className="flex justify-between items-center">
+                  <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
+                  <div className="text-xs flex">
+                    <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造(手動で学習)</button>
+                    <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>自動(プログラムで学習)</button>
+                  </div>
+                </div>
+                {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor />}
               </div>
             </div>
 
+            {/* グラフの可算結果 */}
             <div className="flex-1 bg-inherit">
               <div id="graph-area-bottom" className={`${panel_css} w-full flex flex-col items-start justify-start bg-inherit`}>
-                <div className="flex items-center justify-between w-full mb-3">
-                  <h3 className="text-base font-semibold m-0">グラフの可算結果 (G1+G2)</h3>
+                <div className="flex items-center justify-between w-full mb-1">
+                  <div className="text-base font-semibold m-0">グラフの可算結果 (G1+G2)</div>
                   <div className="flex items-center gap-3">
                     <div className="text-xs"><span className="font-semibold">誤差(MSE):</span> <span
                       id="mse-value">0.0000</span></div>
@@ -495,7 +507,7 @@ export default function Home() {
                 </div>
 
                 <div
-                  className="target-settings mb-3 p-2 border-none rounded-lg shadow-sm text-xs bg-inherit w-full">
+                  className="target-settings mb-1 p-2 border-none rounded-lg shadow-sm text-xs bg-inherit w-full">
                   <div className="flex items-center bg-inherit">
                     <label htmlFor="target-select"
                       className="mr-2 font-medium whitespace-nowrap">目標点データ:</label>
@@ -510,11 +522,11 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="chart-container mx-auto md:mx-0 w-full flex-1 min-h-0">
-                  <canvas id="sum-graph-canvas" className="w-full h-full min-h-0 block"></canvas>
+                <div className="chart-container w-full flex-1 min-h-0">
+                  <canvas id="sum-graph-canvas" className="h-0 min-h-full"></canvas>
                 </div>
 
-                <div className="range-settings mt-3 p-1 border border-gray-300/20 rounded-lg bg-opacity-50 shadow-sm text-xs w-full">
+                <div className="range-settings p-1 border border-gray-300/20 rounded-lg bg-opacity-50 shadow-sm text-xs w-full">
                   <div className="flex justify-between items-center mb-1">
                     <div className="font-semibold m-0">グラフ表示範囲設定</div>
                     <button id="toggle-range-settings"
