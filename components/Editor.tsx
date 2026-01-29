@@ -22,7 +22,11 @@ const buildIframeErrorHandlerScript = `
     })();
 </script >`.replace(/[\r\n\t ]+/g, "");
 
-export default function App() {
+interface EditorProps {
+    onUpdateWeight: (weights: Record<string, number>) => void;
+}
+
+export default function App({ onUpdateWeight }: EditorProps) {
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
     const workerRef = useRef<Worker | null>(null);
     const workerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -60,15 +64,31 @@ export default function App() {
             const { html: inlined_html, insertions } = inlineHTML(htmlString, files);
             const htmlStringWithErrorHandler = inlined_html.replace(/(<html[^>]*>)/i, `$1${buildIframeErrorHandlerScript}`);
 
-            console.log(htmlStringWithErrorHandler)
+            // console.log(htmlStringWithErrorHandler)
             editor_output_elem!.srcdoc = htmlStringWithErrorHandler;
+
         });
         workerRef.current.postMessage({ code: editorRef.current!.getValue() })
     }
 
     // iframeからのメッセージの取得
     useEffect(() => {
-        const handleMessage = (e: Event) => {
+        const handleMessage = (e: { data: Record<string, string | number | Record<string, number>> }) => {
+            if (!e.data) {
+                return;
+            }
+            if (e.data.type === 'iframe-error') {
+                const info = e.data;
+                // const { lineno, colno } = convert_iframe_error_position(info.lineno, info.colno);
+                // set_error_in_iframe({ lineno, colno, message: info.message })
+            } else if (e.data.type === 'weights') {
+                const values = e.data.values as Record<string, number>;
+                onUpdateWeight(values);
+                /*
+                editorに書くテスト用コード
+                window.parent.postMessage({type:'weights',values:{ wIn1: 3.1, wOut1: -2.4 }});
+                */
+            }
             console.log("handleMessage", e);
         }
         window.addEventListener('message', handleMessage);

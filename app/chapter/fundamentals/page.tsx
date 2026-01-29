@@ -225,6 +225,12 @@ export default function Home() {
   const [programmingMode, setProgrammingMode] = useState('manual');
   const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
   const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
+  // iframe->カスタムタグのEditor->経由で受け取るプログラムでアップデートした重み
+  function onUpdateWeight(weights: Record<string, number>) {
+    // toDo 更新はまだテキストだけ、sliderも変える必要あり
+    console.log("updatedWeights",weights)
+    onChangeWeight("wIn1",weights.wIn1.toString())
+  }
 
 
   // 初期表示
@@ -491,7 +497,7 @@ export default function Home() {
                     <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>自動(プログラムで学習)</button>
                   </div>
                 </div>
-                {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor />}
+                {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor onUpdateWeight={onUpdateWeight} />}
               </div>
             </div>
 
