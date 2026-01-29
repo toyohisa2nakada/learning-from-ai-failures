@@ -2,6 +2,10 @@
 import { useRef, useEffect } from "react";
 import Editor from "@monaco-editor/react";
 import { editor } from "monaco-editor";
+import { inlineHTML } from "@/lib/monaco-utils/inlineHTML";
+import { removeLineComments } from "@/lib/monaco-utils/removeLineComments";
+import { buildImportmap } from "@/lib/monaco-utils/buildImportmap";
+
 
 const buildIframeErrorHandlerScript = `
 <script>
@@ -23,6 +27,14 @@ export default function App() {
     const workerRef = useRef<Worker | null>(null);
     const workerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    function ImportImportmap(htmlString: string, files: Record<string, string>): string {
+        // '//'のコメントをとる
+        const filesNoComm = Object.entries(files).reduce((a, e) =>
+            ({ ...a, [e[0]]: removeLineComments(e[1]) }), {} as Record<string, string>);
+        // importmapを追加して返す
+        return htmlString.replace(/(<html[^>]*>)/i, `$1${buildImportmap(files)}`);
+    }
+
     function onStartLearn() {
         const editor_output_elem = document.querySelector(".editor_output") as HTMLIFrameElement;
 
@@ -30,7 +42,7 @@ export default function App() {
             workerRef.current.terminate();
             clearTimeout(workerTimerRef.current!);
         }
-        workerRef.current = new Worker('/workers/worker.js', { type: 'module' });
+        workerRef.current = new Worker(new URL('monaco-utils/worker.js', window.location.origin), { type: 'module' });
         workerTimerRef.current = setTimeout(() => {
             workerRef.current?.terminate();
             workerRef.current = null;
@@ -42,7 +54,14 @@ export default function App() {
             clearTimeout(workerTimerRef.current!);
             console.log("Workerによる実行チェックOK");
 
-            // editor_output_elem!.srcdoc = editorRef.current!.getValue();
+            // 外部のjsファイルをimportmapで取り込む。この例の場合、import {testtemp01234} from 'test.js'; で使用する。
+            const files = { 'test.js': `export const testtemp01234=0;` };
+            const htmlString = ImportImportmap(`<html><script type="module">${editorRef.current?.getValue()}</script></html>`, files);
+            const { html: inlined_html, insertions } = inlineHTML(htmlString, files);
+            const htmlStringWithErrorHandler = inlined_html.replace(/(<html[^>]*>)/i, `$1${buildIframeErrorHandlerScript}`);
+
+            console.log(htmlStringWithErrorHandler)
+            editor_output_elem!.srcdoc = htmlStringWithErrorHandler;
         });
         workerRef.current.postMessage({ code: editorRef.current!.getValue() })
     }
