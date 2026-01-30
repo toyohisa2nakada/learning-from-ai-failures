@@ -156,16 +156,20 @@ function updateCharts(individualChart: Chart, sumChart: Chart, weights: Record<s
 export default function Home() {
   console.log("HOME")
   // 教師データ
-  const currentScatterPoints = useRef<{ x: number; y: number }[]>(
-    TARGET_POINT_DATASETS['原点通る直線'].map(p => ({ x: p[0], y: p[1] }))
-  );
-  function onChangeScatterPoints(index: number) {
-    console.log(index);
-    currentScatterPoints.current = Object.values(TARGET_POINT_DATASETS)[index].map(p => ({ x: p[0], y: p[1] }));
+  // const currentScatterPoints = useRef<{ x: number; y: number }[]>(
+  //   TARGET_POINT_DATASETS['原点通る直線'].map(p => ({ x: p[0], y: p[1] }))
+  // );
+  const trainingDataTypeRef = useRef<HTMLSelectElement>(null);
+  const currentScatterPoints = useRef<{ x: number; y: number }[]>(null);
+  function onChangeScatterPoints(datatype: string) {
+    currentScatterPoints.current = TARGET_POINT_DATASETS[datatype].map(p => ({ x: p[0], y: p[1] }));
     updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current);
     sumChart.current!.data.datasets[1].data = currentScatterPoints.current;
     sumChart.current!.update();
     updateMSEDisplay(currentScatterPoints.current, weights.current);
+  }
+  function getCurrentTrainingDataType(): [number, number][] {
+    return TARGET_POINT_DATASETS[trainingDataTypeRef.current!.selectedOptions[0].text];
   }
 
   // 重み
@@ -177,14 +181,14 @@ export default function Home() {
       (document.getElementById(e) as HTMLInputElement)!.value = weights.current[e].toFixed(3);
       (document.getElementById(`${e}-input`) as HTMLInputElement)!.value = weights.current[e].toFixed(3);
     });
-    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current);
+    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current!);
   }
   function onChangeWeight(id: string, value: string): void {
     const attr = id.split('-')[0] as keyof typeof weights.current & string;
     weights.current[attr] = parseFloat(value) || 0;
     const other = id.includes('-input') ? attr : `${attr}-input`;
     (document.getElementById(other) as HTMLInputElement)!.value = weights.current[attr].toFixed(3);
-    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current);
+    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current!);
   }
   function onWeightInit(id: string) {
     const no = parseInt(id.replace(/[^0-9]/g, "")) || 0;
@@ -194,7 +198,7 @@ export default function Home() {
       (document.getElementById(attr) as HTMLInputElement)!.value = weights.current[attr].toString();
       (document.getElementById(attr + "-input") as HTMLInputElement)!.value = weights.current[attr].toFixed(3);
     })
-    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current);
+    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current!);
   }
 
   // Chart
@@ -202,7 +206,7 @@ export default function Home() {
   const sumChart = useRef<Chart>(null);
 
   // グラフの可算結果のグラフ表示範囲設定
-  const rangeParams = useRef<{ x0: number; x1: number; y0: number, y1: number }>({ x0: -1.5, x1: 2.5, y0: -5, y1: 4 });
+  const rangeParams = useRef<{ x0: number; x1: number; y0: number, y1: number }>({ x0: -1.5, x1: 2.5, y0: -4, y1: 4 });
   function getRangeParams(): Record<string, number> {
     return {
       X_MIN: Math.min(rangeParams.current.x0, rangeParams.current.x1), X_MAX: Math.max(rangeParams.current.x0, rangeParams.current.x1),
@@ -226,7 +230,7 @@ export default function Home() {
   function onChangeGraphSetting(id: keyof typeof rangeParams.current, value: string): void {
     rangeParams.current[id] = parseFloat(value) || 0.0;
     updateChartScales(individualChart.current!, sumChart.current!, getRangeParams());
-    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current);
+    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current!);
   }
 
   // 手動学習、自動（プログラム）学習の切り替え (manual / programming)
@@ -307,7 +311,7 @@ export default function Home() {
           // Scatterプロットのデータセット
           {
             label: '教師データ',
-            data: currentScatterPoints.current, // 動的に更新される変数を使用
+            data: currentScatterPoints.current!, // 動的に更新される変数を使用
             type: 'scatter', // 散布図として描画
             backgroundColor: '#facc15', // オレンジ色
             pointRadius: 5, // 点のサイズ
@@ -324,7 +328,11 @@ export default function Home() {
       (document.getElementById(e) as HTMLInputElement)!.value = weights.current[e].toString();
       (document.getElementById(`${e}-input`) as HTMLInputElement)!.value = weights.current[e].toFixed(3);
     });
-    updateMSEDisplay(currentScatterPoints.current, weights.current);
+
+    // 教師データの初期値をselectタグから文字を取得してセット
+    console.log(trainingDataTypeRef.current?.selectedOptions[0].text);
+    onChangeScatterPoints(trainingDataTypeRef.current!.selectedOptions[0].text);
+    updateMSEDisplay(currentScatterPoints.current!, weights.current);
   }, []);
 
   // 重み部分のinput
@@ -504,7 +512,7 @@ export default function Home() {
                     <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>自動(プログラムで学習)</button>
                   </div>
                 </div>
-                {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor onUpdateWeight={onUpdateWeight} />}
+                {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor onUpdateWeight={onUpdateWeight} getCurrentTrainingDataType={getCurrentTrainingDataType} />}
               </div>
             </div>
 
@@ -526,7 +534,8 @@ export default function Home() {
                       className="mr-2 font-medium whitespace-nowrap">目標点データ:</label>
                     <select id="target-select" defaultValue="0"
                       className="p-1 border-8 border-amber-200 rounded text-xs bg-inherit text-inherit appearance-none"
-                      onChange={e => onChangeScatterPoints(parseInt(e.target.value) || 0)}>
+                      ref={trainingDataTypeRef}
+                      onChange={e => onChangeScatterPoints(e.target.selectedOptions[0].text)}>
                       <option value="0">原点通る直線</option>
                       <option value="1">原点通る折れ線</option>
                       <option value="2">原点通らない直線</option>
@@ -589,7 +598,7 @@ export default function Home() {
       </main>
 
       {/* 解説 */}
-      <footer className="border border-slate-800 rounded-xl px-4 py-3">
+      {/* <footer className="border border-slate-800 rounded-xl px-4 py-3">
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-semibold text-sm">⑤ 解説</h3>
           <span className="text-xs px-2 py-1 rounded-full border border-slate-800 text-slate-400">
@@ -599,7 +608,7 @@ export default function Home() {
         <div className="text-sm text-slate-400 leading-relaxed">
           ここに「なぜそうなるか」の説明を表示します。
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 }

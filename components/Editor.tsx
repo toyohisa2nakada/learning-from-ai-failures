@@ -27,17 +27,55 @@ const BUILD_IFRAME_ERROR_HANDLER_SCRIPT = `
 const HTML_TEMPLATE = `
 <html>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-    <script type="module">__CODE__</script>
+    <script type="module">const trainingData=__TRAINING_DATA__;__EDITOR_VALUE__</script>
 </html>`.replace(/[\r\n\t]+/g, "");
+
+/*
+let latest_insertions = [];
+function convert_iframe_error_position(lineno: string, colno: string) {
+    const line_number = Number(lineno);
+    const column_number = Number(colno);
+    if (!Number.isFinite(line_number) || !Number.isFinite(column_number)) {
+        return { lineno, colno };
+    }
+
+    let line_index = line_number - 1;
+    const sorted_insertions = [...latest_insertions]
+        .sort((a, b) => a.startLine - b.startLine || a.startColumn - b.startColumn);
+
+    for (const insertion of sorted_insertions) {
+        const diff = insertion.newLineCount - insertion.originalLineCount;
+        const start = insertion.startLine;
+        const end = insertion.startLine + insertion.newLineCount - 1;
+
+        if (line_index < start) {
+            continue;
+        }
+
+        if (line_index > end) {
+            line_index -= diff;
+            continue;
+        }
+
+        line_index = start;
+        return { lineno: line_index + 1, colno };
+    }
+
+    return { lineno: line_index + 1, colno };
+}
+    */
+
 
 interface EditorProps {
     onUpdateWeight: (weights: Record<string, number>) => void;
+    getCurrentTrainingDataType: () => [number, number][];
 }
 
-export default function App({ onUpdateWeight }: EditorProps) {
+export default function App({ onUpdateWeight, getCurrentTrainingDataType }: EditorProps) {
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
     const workerRef = useRef<Worker | null>(null);
     const workerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const statusRef = useRef<HTMLDivElement>(null);
 
     function injectImportmap(htmlString: string, files: Record<string, string>): string {
         // '//'のコメントをとる
@@ -68,11 +106,13 @@ export default function App({ onUpdateWeight }: EditorProps) {
 
             // 外部のjsファイルをimportmapで取り込む。この例の場合、import {testtemp01234} from 'test.js'; で使用する。
             const files = { 'test.js': `export const testtemp01234=0;` };
-            const htmlString = injectImportmap(HTML_TEMPLATE.replace('__CODE__', editorRef.current?.getValue() || ""), files);
+            const htmlString = injectImportmap(HTML_TEMPLATE.replace('__TRAINING_DATA__', JSON.stringify(getCurrentTrainingDataType())).
+                replace('__EDITOR_VALUE__', editorRef.current?.getValue() || ""), files);
             const { html: inlined_html, insertions } = inlineHTML(htmlString, files);
+console.log(insertions)
             const htmlStringWithErrorHandler = inlined_html.replace(/(<html[^>]*>)/i, `$1${BUILD_IFRAME_ERROR_HANDLER_SCRIPT}`);
 
-            console.log(htmlStringWithErrorHandler)
+            // console.log(htmlStringWithErrorHandler)
             editor_output_elem!.srcdoc = htmlStringWithErrorHandler;
 
         });
@@ -89,6 +129,9 @@ export default function App({ onUpdateWeight }: EditorProps) {
                 const info = e.data;
                 // const { lineno, colno } = convert_iframe_error_position(info.lineno, info.colno);
                 // set_error_in_iframe({ lineno, colno, message: info.message })
+                if (statusRef.current) {
+                    statusRef.current.textContent = `error L${info.lineno}:C${info.colno}`;
+                }
             } else if (e.data.type === 'weights') {
                 const values = e.data.values as Record<string, number>;
                 onUpdateWeight(values);
@@ -157,8 +200,8 @@ function postWeights(){
     }
     window.parent.postMessage({type:'weights',values:weightValues});
 }
-const { values, ranges, tensors } = await getDataset([[-1, -3], [0, -1], [1, 1], [2, 0],]);
-const [units,useBias,LearningRate,epochs] = [2,true,0.05,50];
+const { values, ranges, tensors } = await getDataset(trainingData);
+const [units,useBias,LearningRate,epochs] = [2,true,0.05,500];
 const model = tf.sequential();
 model.add(tf.layers.dense({
     inputShape:[1], activation:"tanh",
@@ -183,6 +226,8 @@ const history = await model.fit(tensors.x,tensors.y,{
             />
             <button className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
                 onClick={e => onStartLearn()}>AIが学習する</button>
+            <div ref={statusRef} className="overflow-hidden whitespace-nowrap">
+            </div>
         </>
     );
 }
