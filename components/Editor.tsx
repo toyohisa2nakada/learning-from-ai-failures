@@ -141,6 +141,22 @@ async function getDataset(data) {
     },
   };
 }
+function postWeights(){
+    const weights = {
+        w1: model.layers[0].getWeights()[0].dataSync(),
+        b: model.layers[0].getWeights()[1]?.dataSync(),
+        w2: model.layers[1].getWeights()[0].dataSync(),
+    };
+    const weightValues = {
+        wIn1: weights.w1[0],
+        wIn2: weights.w1[1] || 0,
+        wOut1: weights.w2[0],
+        wOut2: weights.w2[1] || 0,
+        b1: weights.b[0],
+        b2: weights.b[1] || 0,
+    }
+    window.parent.postMessage({type:'weights',values:weightValues});
+}
 const { values, ranges, tensors } = await getDataset([[-1, -3], [0, -1], [1, 1], [2, 0],]);
 const [units,useBias,LearningRate,epochs] = [2,true,0.05,50];
 const model = tf.sequential();
@@ -157,22 +173,12 @@ model.compile({
 const history = await model.fit(tensors.x,tensors.y,{
     batchSize: tensors.x.shape[0],shuffle:true,
     epochs,
+    callbacks:{
+        onEpochEnd: ()=>{
+            postWeights();
+        }
+    },
 });
-const weights = {
-    w1: model.layers[0].getWeights()[0].dataSync(),
-    b: model.layers[0].getWeights()[1]?.dataSync(),
-    w2: model.layers[1].getWeights()[0].dataSync(),
-};
-const weightValues = {
-    wIn1: weights.w1[0],
-    wIn2: weights.w1[1] || 0,
-    wOut1: weights.w2[0],
-    wOut2: weights.w2[1] || 0,
-    b1: weights.b[0],
-    b2: weights.b[1] || 0,
-}
-console.log(values);
-window.parent.postMessage({type:'weights',values:weightValues});
 `}
             />
             <button className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"

@@ -171,6 +171,14 @@ export default function Home() {
   // 重み
   const weightInits = [{ wIn1: 1.0, b1: 0.0, wOut1: 1.0 }, { wIn2: 1.0, b2: 0.0, wOut2: -1.0 }];
   const weights = useRef<{ [key: string]: number }>(Object.assign({}, ...weightInits));
+  function onChangeWeightAll(w: Record<string, number>): void {
+    Object.keys(w).forEach(e => {
+      weights.current[e] = w[e];
+      (document.getElementById(e) as HTMLInputElement)!.value = weights.current[e].toFixed(3);
+      (document.getElementById(`${e}-input`) as HTMLInputElement)!.value = weights.current[e].toFixed(3);
+    });
+    updateCharts(individualChart.current!, sumChart.current!, weights.current, getRangeParams(), currentScatterPoints.current);
+  }
   function onChangeWeight(id: string, value: string): void {
     const attr = id.split('-')[0] as keyof typeof weights.current & string;
     weights.current[attr] = parseFloat(value) || 0;
@@ -227,9 +235,8 @@ export default function Home() {
   const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
   // iframe->カスタムタグのEditor->経由で受け取るプログラムでアップデートした重み
   function onUpdateWeight(weights: Record<string, number>) {
-    // toDo 更新はまだテキストだけ、sliderも変える必要あり
-    console.log("updatedWeights",weights)
-    onChangeWeight("wIn1",weights.wIn1.toString())
+    console.log("updatedWeights", weights)
+    onChangeWeightAll(weights)
   }
 
 
