@@ -27,7 +27,7 @@ const BUILD_IFRAME_ERROR_HANDLER_SCRIPT = `
 const HTML_TEMPLATE = `
 <html>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-    <script type="module">const trainingData=__TRAINING_DATA__;__EDITOR_VALUE__</script>
+    <script type="module">__EDITOR_VALUE__</script>
 </html>`.replace(/[\r\n\t]+/g, "");
 
 /*
@@ -105,11 +105,10 @@ export default function App({ onUpdateWeight, getCurrentTrainingDataType }: Edit
             console.log("Workerによる実行チェックOK");
 
             // 外部のjsファイルをimportmapで取り込む。この例の場合、import {testtemp01234} from 'test.js'; で使用する。
-            const files = { 'test.js': `export const testtemp01234=0;` };
-            const htmlString = injectImportmap(HTML_TEMPLATE.replace('__TRAINING_DATA__', JSON.stringify(getCurrentTrainingDataType())).
-                replace('__EDITOR_VALUE__', editorRef.current?.getValue() || ""), files);
-            const { html: inlined_html, insertions } = inlineHTML(htmlString, files);
-console.log(insertions)
+            const extJsCode = { 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingDataType())};` };
+
+            const htmlString = injectImportmap(HTML_TEMPLATE.replace('__EDITOR_VALUE__', editorRef.current?.getValue() || ""), extJsCode);
+            const { html: inlined_html, insertions } = inlineHTML(htmlString, extJsCode);
             const htmlStringWithErrorHandler = inlined_html.replace(/(<html[^>]*>)/i, `$1${BUILD_IFRAME_ERROR_HANDLER_SCRIPT}`);
 
             // console.log(htmlStringWithErrorHandler)
@@ -140,7 +139,6 @@ console.log(insertions)
                 window.parent.postMessage({type:'weights',values:{ wIn1: 3.1, wOut1: -2.4 }});
                 */
             }
-            console.log("handleMessage", e);
         }
         window.addEventListener('message', handleMessage);
         return () => {
@@ -164,6 +162,7 @@ console.log(insertions)
                     },
                 }}
                 defaultValue={`
+import {trainingData} from "trainingData.js";
 async function getDataset(data) {
   if (data === undefined) {
     return {};

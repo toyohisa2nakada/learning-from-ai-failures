@@ -239,7 +239,6 @@ export default function Home() {
   const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
   // iframe->カスタムタグのEditor->経由で受け取るプログラムでアップデートした重み
   function onUpdateWeight(weights: Record<string, number>) {
-    console.log("updatedWeights", weights)
     onChangeWeightAll(weights)
   }
 
@@ -330,7 +329,6 @@ export default function Home() {
     });
 
     // 教師データの初期値をselectタグから文字を取得してセット
-    console.log(trainingDataTypeRef.current?.selectedOptions[0].text);
     onChangeScatterPoints(trainingDataTypeRef.current!.selectedOptions[0].text);
     updateMSEDisplay(currentScatterPoints.current!, weights.current);
   }, []);
