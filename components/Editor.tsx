@@ -162,6 +162,9 @@ export default function App({ onUpdateWeight, getCurrentTrainingDataType }: Edit
                     },
                 }}
                 defaultValue={`
+// ニューロン数、バイアス有無、学習率、学習回数
+const [units,useBias,LearningRate,epochs] = [2,true,0.05,500];
+
 import {trainingData} from "trainingData.js";
 async function getDataset(data) {
   if (data === undefined) {
@@ -190,17 +193,16 @@ function postWeights(){
         w2: model.layers[1].getWeights()[0].dataSync(),
     };
     const weightValues = {
-        wIn1: weights.w1[0],
-        wIn2: weights.w1[1] || 0,
-        wOut1: weights.w2[0],
-        wOut2: weights.w2[1] || 0,
-        b1: weights.b[0],
-        b2: weights.b[1] || 0,
+        wIn0: weights.w1[0],
+        wIn1: weights.w1[1] || 0,
+        wOut0: weights.w2[0],
+        wOut1: weights.w2[1] || 0,
+        b0: weights.b?.[0] || 0,
+        b1: weights.b?.[1] || 0,
     }
     window.parent.postMessage({type:'weights',values:weightValues});
 }
 const { values, ranges, tensors } = await getDataset(trainingData);
-const [units,useBias,LearningRate,epochs] = [2,true,0.05,500];
 const model = tf.sequential();
 model.add(tf.layers.dense({
     inputShape:[1], activation:"tanh",

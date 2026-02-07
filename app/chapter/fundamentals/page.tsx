@@ -34,21 +34,21 @@ function activation(x: number, w_in: number, b: number, w_out: number) {
 
 // Y軸データを計算 (X軸データも依存するため引数に追加)
 function generateYData(weights: Record<string, number>, xData: number[]): {
+  y0Data: number[],
   y1Data: number[],
-  y2Data: number[],
   ySumData: { x: number, y: number }[]
 } {
   // y = w2 * tanh(w1 * x + b) を計算
+  const y0Data = xData.map(x => activation(x, weights.wIn0, weights.b0, weights.wOut0));
   const y1Data = xData.map(x => activation(x, weights.wIn1, weights.b1, weights.wOut1));
-  const y2Data = xData.map(x => activation(x, weights.wIn2, weights.b2, weights.wOut2));
 
   // 合成グラフ (y1 + y2)
-  const ySumData = y1Data.map((y1, i) => y1 + y2Data[i]);
+  const ySumData = y0Data.map((y0, i) => y0 + y1Data[i]);
 
   // Chart.jsはX軸をラベルとして扱えないため、X-Yペアの形式に変換
   const ySumChartData = xData.map((x, i) => ({ x: x, y: ySumData[i] }));
 
-  return { y1Data, y2Data, ySumData: ySumChartData };
+  return { y0Data, y1Data, ySumData: ySumChartData };
 }
 
 // Chart.jsの共通設定を取得する関数（範囲設定を動的に反映）
@@ -93,8 +93,8 @@ function calculateMSE(currentScatterPoints: Record<string, number>[], weights: R
   if (!currentScatterPoints.length) return 0;
 
   const totalSquaredError = currentScatterPoints.reduce((acc, point) => {
-    const predicted = activation(point.x, weights.wIn1, weights.b1, weights.wOut1)
-      + activation(point.x, weights.wIn2, weights.b2, weights.wOut2);
+    const predicted = activation(point.x, weights.wIn0, weights.b0, weights.wOut0)
+      + activation(point.x, weights.wIn1, weights.b1, weights.wOut1);
     const diff = predicted - point.y;
     return acc + diff * diff;
   }, 0);
@@ -134,12 +134,12 @@ function updateChartScales(individualChart: Chart, sumChart: Chart, range: Recor
 // グラフ全体を更新する関数
 function updateCharts(individualChart: Chart, sumChart: Chart, weights: Record<string, number>, range: Record<string, number>, currentScatterPoints: Record<string, number>[]) {
   const xData: number[] = generateXData(range.X_MIN, range.X_MAX);
-  const { y1Data, y2Data, ySumData } = generateYData(weights, xData);
+  const { y0Data, y1Data, ySumData } = generateYData(weights, xData);
 
   // Individual Chart (Line Chart): labelsとy-value配列で更新
   individualChart.data.labels = xData.map(x => x.toFixed(2));
-  individualChart.data.datasets[0].data = y1Data;
-  individualChart.data.datasets[1].data = y2Data;
+  individualChart.data.datasets[0].data = y0Data;
+  individualChart.data.datasets[1].data = y1Data;
 
   // Sum Chart (Line + Scatter): x-yペアで更新
   sumChart.data.datasets[0].data = ySumData;
@@ -151,7 +151,6 @@ function updateCharts(individualChart: Chart, sumChart: Chart, weights: Record<s
 
   updateMSEDisplay(currentScatterPoints, weights);
 }
-
 
 export default function Home() {
   console.log("HOME")
@@ -173,7 +172,7 @@ export default function Home() {
   }
 
   // 重み
-  const weightInits = [{ wIn1: 1.0, b1: 0.0, wOut1: 1.0 }, { wIn2: 1.0, b2: 0.0, wOut2: -1.0 }];
+  const weightInits = [{ wIn0: 1.0, b0: 0.0, wOut0: 1.0 }, { wIn1: 1.0, b1: 0.0, wOut1: -1.0 }];
   const weights = useRef<{ [key: string]: number }>(Object.assign({}, ...weightInits));
   function onChangeWeightAll(w: Record<string, number>): void {
     Object.keys(w).forEach(e => {
@@ -192,7 +191,7 @@ export default function Home() {
   }
   function onWeightInit(id: string) {
     const no = parseInt(id.replace(/[^0-9]/g, "")) || 0;
-    Object.assign(weights.current, weightInits[no - 1]);
+    Object.assign(weights.current, weightInits[no]);
     ["wIn", "b", "wOut"].forEach(e => {
       const attr = `${e}${no}`;
       (document.getElementById(attr) as HTMLInputElement)!.value = weights.current[attr].toString();
@@ -248,13 +247,13 @@ export default function Home() {
 
     const range: Record<string, number> = getRangeParams();
     const xData = generateXData(range.X_MIN, range.X_MAX);
-    const { y1Data, y2Data, ySumData } = generateYData(weights.current, xData);
+    const { y0Data, y1Data, ySumData } = generateYData(weights.current, xData);
     const commonOptions: ChartConfiguration['options'] = getCommonChartOptions(range);
 
     // Chart.jsではLine Chartのデータラベル（xData）とデータポイントのインデックスが紐づくため、
     // 個別グラフはこれまで通りの配列形式を維持
-    const y1Only: number[] = y1Data.map((d: number) => d);
-    const y2Only: number[] = y2Data.map((d: number) => d);
+    const y1Only: number[] = y0Data.map((d: number) => d);
+    const y2Only: number[] = y1Data.map((d: number) => d);
 
     // 上部の個別グラフ
     const ctxIndividual: CanvasRenderingContext2D = (document.getElementById('individual-graphs-canvas') as HTMLCanvasElement)?.getContext('2d')!;
@@ -335,8 +334,6 @@ export default function Home() {
 
   // 重み部分のinput
   const weight_input_css = "no-spin font-bold w-12 text-right p-0 bg-transparent text-sm rounded border border-[#1f2a44] border-solid";
-  // panel
-  const panel_css = "p-3 rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent h-full";
 
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
@@ -363,128 +360,82 @@ export default function Home() {
 
       {/* 指令エリア */}
       <section className="action-section">
-        指令：パラメータを変更して、グラフの可算結果が教師データを通るようにする
+        指令：パラメータを変更して、グラフの可算結果が教師データを通るようにする。
       </section>
+
       {/* 操作と可視化 */}
       <main className="flex bg-inherit">
         <div id="container" className="container-panel">
+
           {/* 上部パネル */}
           <div id="upper-panel" className="upper-panel">
+
             {/* パラメータ設定 */}
-            <div id="parameter-control" className={`md:w-[55%] ${panel_css}`}>
+            <div id="parameter-control" className="left-panel">
               <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
 
-              <div className="mb-2 p-2 border-8 border-red-300 rounded-lg bg-red-400/5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-base font-semibold text-pink-400">グラフ1: <span className="text-gray-300">y =
-                    w2 * tanh(w1 * x + b)</span></h3>
-                  <button id="weight1-init"
-                    className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
-                    onClick={e => onWeightInit(e.currentTarget.id)}>リセット</button>
-                </div>
-
-                <div className="flex gap-3 text-gray-300">
-                  <div className="w-1/3 pr-1">
-                    <label htmlFor="wIn1-input" className="text-xs font-medium block">
-                      <div className="flex items-center whitespace-nowrap">
-                        <span className="flex-shrink">重み w1:</span>
-                        <input type="number" id="wIn1-input" min="-10.0" max="10.0" step="0.001"
-                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`}
-                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                      </div>
-                    </label>
-                    <input type="range" id="wIn1" min="-10.0" max="10.0" step="0.001"
-                      className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400"
-                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+              {[
+                { borderColor: "border-red-300", textFocusColor: "ring-red-400", sliderColor: "accent-pink-400" },
+                { borderColor: "border-blue-300", textFocusColor: "ring-blue-400", sliderColor: "accent-sky-400" },
+              ].map((e, i) => (
+                <div className={`${e.borderColor} mb-2 p-2 border-8 rounded-lg bg-red-400/5`} key={i}>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-base font-semibold">{`グラフ${i + 1}: `}<span className="text-gray-300">y =
+                      w2 * tanh(w1 * x + b)</span></h3>
+                    <button id={`weight${i}-init`}
+                      className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
+                      onClick={e => onWeightInit(e.currentTarget.id)}>リセット</button>
                   </div>
 
-                  <div className="w-1/3 pr-1">
-                    <label htmlFor="b1-input" className="text-xs font-medium block">
-                      <div className="flex items-center whitespace-nowrap">
-                        <span className="flex-shrink">バイアス b:</span>
-                        <input type="number" id="b1-input" min="-10.0" max="10.0" step="0.001"
-                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`}
-                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                      </div>
-                    </label>
-                    <input type="range" id="b1" min="-10.0" max="10.0" step="0.001"
-                      className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400"
-                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-1/3 pr-1">
+                      <label htmlFor={`wIn${i}-input`} className="text-xs font-medium block">
+                        <div className="flex items-center whitespace-nowrap">
+                          <span className="flex-shrink">重み w1:</span>
+                          <input type="number" id={`wIn${i}-input`} min="-10.0" max="10.0" step="0.001"
+                            className={`${weight_input_css} focus:outline-none focus:ring-1 focus:${e.textFocusColor}`}
+                            onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                        </div>
+                      </label>
+                      <input type="range" id={`wIn${i}`} min="-10.0" max="10.0" step="0.001"
+                        className={`w-full h-[6px] cursor-pointer my-[3px] ${e.sliderColor}`}
+                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                    </div>
 
-                  <div className="w-1/3 pr-1">
-                    <label htmlFor="wOut1-input" className="text-xs font-medium block">
-                      <div className="flex items-center whitespace-nowrap">
-                        <span className="flex-shrink">重み w2:</span>
-                        <input type="number" id="wOut1-input" min="-10.0" max="10.0" step="0.001"
-                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`}
-                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                      </div>
-                    </label>
-                    <input type="range" id="wOut1" min="-10.0" max="10.0" step="0.001"
-                      className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400"
-                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                  </div>
-                </div>
-              </div>
+                    <div className="w-1/3 pr-1">
+                      <label htmlFor={`b${i}-input`} className="text-xs font-medium block">
+                        <div className="flex items-center whitespace-nowrap">
+                          <span className="flex-shrink">バイアス b:</span>
+                          <input type="number" id={`b${i}-input`} min="-10.0" max="10.0" step="0.001"
+                            className={`${weight_input_css} focus:outline-none focus:ring-1 focus:${e.textFocusColor}`}
+                            onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                        </div>
+                      </label>
+                      <input type="range" id={`b${i}`} min="-10.0" max="10.0" step="0.001"
+                        className={`w-full h-[6px] cursor-pointer my-[3px] ${e.sliderColor}`}
+                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                    </div>
 
-              <div className="mb-1 p-2 border-8 border-blue-300 rounded-lg bg-blue-400/5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-base font-semibold">グラフ2: <span className="text-gray-300">y =
-                    w2 * tanh(w1 * x + b)</span></h3>
-                  <button id="weight2-init"
-                    className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
-                    onClick={e => onWeightInit(e.currentTarget.id)}>リセット</button>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="w-1/3 pr-1">
-                    <label htmlFor="wIn2-input" className="text-xs font-medium block">
-                      <div className="flex items-center whitespace-nowrap">
-                        <span className="flex-shrink">重み w1:</span>
-                        <input type="number" id="wIn2-input" min="-10.0" max="10.0" step="0.001"
-                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`}
-                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                      </div>
-                    </label>
-                    <input type="range" id="wIn2" min="-10.0" max="10.0" step="0.001"
-                      className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400"
-                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                  </div>
-
-                  <div className="w-1/3 pr-1">
-                    <label htmlFor="b2-input" className="text-xs font-medium block">
-                      <div className="flex items-center whitespace-nowrap">
-                        <span className="flex-shrink">バイアス b:</span>
-                        <input type="number" id="b2-input" min="-10.0" max="10.0" step="0.001"
-                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`}
-                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                      </div>
-                    </label>
-                    <input type="range" id="b2" min="-10.0" max="10.0" step="0.001"
-                      className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400"
-                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                  </div>
-
-                  <div className="w-1/3 pr-1">
-                    <label htmlFor="wOut2-input" className="text-xs font-medium block">
-                      <div className="flex items-center whitespace-nowrap">
-                        <span className="flex-shrink">重み w2:</span>
-                        <input type="number" id="wOut2-input" min="-10.0" max="10.0" step="0.001"
-                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`}
-                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                      </div>
-                    </label>
-                    <input type="range" id="wOut2" min="-10.0" max="10.0" step="0.001"
-                      className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400"
-                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                    <div className="w-1/3 pr-1">
+                      <label htmlFor={`wOut${i}-input`} className="text-xs font-medium block">
+                        <div className="flex items-center whitespace-nowrap">
+                          <span className="flex-shrink">重み w2:</span>
+                          <input type="number" id={`wOut${i}-input`} min="-10.0" max="10.0" step="0.001"
+                            className={`${weight_input_css} focus:outline-none focus:ring-1 focus:${e.textFocusColor}`}
+                            onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                        </div>
+                      </label>
+                      <input type="range" id={`wOut${i}`} min="-10.0" max="10.0" step="0.001"
+                        className={`w-full h-[6px] cursor-pointer my-[3px] ${e.sliderColor}`}
+                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
 
             {/* 個別のグラフ */}
-            <div id="graph-area-top" className={`${panel_css} flex-1 w-full flex flex-col items-start justify-start`}>
+            <div id="graph-area-top" className="right-panel">
               <div className="flex items-center justify-between w-full mb-3">
                 <h3 className="text-base font-semibold m-0">個別のグラフ (G1, G2)</h3>
               </div>
@@ -496,8 +447,9 @@ export default function Home() {
 
           {/* 下部パネル */}
           <div id="lower-panel" className="lower-panel">
+
             {/* ニューラルネットワークの構造 */}
-            <div id="drawing-area" className={`${panel_css} md:w-[55%] flex flex-col relative`}>
+            <div id="drawing-area" className="left-panel relative">
               <div className="flex justify-between items-center">
                 <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
                 <div className="text-xs flex">
@@ -509,7 +461,7 @@ export default function Home() {
             </div>
 
             {/* グラフの可算結果 */}
-            <div id="graph-area-bottom" className={`${panel_css} flex-1 w-full flex flex-col items-start justify-start bg-inherit`}>
+            <div id="graph-area-bottom" className="right-panel">
               <div className="flex items-center justify-between w-full mb-1">
                 <div className="text-base font-semibold m-0">グラフの可算結果 (G1+G2)</div>
                 <div className="flex items-center gap-3 text-xs">
@@ -582,6 +534,7 @@ export default function Home() {
               </div>
             </div>
           </div>
+
         </div>
       </main>
 
