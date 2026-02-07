@@ -378,7 +378,7 @@ export default function Home() {
                 { borderColor: "border-red-300", textFocusColor: "ring-red-400", sliderColor: "accent-pink-400" },
                 { borderColor: "border-blue-300", textFocusColor: "ring-blue-400", sliderColor: "accent-sky-400" },
               ].map((e, i) => (
-                <div className={`${e.borderColor} mb-2 p-2 border-8 rounded-lg bg-red-400/5`} key={i}>
+                <div className={`${e.borderColor} mb-2 p-2 border-8 rounded-lg`} key={i}>
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-base font-semibold">{`グラフ${i + 1}: `}<span className="text-gray-300">y =
                       w2 * tanh(w1 * x + b)</span></h3>
