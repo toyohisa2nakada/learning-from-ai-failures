@@ -362,231 +362,221 @@ export default function Home() {
       `}</style>
 
       {/* 指令エリア */}
-      <section className="border border-slate-800 rounded-xl px-4 py-3 flex gap-4 items-start">
+      <section className="action-section">
         指令：パラメータを変更して、グラフの可算結果が教師データを通るようにする
       </section>
       {/* 操作と可視化 */}
       <main className="flex bg-inherit">
-        {/* 上部パネル */}
-        <div id="container" className="flex flex-col p-1 gap-4 w-full shadow-2xl rounded-xl border border-slate-800/80 bg-inherit">
-          <div id="upper-panel" className="flex flex-col md:flex-row gap-6">
+        <div id="container" className="container-panel">
+          {/* 上部パネル */}
+          <div id="upper-panel" className="upper-panel">
             {/* パラメータ設定 */}
-            <div className="md:w-[55%]">
-              <div id="parameter-control" className={panel_css}>
-                <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
+            <div id="parameter-control" className={`md:w-[55%] ${panel_css}`}>
+              <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
 
-                <div className="mb-2 p-2 border-8 border-red-300 rounded-lg bg-red-400/5">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-base font-semibold text-pink-400">グラフ1: <span className="text-gray-300">y =
-                      w2 * tanh(w1 * x + b)</span></h3>
-                    <button id="weight1-init"
-                      className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
-                      onClick={e => onWeightInit(e.currentTarget.id)}>リセット</button>
-                  </div>
-
-                  <div className="flex gap-3 text-gray-300">
-                    <div className="w-1/3 pr-1">
-                      <label htmlFor="wIn1-input" className="text-xs font-medium block">
-                        <div className="flex items-center whitespace-nowrap">
-                          <span className="flex-shrink">重み w1:</span>
-                          <input type="number" id="wIn1-input" min="-10.0" max="10.0" step="0.001"
-                            className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`}
-                            onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                        </div>
-                      </label>
-                      <input type="range" id="wIn1" min="-10.0" max="10.0" step="0.001"
-                        className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400"
-                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                    </div>
-
-                    <div className="w-1/3 pr-1">
-                      <label htmlFor="b1-input" className="text-xs font-medium block">
-                        <div className="flex items-center whitespace-nowrap">
-                          <span className="flex-shrink">バイアス b:</span>
-                          <input type="number" id="b1-input" min="-10.0" max="10.0" step="0.001"
-                            className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`}
-                            onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                        </div>
-                      </label>
-                      <input type="range" id="b1" min="-10.0" max="10.0" step="0.001"
-                        className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400"
-                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                    </div>
-
-                    <div className="w-1/3 pr-1">
-                      <label htmlFor="wOut1-input" className="text-xs font-medium block">
-                        <div className="flex items-center whitespace-nowrap">
-                          <span className="flex-shrink">重み w2:</span>
-                          <input type="number" id="wOut1-input" min="-10.0" max="10.0" step="0.001"
-                            className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`}
-                            onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                        </div>
-                      </label>
-                      <input type="range" id="wOut1" min="-10.0" max="10.0" step="0.001"
-                        className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400"
-                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                    </div>
-                  </div>
+              <div className="mb-2 p-2 border-8 border-red-300 rounded-lg bg-red-400/5">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-base font-semibold text-pink-400">グラフ1: <span className="text-gray-300">y =
+                    w2 * tanh(w1 * x + b)</span></h3>
+                  <button id="weight1-init"
+                    className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
+                    onClick={e => onWeightInit(e.currentTarget.id)}>リセット</button>
                 </div>
 
-                <div className="mb-1 p-2 border-8 border-blue-300 rounded-lg bg-blue-400/5">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-base font-semibold">グラフ2: <span className="text-gray-300">y =
-                      w2 * tanh(w1 * x + b)</span></h3>
-                    <button id="weight2-init"
-                      className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
-                      onClick={e => onWeightInit(e.currentTarget.id)}>リセット</button>
+                <div className="flex gap-3 text-gray-300">
+                  <div className="w-1/3 pr-1">
+                    <label htmlFor="wIn1-input" className="text-xs font-medium block">
+                      <div className="flex items-center whitespace-nowrap">
+                        <span className="flex-shrink">重み w1:</span>
+                        <input type="number" id="wIn1-input" min="-10.0" max="10.0" step="0.001"
+                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`}
+                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                      </div>
+                    </label>
+                    <input type="range" id="wIn1" min="-10.0" max="10.0" step="0.001"
+                      className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400"
+                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
                   </div>
 
-                  <div className="flex gap-3">
-                    <div className="w-1/3 pr-1">
-                      <label htmlFor="wIn2-input" className="text-xs font-medium block">
-                        <div className="flex items-center whitespace-nowrap">
-                          <span className="flex-shrink">重み w1:</span>
-                          <input type="number" id="wIn2-input" min="-10.0" max="10.0" step="0.001"
-                            className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`}
-                            onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                        </div>
-                      </label>
-                      <input type="range" id="wIn2" min="-10.0" max="10.0" step="0.001"
-                        className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400"
-                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                    </div>
+                  <div className="w-1/3 pr-1">
+                    <label htmlFor="b1-input" className="text-xs font-medium block">
+                      <div className="flex items-center whitespace-nowrap">
+                        <span className="flex-shrink">バイアス b:</span>
+                        <input type="number" id="b1-input" min="-10.0" max="10.0" step="0.001"
+                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`}
+                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                      </div>
+                    </label>
+                    <input type="range" id="b1" min="-10.0" max="10.0" step="0.001"
+                      className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400"
+                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                  </div>
 
-                    <div className="w-1/3 pr-1">
-                      <label htmlFor="b2-input" className="text-xs font-medium block">
-                        <div className="flex items-center whitespace-nowrap">
-                          <span className="flex-shrink">バイアス b:</span>
-                          <input type="number" id="b2-input" min="-10.0" max="10.0" step="0.001"
-                            className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`}
-                            onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                        </div>
-                      </label>
-                      <input type="range" id="b2" min="-10.0" max="10.0" step="0.001"
-                        className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400"
-                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                    </div>
+                  <div className="w-1/3 pr-1">
+                    <label htmlFor="wOut1-input" className="text-xs font-medium block">
+                      <div className="flex items-center whitespace-nowrap">
+                        <span className="flex-shrink">重み w2:</span>
+                        <input type="number" id="wOut1-input" min="-10.0" max="10.0" step="0.001"
+                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-red-400`}
+                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                      </div>
+                    </label>
+                    <input type="range" id="wOut1" min="-10.0" max="10.0" step="0.001"
+                      className="w-full h-[6px] cursor-pointer my-[3px] accent-pink-400"
+                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                  </div>
+                </div>
+              </div>
 
-                    <div className="w-1/3 pr-1">
-                      <label htmlFor="wOut2-input" className="text-xs font-medium block">
-                        <div className="flex items-center whitespace-nowrap">
-                          <span className="flex-shrink">重み w2:</span>
-                          <input type="number" id="wOut2-input" min="-10.0" max="10.0" step="0.001"
-                            className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`}
-                            onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                        </div>
-                      </label>
-                      <input type="range" id="wOut2" min="-10.0" max="10.0" step="0.001"
-                        className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400"
-                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                    </div>
+              <div className="mb-1 p-2 border-8 border-blue-300 rounded-lg bg-blue-400/5">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-base font-semibold">グラフ2: <span className="text-gray-300">y =
+                    w2 * tanh(w1 * x + b)</span></h3>
+                  <button id="weight2-init"
+                    className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
+                    onClick={e => onWeightInit(e.currentTarget.id)}>リセット</button>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-1/3 pr-1">
+                    <label htmlFor="wIn2-input" className="text-xs font-medium block">
+                      <div className="flex items-center whitespace-nowrap">
+                        <span className="flex-shrink">重み w1:</span>
+                        <input type="number" id="wIn2-input" min="-10.0" max="10.0" step="0.001"
+                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`}
+                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                      </div>
+                    </label>
+                    <input type="range" id="wIn2" min="-10.0" max="10.0" step="0.001"
+                      className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400"
+                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                  </div>
+
+                  <div className="w-1/3 pr-1">
+                    <label htmlFor="b2-input" className="text-xs font-medium block">
+                      <div className="flex items-center whitespace-nowrap">
+                        <span className="flex-shrink">バイアス b:</span>
+                        <input type="number" id="b2-input" min="-10.0" max="10.0" step="0.001"
+                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`}
+                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                      </div>
+                    </label>
+                    <input type="range" id="b2" min="-10.0" max="10.0" step="0.001"
+                      className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400"
+                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                  </div>
+
+                  <div className="w-1/3 pr-1">
+                    <label htmlFor="wOut2-input" className="text-xs font-medium block">
+                      <div className="flex items-center whitespace-nowrap">
+                        <span className="flex-shrink">重み w2:</span>
+                        <input type="number" id="wOut2-input" min="-10.0" max="10.0" step="0.001"
+                          className={`${weight_input_css} focus:outline-none focus:ring-1 focus:ring-blue-400`}
+                          onChange={e => onChangeWeight(e.target.id, e.target.value)} />
+                      </div>
+                    </label>
+                    <input type="range" id="wOut2" min="-10.0" max="10.0" step="0.001"
+                      className="w-full h-[6px] cursor-pointer my-[3px] accent-sky-400"
+                      onChange={e => onChangeWeight(e.target.id, e.target.value)} />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* 個別のグラフ */}
-            <div className="flex-1">
-              <div id="graph-area-top" className={`${panel_css} w-full flex flex-col items-start justify-start`}>
-                <div className="flex items-center justify-between w-full mb-3">
-                  <h3 className="text-base font-semibold m-0">個別のグラフ (G1, G2)</h3>
-                </div>
-                <div className="chart-container w-full flex-1 min-h-0">
-                  <canvas id="individual-graphs-canvas" className="h-0 min-h-full"></canvas>
-                </div>
+            <div id="graph-area-top" className={`${panel_css} flex-1 w-full flex flex-col items-start justify-start`}>
+              <div className="flex items-center justify-between w-full mb-3">
+                <h3 className="text-base font-semibold m-0">個別のグラフ (G1, G2)</h3>
+              </div>
+              <div className="chart-container w-full flex-1 min-h-0">
+                <canvas id="individual-graphs-canvas" className="h-0 min-h-full"></canvas>
               </div>
             </div>
           </div>
 
           {/* 下部パネル */}
-          <div id="lower-panel" className="flex flex-col md:flex-row flex-1 gap-6 bg-inherit">
+          <div id="lower-panel" className="lower-panel">
             {/* ニューラルネットワークの構造 */}
-            <div className="md:w-[55%]">
-              <div id="drawing-area" className={`${panel_css} flex flex-col relative`}>
-                <div className="flex justify-between items-center">
-                  <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
-                  <div className="text-xs flex">
-                    <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造(手動で学習)</button>
-                    <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>自動(プログラムで学習)</button>
-                  </div>
+            <div id="drawing-area" className={`${panel_css} md:w-[55%] flex flex-col relative`}>
+              <div className="flex justify-between items-center">
+                <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
+                <div className="text-xs flex">
+                  <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造(手動で学習)</button>
+                  <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>自動(プログラムで学習)</button>
                 </div>
-                {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor onUpdateWeight={onUpdateWeight} getCurrentTrainingDataType={getCurrentTrainingDataType} />}
               </div>
+              {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor onUpdateWeight={onUpdateWeight} getCurrentTrainingDataType={getCurrentTrainingDataType} />}
             </div>
 
             {/* グラフの可算結果 */}
-            <div className="flex-1 bg-inherit">
-              <div id="graph-area-bottom" className={`${panel_css} w-full flex flex-col items-start justify-start bg-inherit`}>
-                <div className="flex items-center justify-between w-full mb-1">
-                  <div className="text-base font-semibold m-0">グラフの可算結果 (G1+G2)</div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-xs"><span className="font-semibold">誤差(MSE):</span> <span
-                      id="mse-value">0.0000</span></div>
-                  </div>
+            <div id="graph-area-bottom" className={`${panel_css} flex-1 w-full flex flex-col items-start justify-start bg-inherit`}>
+              <div className="flex items-center justify-between w-full mb-1">
+                <div className="text-base font-semibold m-0">グラフの可算結果 (G1+G2)</div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="font-semibold">誤差(MSE):</span> <span
+                    id="mse-value">0.0000</span>
+                </div>
+              </div>
+
+              <div
+                className="target-settings mb-1 p-2 border-none rounded-lg shadow-sm text-xs bg-inherit w-full">
+                <div className="flex items-center bg-inherit">
+                  <label htmlFor="target-select"
+                    className="mr-2 font-medium whitespace-nowrap">目標点データ:</label>
+                  <select id="target-select" defaultValue="0"
+                    className="p-1 border-8 border-amber-200 rounded text-xs bg-inherit text-inherit appearance-none"
+                    ref={trainingDataTypeRef}
+                    onChange={e => onChangeScatterPoints(e.target.selectedOptions[0].text)}>
+                    <option value="0">原点通る直線</option>
+                    <option value="1">原点通る折れ線</option>
+                    <option value="2">原点通らない直線</option>
+                    <option value="3">原点通らない折れ線</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="chart-container w-full flex-1 min-h-0">
+                <canvas id="sum-graph-canvas" className="h-0 min-h-full"></canvas>
+              </div>
+
+              <div className="range-settings p-1 border border-gray-300/20 rounded-lg bg-opacity-50 shadow-sm text-xs w-full">
+                <div className="flex justify-between items-center mb-1">
+                  <div className="font-semibold m-0">グラフ表示範囲設定</div>
+                  <button id="toggle-range-settings"
+                    className="p-1 rounded-full text-gray-600 hover:bg-gray-200 transition"
+                    aria-expanded="false" aria-controls="range-settings-content"
+                    onClick={e => onToggleGraphSetting(e.currentTarget)}>
+                    <svg id="toggle-icon"
+                      className="w-4 h-4 transform rotate-0 transition-transform duration-300" fill="none"
+                      stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                        d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </button>
                 </div>
 
-                <div
-                  className="target-settings mb-1 p-2 border-none rounded-lg shadow-sm text-xs bg-inherit w-full">
-                  <div className="flex items-center bg-inherit">
-                    <label htmlFor="target-select"
-                      className="mr-2 font-medium whitespace-nowrap">目標点データ:</label>
-                    <select id="target-select" defaultValue="0"
-                      className="p-1 border-8 border-amber-200 rounded text-xs bg-inherit text-inherit appearance-none"
-                      ref={trainingDataTypeRef}
-                      onChange={e => onChangeScatterPoints(e.target.selectedOptions[0].text)}>
-                      <option value="0">原点通る直線</option>
-                      <option value="1">原点通る折れ線</option>
-                      <option value="2">原点通らない直線</option>
-                      <option value="3">原点通らない折れ線</option>
-                    </select>
-                  </div>
-                </div>
+                <div id="range-settings-content" className="hidden flex flex-wrap justify-start gap-x-4 gap-y-2">
 
-                <div className="chart-container w-full flex-1 min-h-0">
-                  <canvas id="sum-graph-canvas" className="h-0 min-h-full"></canvas>
-                </div>
-
-                <div className="range-settings p-1 border border-gray-300/20 rounded-lg bg-opacity-50 shadow-sm text-xs w-full">
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="font-semibold m-0">グラフ表示範囲設定</div>
-                    <button id="toggle-range-settings"
-                      className="p-1 rounded-full text-gray-600 hover:bg-gray-200 transition"
-                      aria-expanded="false" aria-controls="range-settings-content"
-                      onClick={e => onToggleGraphSetting(e.currentTarget)}>
-                      <svg id="toggle-icon"
-                        className="w-4 h-4 transform rotate-0 transition-transform duration-300" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                          d="M9 5l7 7-7 7"></path>
-                      </svg>
-                    </button>
+                  <div className="flex items-center">
+                    <span className="mr-1 font-medium">X軸:</span>
+                    <input type="number" id="x0" defaultValue="-1.5" step="0.5"
+                      className="no-spin range-input text-center border border-gray-300 rounded p-1"
+                      onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
+                    <span className="mx-1">〜</span>
+                    <input type="number" id="x1" defaultValue="2.5" step="0.5"
+                      className="no-spin range-input text-center border border-gray-300 rounded p-1"
+                      onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
                   </div>
 
-                  <div id="range-settings-content" className="hidden">
-                    <div className="flex flex-wrap justify-start gap-x-4 gap-y-2">
-
-                      <div className="flex items-center">
-                        <span className="mr-1 font-medium">X軸:</span>
-                        <input type="number" id="x0" defaultValue="-1.5" step="0.5"
-                          className="no-spin range-input text-center border border-gray-300 rounded p-1"
-                          onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
-                        <span className="mx-1">〜</span>
-                        <input type="number" id="x1" defaultValue="2.5" step="0.5"
-                          className="no-spin range-input text-center border border-gray-300 rounded p-1"
-                          onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
-                      </div>
-
-                      <div className="flex items-center">
-                        <span className="mr-1 font-medium">Y軸:</span>
-                        <input type="number" id="y0" defaultValue="-5" step="1"
-                          className="no-spin range-input text-center border border-gray-300 rounded p-1"
-                          onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
-                        <span className="mx-1">〜</span>
-                        <input type="number" id="y1" defaultValue="4" step="1"
-                          className="no-spin range-input text-center border border-gray-300 rounded p-1"
-                          onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
-                      </div>
-                    </div>
+                  <div className="flex items-center">
+                    <span className="mr-1 font-medium">Y軸:</span>
+                    <input type="number" id="y0" defaultValue="-5" step="1"
+                      className="no-spin range-input text-center border border-gray-300 rounded p-1"
+                      onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
+                    <span className="mx-1">〜</span>
+                    <input type="number" id="y1" defaultValue="4" step="1"
+                      className="no-spin range-input text-center border border-gray-300 rounded p-1"
+                      onChange={e => onChangeGraphSetting(e.target.id as keyof typeof rangeParams.current, e.target.value)} />
                   </div>
                 </div>
               </div>
