@@ -5,16 +5,14 @@ import NeuralNetGraph from "@/components/NeuralNetGraph";
 
 
 export default function Home() {
+  console.log("Editor HOME")
   // 手動で重みの変更
   function onChangeWeight(id: string, value: string): void {
   }
   // 手動学習、自動（プログラム）学習の切り替え (manual / programming)
-  const [programmingMode, setProgrammingMode] = useState('manual');
+  const [programmingMode, setProgrammingMode] = useState('programming');
   const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
   const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
-  // iframe->カスタムタグのEditor->経由で受け取るプログラムでアップデートした重み
-  function onUpdateWeight(weights: Record<string, number>) {
-  }
 
   useEffect(() => {
   });
@@ -83,7 +81,7 @@ export default function Home() {
                   <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>自動(プログラムで学習)</button>
                 </div>
               </div>
-              {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor onUpdateWeight={onUpdateWeight} />}
+              {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor />}
             </div>
 
             {/* グラフの可算結果 */}

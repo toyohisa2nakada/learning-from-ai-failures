@@ -67,11 +67,15 @@ function convert_iframe_error_position(lineno: string, colno: string) {
 
 
 interface EditorProps {
-    onUpdateWeight: (weights: Record<string, number>) => void;
-    getCurrentTrainingDataType: () => [number, number][];
+    defaultValue?: string;
+    updateHandler?: {
+        onUpdate: (data: Record<string, number>) => void;
+        messageType: string;
+    };
+    externalScripts?: Record<string, string> | (() => Record<string, string>);
 }
 
-export default function App({ onUpdateWeight, getCurrentTrainingDataType }: EditorProps) {
+export default function App({ defaultValue = "", updateHandler, externalScripts = {} }: EditorProps) {
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
     const workerRef = useRef<Worker | null>(null);
     const workerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -82,7 +86,7 @@ export default function App({ onUpdateWeight, getCurrentTrainingDataType }: Edit
         const filesNoComm = Object.entries(files).reduce((a, e) =>
             ({ ...a, [e[0]]: removeLineComments(e[1]) }), {} as Record<string, string>);
         // importmapを追加して返す
-        return htmlString.replace(/(<html[^>]*>)/i, `$1${buildImportmap(files)}`);
+        return htmlString.replace(/(<html[^>]*>)/i, `$1${buildImportmap(filesNoComm)}`);
     }
 
     function onStartLearn() {
@@ -105,13 +109,13 @@ export default function App({ onUpdateWeight, getCurrentTrainingDataType }: Edit
             console.log("Workerによる実行チェックOK");
 
             // 外部のjsファイルをimportmapで取り込む。この例の場合、import {testtemp01234} from 'test.js'; で使用する。
-            const extJsCode = { 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingDataType())};` };
+            // const extJsCode = { 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingDataType())};` };
+            const extJsCode = externalScripts instanceof Function ? externalScripts() : externalScripts;
 
             const htmlString = injectImportmap(HTML_TEMPLATE.replace('__EDITOR_VALUE__', editorRef.current?.getValue() || ""), extJsCode);
             const { html: inlined_html, insertions } = inlineHTML(htmlString, extJsCode);
             const htmlStringWithErrorHandler = inlined_html.replace(/(<html[^>]*>)/i, `$1${BUILD_IFRAME_ERROR_HANDLER_SCRIPT}`);
 
-            // console.log(htmlStringWithErrorHandler)
             editor_output_elem!.srcdoc = htmlStringWithErrorHandler;
 
         });
@@ -126,14 +130,12 @@ export default function App({ onUpdateWeight, getCurrentTrainingDataType }: Edit
             }
             if (e.data.type === 'iframe-error') {
                 const info = e.data;
-                // const { lineno, colno } = convert_iframe_error_position(info.lineno, info.colno);
-                // set_error_in_iframe({ lineno, colno, message: info.message })
                 if (statusRef.current) {
                     statusRef.current.textContent = `error L${info.lineno}:C${info.colno}`;
                 }
-            } else if (e.data.type === 'weights') {
-                const values = e.data.values as Record<string, number>;
-                onUpdateWeight(values);
+            } else if (e.data.type === updateHandler?.messageType) {
+                const data = e.data.values as Record<string, number>;
+                updateHandler?.onUpdate(data);
                 /*
                 editorに書くテスト用コード
                 window.parent.postMessage({type:'weights',values:{ wIn1: 3.1, wOut1: -2.4 }});
@@ -161,69 +163,7 @@ export default function App({ onUpdateWeight, getCurrentTrainingDataType }: Edit
                         enabled: false,
                     },
                 }}
-                defaultValue={`
-// ニューロン数、バイアス有無、学習率、学習回数
-const [units,useBias,LearningRate,epochs] = [2,true,0.05,500];
-
-import {trainingData} from "trainingData.js";
-async function getDataset(data) {
-  if (data === undefined) {
-    return {};
-  }
-  const series = {
-    x: data.map((e) => e[0]),
-    y: data.map((e) => e[1]),
-  };
-  return {
-    values: data.map((e) => ({ x: e[0], y: e[1] })),
-    ranges: {
-      x: [Math.min(...series.x) - 0.5, Math.max(...series.x) + 0.5],
-      y: [Math.min(...series.y) - 2.5, Math.max(...series.y) + 2.5],
-    },
-    tensors: {
-      x: tf.tensor2d(series.x, [data.length, 1]),
-      y: tf.tensor2d(series.y, [data.length, 1]),
-    },
-  };
-}
-function postWeights(){
-    const weights = {
-        w1: model.layers[0].getWeights()[0].dataSync(),
-        b: model.layers[0].getWeights()[1]?.dataSync(),
-        w2: model.layers[1].getWeights()[0].dataSync(),
-    };
-    const weightValues = {
-        wIn0: weights.w1[0],
-        wIn1: weights.w1[1] || 0,
-        wOut0: weights.w2[0],
-        wOut1: weights.w2[1] || 0,
-        b0: weights.b?.[0] || 0,
-        b1: weights.b?.[1] || 0,
-    }
-    window.parent.postMessage({type:'weights',values:weightValues});
-}
-const { values, ranges, tensors } = await getDataset(trainingData);
-const model = tf.sequential();
-model.add(tf.layers.dense({
-    inputShape:[1], activation:"tanh",
-    units,useBias,
-}),);
-model.add(tf.layers.dense({ units: 1, useBias: false }));
-model.compile({
-    optimizer: tf.train.adam(LearningRate),
-    loss: tf.losses.meanSquaredError,
-    metrics: ["mse"],
-});
-const history = await model.fit(tensors.x,tensors.y,{
-    batchSize: tensors.x.shape[0],shuffle:true,
-    epochs,
-    callbacks:{
-        onEpochEnd: ()=>{
-            postWeights();
-        }
-    },
-});
-`}
+                defaultValue={defaultValue}
             />
             <button className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
                 onClick={e => onStartLearn()}>AIが学習する</button>
