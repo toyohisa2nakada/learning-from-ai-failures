@@ -4,6 +4,8 @@ import Editor from "@/components/Editor";
 import NeuralNetGraph from "@/components/NeuralNetGraph";
 
 
+import ImageComparisonPanel from "@/app/chapter/image-generation/components/ImageComparisonPanel";
+
 export default function Home() {
   console.log("Editor HOME")
   // 手動で重みの変更
@@ -84,9 +86,9 @@ export default function Home() {
               {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor />}
             </div>
 
-            {/* グラフの可算結果 */}
+            {/* 画像生成結果 */}
             <div id="graph-area-bottom" className="right-panel">
-
+              <ImageComparisonPanel />
             </div>
           </div>
         </div>
