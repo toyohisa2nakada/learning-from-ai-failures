@@ -2,6 +2,8 @@
 import Image from "next/image";
 
 export default function Home() {
+  function onChangeWeight(id: string, value: string): void {
+  }
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
       {/* 指令エリア */}
@@ -17,7 +19,7 @@ export default function Home() {
 
             {/* パラメータ設定 */}
             <div id="parameter-control" className="left-panel h-[200px] overflow-y-auto">
-              {Array(4).fill(({ borderColor: "border-gray-800", sliderColor: "accent-gray-400" })).map((e, i) => (
+              {Array(8).fill(({ borderColor: "border-gray-800", sliderColor: "accent-gray-400" })).map((e, i) => (
                 <div className={`${e.borderColor} mb-2 p-2 border-1 rounded-lg`} key={i}>
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xs font-semibold">{`グラフ${i + 1}: `}<span className="text-gray-300">y =
