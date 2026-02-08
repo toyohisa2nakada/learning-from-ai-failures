@@ -49,14 +49,16 @@ export default function ImageComparisonPanel() {
 
     return (
         <div className="flex flex-col h-full w-full gap-2">
+            <div className="text-base font-semibold m-0">データセットと予測結果</div>
+
             {/* Header / Controls */}
-            <div className="flex justify-between px-4 py-2">
+            <div className="flex justify-between px-1 py-2">
                 <div className="flex flex-col gap-1 w-[40%]">
                     <label className="text-xs text-slate-400">画像1</label>
                     <select
                         value={image1}
                         onChange={handleImage1Change}
-                        className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="bg-slate-800 border border-slate-700 rounded px-1 py-1 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
                         {PRESET_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                         <option value="file">ファイルから読み込む...</option>
@@ -75,7 +77,7 @@ export default function ImageComparisonPanel() {
                     <select
                         value={image2}
                         onChange={handleImage2Change}
-                        className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="bg-slate-800 border border-slate-700 rounded px-1 py-1 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
                         {PRESET_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                         <option value="file">ファイルから読み込む...</option>
@@ -93,19 +95,19 @@ export default function ImageComparisonPanel() {
             {/* Visualization Canvas */}
             <div className="flex-1 flex flex-col items-center justify-center p-4 relative">
                 {/* Top Row: Target Images - Updated to yellow as requested */}
-                <div className="flex justify-between w-full mb-4 px-8">
+                <div className="flex justify-between w-full mb-4 px-1">
                     {/* Image 1 Box */}
-                    <div className="w-16 h-16 bg-yellow-300 border-2 border-slate-900 rounded flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
+                    <div className="w-9 h-9 bg-yellow-300 border-2 border-slate-900 rounded flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
                         {renderImageContent(image1, customImage1)}
                     </div>
                     {/* Image 2 Box */}
-                    <div className="w-16 h-16 bg-yellow-300 border-2 border-slate-900 rounded flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
+                    <div className="w-9 h-9 bg-yellow-300 border-2 border-slate-900 rounded flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
                         {renderImageContent(image2, customImage2)}
                     </div>
                 </div>
 
                 {/* Middle Row: Interpolation Steps */}
-                <div className="flex justify-between w-full mb-6 px-8 items-end h-16">
+                <div className="flex justify-between w-full mb-6 px-1 items-end h-16">
                     {/* 6 Intermediate Boxes */}
                     {Array(6).fill(0).map((_, i) => (
                         <div key={i} className="w-8 h-8 bg-sky-900/40 border border-sky-500/30 rounded shadow-inner" />
@@ -113,7 +115,7 @@ export default function ImageComparisonPanel() {
                 </div>
 
                 {/* Bottom Row: Axis */}
-                <div className="w-full px-4 relative">
+                <div className="w-full px-1 relative">
                     {/* Axis Line */}
                     <div className="h-0.5 w-full bg-slate-500 relative flex items-center">
                         <div className="absolute right-0 -mr-1 w-2 h-2 border-t-2 border-r-2 border-slate-500 transform rotate-45"></div>

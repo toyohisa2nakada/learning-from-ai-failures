@@ -5,6 +5,7 @@ import NeuralNetGraph from "@/components/NeuralNetGraph";
 
 
 import ImageComparisonPanel from "@/app/chapter/image-generation/components/ImageComparisonPanel";
+import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
 
 export default function Home() {
   console.log("Editor HOME")
@@ -33,7 +34,9 @@ export default function Home() {
           <div id="upper-panel" className="upper-panel items-start">
 
             {/* パラメータ設定 */}
-            <div id="parameter-control" className="left-panel h-[200px] overflow-y-auto">
+            <div id="parameter-control" className="left-panel h-[180px] overflow-y-auto">
+              <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
+
               {Array(8).fill(({ borderColor: "border-gray-800", sliderColor: "accent-gray-400" })).map((e, i) => (
                 <div className={`${e.borderColor} mb-2 p-2 border-1 rounded-lg`} key={i}>
                   <div className="flex items-center justify-between mb-2">
@@ -67,6 +70,7 @@ export default function Home() {
 
             {/* 個別のグラフ */}
             <div id="graph-area-top" className="right-panel">
+              <ImageGridPanel />
             </div>
 
           </div>
