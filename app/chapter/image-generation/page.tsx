@@ -1,9 +1,24 @@
 "use client"
-import Image from "next/image";
+import { useEffect, useState } from "react";
+import Editor from "@/components/Editor";
+import NeuralNetGraph from "@/components/NeuralNetGraph";
+
 
 export default function Home() {
+  // 手動で重みの変更
   function onChangeWeight(id: string, value: string): void {
   }
+  // 手動学習、自動（プログラム）学習の切り替え (manual / programming)
+  const [programmingMode, setProgrammingMode] = useState('manual');
+  const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
+  const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
+  // iframe->カスタムタグのEditor->経由で受け取るプログラムでアップデートした重み
+  function onUpdateWeight(weights: Record<string, number>) {
+  }
+
+  useEffect(() => {
+  });
+
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
       {/* 指令エリア */}
@@ -61,6 +76,14 @@ export default function Home() {
 
             {/* ニューラルネットワークの構造 */}
             <div id="drawing-area" className="left-panel relative">
+              <div className="flex justify-between items-center">
+                <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
+                <div className="text-xs flex">
+                  <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造(手動で学習)</button>
+                  <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>自動(プログラムで学習)</button>
+                </div>
+              </div>
+              {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor onUpdateWeight={onUpdateWeight} />}
             </div>
 
             {/* グラフの可算結果 */}
