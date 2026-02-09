@@ -222,7 +222,7 @@ export default function Home() {
       elem.setAttribute('aria-expanded', 'false');
     } else {
       contentDiv?.classList.remove('hidden');
-      if (toggleIcon) toggleIcon.style.transform = 'rotate(90deg)'; // 90度回転させて下向きにする
+      if (toggleIcon) toggleIcon.style.transform = 'rotate(90deg)';
       elem.setAttribute('aria-expanded', 'true');
     }
   }
@@ -233,7 +233,7 @@ export default function Home() {
   }
 
   // 手動学習、自動（プログラム）学習の切り替え (manual / programming)
-  const [programmingMode, setProgrammingMode] = useState('manual');
+  const [programmingMode, setProgrammingMode] = useState('programming');
   const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
   const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
   // iframe->カスタムタグのEditor->経由で受け取るプログラムでアップデートした重み
