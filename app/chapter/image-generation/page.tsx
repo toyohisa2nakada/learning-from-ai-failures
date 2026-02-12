@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import Editor from "@/components/Editor";
 import NeuralNetGraph from "@/components/NeuralNetGraph";
 
-
 import ImageComparisonPanel from "@/app/chapter/image-generation/components/ImageComparisonPanel";
 import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
 
