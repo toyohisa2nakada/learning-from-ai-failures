@@ -79,7 +79,7 @@ function convert_iframe_error_position(lineno: string, colno: string) {
     */
 
 
-interface EditorProps {
+interface JsEditorProps {
     defaultValue?: string;
     updateHandler?: {
         onUpdate: (data: Record<string, number>) => void;
@@ -88,7 +88,7 @@ interface EditorProps {
     externalScripts?: Record<string, string> | (() => Record<string, string>);
 }
 
-export default function App({ defaultValue = "", updateHandler, externalScripts = {} }: EditorProps) {
+export default function JsEditor({ defaultValue = "", updateHandler, externalScripts = {} }: JsEditorProps) {
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
     const workerRef = useRef<Worker | null>(null);
     const workerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

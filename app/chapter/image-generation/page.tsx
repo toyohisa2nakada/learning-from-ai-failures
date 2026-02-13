@@ -1,10 +1,11 @@
 "use client"
-import { useEffect, useState } from "react";
-import Editor from "@/components/Editor";
+import { useState } from "react";
+import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/components/NeuralNetGraph";
 
 import DatasetView from "@/app/chapter/image-generation/components/DatasetView";
 import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
+import { type ImageOption } from "@/components/ImageSelect";
 
 export default function Home() {
   console.log("Editor HOME")
@@ -16,8 +17,28 @@ export default function Home() {
   const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
   const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
 
-  useEffect(() => {
-  });
+  const [imageSelected0, setImageSelected0] = useState<ImageOption | undefined>();
+  const [imageSelected1, setImageSelected1] = useState<ImageOption | undefined>();
+
+  const handleImageSelectChange = (index: 0 | 1, newValue: ImageOption) => {
+    if (index === 0) setImageSelected0(newValue);
+    else setImageSelected1(newValue);
+  };
+
+  function getCurrentTrainingData() {
+    if (imageSelected0 === undefined || imageSelected1 === undefined) return null;
+    return [imageSelected0, imageSelected1].map(sel => {
+      const canvas = sel.icon as HTMLCanvasElement;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return null;
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      return {
+        width: canvas.width,
+        height: canvas.height,
+        data: Array.from(imageData.data) // RGBA values as normal array
+      };
+    });
+  }
 
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
@@ -87,25 +108,32 @@ export default function Home() {
                 </div>
               </div>
               {programmingMode === 'manual' ? <NeuralNetGraph /> :
-                <Editor
+                <JsEditor
+                  updateHandler={{ onUpdate: () => { }, messageType: 'weights' }}
+                  externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
                   defaultValue={`
-function getTensor(canvases) {
-    const n = canvases.length;
+const config = {
+    units: 8,
+    useBias: true,
+    learningRate: 0.005,
+    epochs: 500,
+};
+function getTensor(dataArray) {
+    const n = dataArray.length;
     const imgArray = [];
-    canvases.forEach(canvas => {
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    dataArray.forEach(item => {
         const rgbData = [];
-        for (let i = 0; i < imageData.data.length; i += 4) {
-            rgbData.push(imageData.data[i + 0] / 255);
-            rgbData.push(imageData.data[i + 1] / 255);
-            rgbData.push(imageData.data[i + 2] / 255);
+        // item.data is [R, G, B, A, R, G, B, A, ...]
+        for (let i = 0; i < item.data.length; i += 4) {
+            rgbData.push(item.data[i + 0] / 255);
+            rgbData.push(item.data[i + 1] / 255);
+            rgbData.push(item.data[i + 2] / 255);
         }
         imgArray.push(rgbData);
     });
     return {
         x: tf.tensor2d([...Array(n).keys()], [n, 1]),
-        y: tf.tensor2d(imgArray, [n, canvases[0].width * canvases[0].height * 3]),
+        y: tf.tensor2d(imgArray, [n, dataArray[0].width * dataArray[0].height * 3]),
     };
 }
 function buildModel({ outputShape }) {
@@ -133,23 +161,38 @@ function buildModel({ outputShape }) {
 }
 
 
-const tensors = getTensor(pokemonData.map(e => e.canvas));
+import {trainingData} from "trainingData.js";
+console.log(trainingData);
+const tensors = getTensor(trainingData);
 const model = buildModel({ outputShape: tensors.y.shape[1] });
 
-const batchSize = tensors.x.shape[0];
-const epochs = config.epochs;
+function postWeights(){
+}
+
 const history = await model.fit(tensors.x, tensors.y, {
-    batchSize,
-    epochs,
+    batchSize: tensors.x.shape[0],
+    epochs: config.epochs,
     shuffle: true,
-});`}
+    callbacks:{
+      onEpochEnd: ()=>{
+        postWeights();
+      }
+    },
+});
+console.log("history",history);
+console.log("last loss",history.history.loss[history.history.loss.length - 1]);
+`}
                 />
               }
             </div>
 
             {/* 画像生成結果 */}
             <div id="graph-area-bottom" className="right-panel">
-              <DatasetView />
+              <DatasetView
+                imageSelected0={imageSelected0}
+                imageSelected1={imageSelected1}
+                onImageSelectChange={handleImageSelectChange}
+              />
             </div>
           </div>
         </div>

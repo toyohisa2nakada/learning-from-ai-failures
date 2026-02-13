@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState, useRef } from "react";
 import { Chart, ChartConfiguration } from 'chart.js/auto';
-import Editor from "@/components/Editor";
+import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/components/NeuralNetGraph";
 
 
@@ -167,7 +167,7 @@ export default function Home() {
     sumChart.current!.update();
     updateMSEDisplay(currentScatterPoints.current, weights.current);
   }
-  function getCurrentTrainingDataType(): [number, number][] {
+  function getCurrentTrainingData(): [number, number][] {
     return TARGET_POINT_DATASETS[trainingDataTypeRef.current!.selectedOptions[0].text];
   }
 
@@ -458,9 +458,9 @@ export default function Home() {
                 </div>
               </div>
               {programmingMode === 'manual' ? <NeuralNetGraph /> :
-                <Editor
+                <JsEditor
                   updateHandler={{ onUpdate: onUpdateWeight, messageType: 'weights' }}
-                  externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingDataType())};` })}
+                  externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
                   defaultValue={`
 // ニューロン数、バイアス有無、学習率、学習回数
 const [units,useBias,LearningRate,epochs] = [2,true,0.05,500];

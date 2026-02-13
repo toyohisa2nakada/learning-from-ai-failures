@@ -1,6 +1,6 @@
 "use client";
 
-import Editor from "@/components/Editor";
+import Editor from "@/components/JsEditor";
 
 export default function Home() {
   return (

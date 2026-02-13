@@ -9,6 +9,12 @@ type PokemonData = {
     name: string;
     canvas: HTMLCanvasElement;
 }
+
+export interface DatasetViewProps {
+    imageSelected0: ImageOption | undefined;
+    imageSelected1: ImageOption | undefined;
+    onImageSelectChange: (index: 0 | 1, newValue: ImageOption) => void;
+}
 const LEARNING_DATA_SIZE: [number, number] = [48, 48];
 
 async function getMat(url: string, learningDataSize: [number, number]): Promise<any | null> {
@@ -61,13 +67,11 @@ async function getPokemonData(pokemonNames: string[], learningDataSize: [number,
             canvas,
         });
     }
-    console.log("poikemonData", pokemonData);
     return pokemonData;
 }
 
 
-export default function DatasetView() {
-
+export default function DatasetView({ imageSelected0, imageSelected1, onImageSelectChange }: DatasetViewProps) {
     const [imageOptions, setImageOptions] = useState<ImageOption[]>([]);
     useEffect(() => {
         (async () => {
@@ -82,8 +86,6 @@ export default function DatasetView() {
         })();
     }, [])
 
-    const [imageSelected0, setImageSelected0] = useState(imageOptions[0]);
-    const [imageSelected1, setImageSelected1] = useState(imageOptions[1]);
     const [activeSelector, setActiveSelector] = useState<0 | 1 | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -95,8 +97,7 @@ export default function DatasetView() {
             setActiveSelector(index);
             fileInputRef.current?.click();
         } else {
-            if (index === 0) setImageSelected0(newValue);
-            else setImageSelected1(newValue);
+            onImageSelectChange(index, newValue);
         }
     };
 
@@ -124,8 +125,7 @@ export default function DatasetView() {
                     label: file.name,
                     icon: canvas
                 };
-                if (activeSelector === 0) setImageSelected0(newOption);
-                else setImageSelected1(newOption);
+                onImageSelectChange(activeSelector, newOption);
             };
             reader.readAsDataURL(file);
         }
