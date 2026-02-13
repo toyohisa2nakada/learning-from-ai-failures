@@ -1,10 +1,23 @@
 "use client";
 import { useRef, useEffect } from "react";
-import Editor from "@monaco-editor/react";
+import Editor, { loader, OnMount } from "@monaco-editor/react";
 import { editor } from "monaco-editor";
 import { inlineHTML } from "@/lib/monaco-utils/inlineHTML";
 import { removeLineComments } from "@/lib/monaco-utils/removeLineComments";
 import { buildImportmap } from "@/lib/monaco-utils/buildImportmap";
+
+// Monaco Editorの重複読み込みを防ぐためのグローバルフラグ
+declare global {
+    interface Window {
+        __MONACO_EDITOR_INITIALIZED__?: boolean;
+    }
+}
+
+// loader設定を一度だけ実行
+if (typeof window !== 'undefined' && !window.__MONACO_EDITOR_INITIALIZED__) {
+    loader.config({ monaco: undefined });
+    window.__MONACO_EDITOR_INITIALIZED__ = true;
+}
 
 
 // iframeに追加するエラー発生時に親ウィンドウにメッセージを送信するコード

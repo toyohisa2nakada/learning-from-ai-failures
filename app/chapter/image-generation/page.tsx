@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Editor from "@/components/Editor";
 import NeuralNetGraph from "@/components/NeuralNetGraph";
 
-import ImageComparisonPanel from "@/app/chapter/image-generation/components/ImageComparisonPanel";
+import DatasetView from "@/app/chapter/image-generation/components/DatasetView";
 import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
 
 export default function Home() {
@@ -86,12 +86,70 @@ export default function Home() {
                   <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>自動(プログラムで学習)</button>
                 </div>
               </div>
-              {programmingMode === 'manual' ? <NeuralNetGraph /> : <Editor />}
+              {programmingMode === 'manual' ? <NeuralNetGraph /> :
+                <Editor
+                  defaultValue={`
+function getTensor(canvases) {
+    const n = canvases.length;
+    const imgArray = [];
+    canvases.forEach(canvas => {
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const rgbData = [];
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            rgbData.push(imageData.data[i + 0] / 255);
+            rgbData.push(imageData.data[i + 1] / 255);
+            rgbData.push(imageData.data[i + 2] / 255);
+        }
+        imgArray.push(rgbData);
+    });
+    return {
+        x: tf.tensor2d([...Array(n).keys()], [n, 1]),
+        y: tf.tensor2d(imgArray, [n, canvases[0].width * canvases[0].height * 3]),
+    };
+}
+function buildModel({ outputShape }) {
+    const model = tf.sequential();
+    model.add(
+        tf.layers.dense({
+            inputShape: [1],
+            units: config.units,
+            useBias: config.useBias,
+            activation: "tanh",
+        }),
+    );
+    model.add(
+        tf.layers.dense({
+            units: outputShape,
+            useBias: false,
+        }),
+    );
+    model.compile({
+        optimizer: tf.train.adam(config.learningRate),
+        loss: tf.losses.meanSquaredError,
+        metrics: ["mse"],
+    });
+    return model;
+}
+
+
+const tensors = getTensor(pokemonData.map(e => e.canvas));
+const model = buildModel({ outputShape: tensors.y.shape[1] });
+
+const batchSize = tensors.x.shape[0];
+const epochs = config.epochs;
+const history = await model.fit(tensors.x, tensors.y, {
+    batchSize,
+    epochs,
+    shuffle: true,
+});`}
+                />
+              }
             </div>
 
             {/* 画像生成結果 */}
             <div id="graph-area-bottom" className="right-panel">
-              <ImageComparisonPanel />
+              <DatasetView />
             </div>
           </div>
         </div>

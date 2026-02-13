@@ -1,58 +1,94 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
-import ImageSelect from "@/components/ImageSelect";
+import React, { useState, useRef, useEffect } from 'react';
+import { ImageSelect, type ImageOption } from "@/components/ImageSelect";
+declare const cv: any;
 
-const PRESET_OPTIONS = ['A', 'B', 'C', 'D', 'E'];
+type PokemonData = {
+    id: number;
+    name: string;
+    canvas: HTMLCanvasElement;
+}
+const LEARNING_DATA_SIZE: [number, number] = [48, 48];
 
-export default function ImageComparisonPanel() {
+async function getMat(url: string, learningDataSize: [number, number]): Promise<any | null> {
+    return new Promise((resolve, reject) => {
+        const imgElem = document.createElement("img");
+        imgElem.crossOrigin = "Anonymous";
+        imgElem.src = url;
+        imgElem.onload = () => {
+            const canvas = document.createElement("canvas");
+            if (canvas === null) {
+                reject();
+                return;
+            }
+            canvas.width = imgElem.width;
+            canvas.height = imgElem.height;
+            const ctx = canvas.getContext("2d");
+            if (ctx === null) {
+                reject();
+                return;
+            }
+            ctx.drawImage(imgElem, 0, 0);
+            const src = cv.imread(canvas);
+            const dst = new cv.Mat();
+            cv.resize(src, dst, new cv.Size(...learningDataSize), 0, 0, cv.INTER_AREA);
+            src.delete();
+            resolve(dst);
+        }
+    })
+}
+async function getPokemonData(pokemonNames: string[], learningDataSize: [number, number]): Promise<PokemonData[]> {
+    const pokemonData = [];
+    for (let pokemonName of pokemonNames) {
+        const pokemon = await fetch(
+            `https://pokeapi.co/api/v2/pokemon/${pokemonName}`,
+        ).then((r) => r.json());
 
-    const imageOptions = [
-        { value: 'pikachu', label: 'ピカチュウ', icon: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png' },
-        { value: 'raichu', label: 'ライチュウ', icon: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/26.png' },
-    ];
+        const spriteMat = await getMat(pokemon.sprites.front_default, learningDataSize);
+        if (spriteMat === null) {
+            console.error("Failed to get sprite mat for pokemon", pokemonName);
+            continue;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.id = pokemonName;
+        cv.imshow(canvas, spriteMat);
+        spriteMat.delete();
+
+        pokemonData.push({
+            id: pokemon.id,
+            name: pokemon.name,
+            canvas,
+        });
+    }
+    console.log("poikemonData", pokemonData);
+    return pokemonData;
+}
+
+
+export default function DatasetView() {
+
+    const [imageOptions, setImageOptions] = useState<ImageOption[]>([]);
+    useEffect(() => {
+        (async () => {
+            const pokemonData = await getPokemonData(['pikachu', 'raichu'], LEARNING_DATA_SIZE)
+            setImageOptions(pokemonData.map((pokemon) => {
+                return {
+                    value: pokemon.name,
+                    label: pokemon.name,
+                    icon: pokemon.canvas,
+                };
+            }));
+        })();
+    }, [])
+
     const [imageSelected0, setImageSelected0] = useState(imageOptions[0]);
     const [imageSelected1, setImageSelected1] = useState(imageOptions[1]);
     const [activeSelector, setActiveSelector] = useState<0 | 1 | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const FILE_OPTION = { value: 'file', label: 'ファイルから読み込む...', icon: '' }; // Icon can be empty or a placeholder
+    const FILE_OPTION: ImageOption = { value: 'file', label: 'ファイルから読み込む...', icon: null }; // Icon can be empty or a placeholder
     const optionsWithFile = [...imageOptions, FILE_OPTION];
-
-    const [image1, setImage1] = useState(PRESET_OPTIONS[0]);
-    const [image2, setImage2] = useState(PRESET_OPTIONS[1]);
-    const [customImage1, setCustomImage1] = useState<string | null>(null);
-    const [customImage2, setCustomImage2] = useState<string | null>(null);
-
-    const fileInput1Ref = useRef<HTMLInputElement>(null);
-    const fileInput2Ref = useRef<HTMLInputElement>(null);
-
-    const handleImage1Change = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value;
-        setImage1(value);
-        if (value === 'file' && fileInput1Ref.current) {
-            fileInput1Ref.current.click();
-        }
-    };
-
-    const handleImage2Change = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value;
-        setImage2(value);
-        if (value === 'file' && fileInput2Ref.current) {
-            fileInput2Ref.current.click();
-        }
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setCustomImage: (url: string) => void) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setCustomImage(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
 
     const handleImageSelectChange = (index: 0 | 1, newValue: any) => {
         if (newValue.value === 'file') {
@@ -68,11 +104,25 @@ export default function ImageComparisonPanel() {
         const file = e.target.files?.[0];
         if (file && activeSelector !== null) {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                const newOption = {
+            reader.onloadend = async () => {
+                const dataUrl = reader.result as string;
+
+                // getMat でリサイズ
+                const mat = await getMat(dataUrl, LEARNING_DATA_SIZE);
+                if (mat === null) {
+                    console.error("Failed to load image from file");
+                    return;
+                }
+
+                // Canvasに描画
+                const canvas = document.createElement('canvas');
+                cv.imshow(canvas, mat);
+                mat.delete();
+
+                const newOption: ImageOption = {
                     value: 'custom',
                     label: file.name,
-                    icon: reader.result as string
+                    icon: canvas
                 };
                 if (activeSelector === 0) setImageSelected0(newOption);
                 else setImageSelected1(newOption);
@@ -82,8 +132,6 @@ export default function ImageComparisonPanel() {
         // Reset input so same file can be selected again if needed
         if (e.target) e.target.value = '';
     };
-
-    // ... existing code ...
 
     return (
         <div className="flex flex-col h-full w-full gap-2">

@@ -76,7 +76,7 @@ export default function Header() {
                             ? "opacity-30 cursor-not-allowed"
                             : "hover:bg-slate-800"
                         }`}
-                >前へ</Link>
+                >後ろへ</Link>
                 <Link href={isLast ? "#" : `${basePath}/${CHAPTERS[currentIndex + 1]}`}
                     onClick={(e) => isLast && e.preventDefault()} // JSでクリックを完全防止
                     title={isLast ? "次のセクションはありません" : ""}

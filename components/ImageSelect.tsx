@@ -6,7 +6,7 @@ import Select, { SingleValue, ActionMeta } from 'react-select';
 export interface ImageOption {
     value: string;
     label: string;
-    icon: string;
+    icon: HTMLCanvasElement | null;
 }
 
 // 2. コンポーネントのPropsの型定義
@@ -17,7 +17,7 @@ interface ImageSelectProps {
     placeholder?: string;
 }
 
-export default function ImageSelect({
+export function ImageSelect({
     options,
     value,
     onChange,
@@ -66,16 +66,23 @@ export default function ImageSelect({
                     fontSize: '0.75rem', // text-xs
                 }),
             }}
-            formatOptionLabel={(item: ImageOption) => (
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <img
-                        src={item.icon}
-                        alt={item.label}
-                        style={{ width: 24, height: 24, marginRight: 10, borderRadius: '4px' }}
-                    />
-                    <span>{item.label}</span>
-                </div>
-            )}
+            formatOptionLabel={(item: ImageOption) => {
+                // HTMLCanvasElementの場合はData URLに変換
+                const iconSrc = item.icon instanceof HTMLCanvasElement
+                    ? item.icon.toDataURL()
+                    : (item.icon || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <img
+                            src={iconSrc}
+                            alt={item.label}
+                            style={{ width: 24, height: 24, marginRight: 10, borderRadius: '4px' }}
+                        />
+                        <span>{item.label}</span>
+                    </div>
+                );
+            }}
         />
     );
 }
