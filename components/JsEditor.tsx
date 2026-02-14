@@ -82,7 +82,7 @@ function convert_iframe_error_position(lineno: string, colno: string) {
 interface JsEditorProps {
     defaultValue?: string;
     updateHandler?: {
-        onUpdate: (data: Record<string, number>) => void;
+        onUpdate: (data: Record<string, number | number[]>) => void;
         messageType: string;
     };
     externalScripts?: Record<string, string> | (() => Record<string, string>);
@@ -147,7 +147,7 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
                     statusRef.current.textContent = `error L${info.lineno}:C${info.colno}`;
                 }
             } else if (e.data.type === updateHandler?.messageType) {
-                const data = e.data.values as Record<string, number>;
+                const data = e.data.values as Record<string, number | number[]>;
                 updateHandler?.onUpdate(data);
                 /*
                 editorに書くテスト用コード

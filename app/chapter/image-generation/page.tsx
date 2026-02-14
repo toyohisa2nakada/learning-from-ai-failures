@@ -1,9 +1,9 @@
 "use client"
-import { useState } from "react";
+import { useState, useRef } from "react";
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/components/NeuralNetGraph";
 
-import DatasetView from "@/app/chapter/image-generation/components/DatasetView";
+import DatasetView, { type DatasetViewHandle } from "@/app/chapter/image-generation/components/DatasetView";
 import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
 import { type ImageOption } from "@/components/ImageSelect";
 
@@ -19,6 +19,7 @@ export default function Home() {
 
   const [imageSelected0, setImageSelected0] = useState<ImageOption | undefined>();
   const [imageSelected1, setImageSelected1] = useState<ImageOption | undefined>();
+  const datasetViewRef = useRef<DatasetViewHandle>(null);
 
   const handleImageSelectChange = (index: 0 | 1, newValue: ImageOption) => {
     if (index === 0) setImageSelected0(newValue);
@@ -38,6 +39,10 @@ export default function Home() {
         data: Array.from(imageData.data) // RGBA values as normal array
       };
     });
+  }
+
+  function onImageUpdate(images: Record<string, any>) {
+    datasetViewRef.current?.updatePredictions(images as Record<string, number[]>);
   }
 
   return (
@@ -109,14 +114,14 @@ export default function Home() {
               </div>
               {programmingMode === 'manual' ? <NeuralNetGraph /> :
                 <JsEditor
-                  updateHandler={{ onUpdate: () => { }, messageType: 'weights' }}
+                  updateHandler={{ onUpdate: onImageUpdate, messageType: 'images' }}
                   externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
                   defaultValue={`
 const config = {
     units: 8,
     useBias: true,
     learningRate: 0.005,
-    epochs: 500,
+    epochs: 10,
 };
 function getTensor(dataArray) {
     const n = dataArray.length;
@@ -167,6 +172,11 @@ const tensors = getTensor(trainingData);
 const model = buildModel({ outputShape: tensors.y.shape[1] });
 
 function postWeights(){
+  const range = [0.0,0.2,0.4,0.6,0.8,1.0];
+  const images = model.predict(tf.tensor2d(range, [range.length, 1])).arraySync();
+  console.log("images",images);
+  const values = range.reduce((a,e,i)=>({...a,[e]:images[i]}),{})
+  window.parent.postMessage({type:'images',values});
 }
 
 const history = await model.fit(tensors.x, tensors.y, {
@@ -189,6 +199,7 @@ console.log("last loss",history.history.loss[history.history.loss.length - 1]);
             {/* 画像生成結果 */}
             <div id="graph-area-bottom" className="right-panel">
               <DatasetView
+                ref={datasetViewRef}
                 imageSelected0={imageSelected0}
                 imageSelected1={imageSelected1}
                 onImageSelectChange={handleImageSelectChange}

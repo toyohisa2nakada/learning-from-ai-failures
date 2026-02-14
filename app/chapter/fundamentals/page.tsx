@@ -237,8 +237,8 @@ export default function Home() {
   const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
   const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
   // iframe->カスタムタグのEditor->経由で受け取るプログラムでアップデートした重み
-  function onUpdateWeight(weights: Record<string, number>) {
-    onChangeWeightAll(weights)
+  function onUpdateWeight(weights: Record<string, any>) {
+    onChangeWeightAll(weights as Record<string, number>)
   }
 
 

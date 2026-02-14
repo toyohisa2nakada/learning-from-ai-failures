@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useImperativeHandle } from 'react';
 import { ImageSelect, type ImageOption } from "@/components/ImageSelect";
 declare const cv: any;
 
@@ -15,6 +15,11 @@ export interface DatasetViewProps {
     imageSelected1: ImageOption | undefined;
     onImageSelectChange: (index: 0 | 1, newValue: ImageOption) => void;
 }
+
+export interface DatasetViewHandle {
+    updatePredictions: (images: Record<string, number[]>) => void;
+}
+
 const LEARNING_DATA_SIZE: [number, number] = [48, 48];
 
 async function getMat(url: string, learningDataSize: [number, number]): Promise<any | null> {
@@ -71,18 +76,49 @@ async function getPokemonData(pokemonNames: string[], learningDataSize: [number,
 }
 
 
-export default function DatasetView({ imageSelected0, imageSelected1, onImageSelectChange }: DatasetViewProps) {
+const DatasetView = React.forwardRef<DatasetViewHandle, DatasetViewProps>(({ imageSelected0, imageSelected1, onImageSelectChange }, ref) => {
     const [imageOptions, setImageOptions] = useState<ImageOption[]>([]);
+    const canvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
+
+    useImperativeHandle(ref, () => ({
+        updatePredictions: (images: Record<string, number[]>) => {
+            Object.entries(images).forEach(([key, data]) => {
+                const normalizedKey = parseFloat(key).toFixed(1);
+                const canvas = canvasRefs.current[normalizedKey];
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+
+                const [width, height] = LEARNING_DATA_SIZE;
+                const imageData = ctx.createImageData(width, height);
+                for (let i = 0; i < data.length / 3; i++) {
+                    imageData.data[i * 4 + 0] = Math.round(data[i * 3 + 0] * 255);
+                    imageData.data[i * 4 + 1] = Math.round(data[i * 3 + 1] * 255);
+                    imageData.data[i * 4 + 2] = Math.round(data[i * 3 + 2] * 255);
+                    imageData.data[i * 4 + 3] = 255;
+                }
+                ctx.putImageData(imageData, 0, 0);
+            });
+        }
+    }));
+
     useEffect(() => {
         (async () => {
-            const pokemonData = await getPokemonData(['pikachu', 'raichu'], LEARNING_DATA_SIZE)
-            setImageOptions(pokemonData.map((pokemon) => {
+            // ポケモン名は以下の英語名称を使用する。
+            // https://wiki.xn--rckteqa2e.com/wiki/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%81%AE%E5%A4%96%E5%9B%BD%E8%AA%9E%E5%90%8D%E4%B8%80%E8%A6%A7
+            const pokemonData = await getPokemonData(['pikachu', 'raichu', 'bulbasaur', 'mewtwo'], LEARNING_DATA_SIZE)
+            const options = pokemonData.map((pokemon) => {
                 return {
                     value: pokemon.name,
                     label: pokemon.name,
                     icon: pokemon.canvas,
                 };
-            }));
+            });
+            setImageOptions(options);
+            if (options.length >= 2) {
+                onImageSelectChange(0, options[0]);
+                onImageSelectChange(1, options[1]);
+            }
         })();
     }, [])
 
@@ -165,8 +201,15 @@ export default function DatasetView({ imageSelected0, imageSelected1, onImageSel
                 {/* Middle Row: Interpolation Steps */}
                 <div className="flex justify-between w-full mb-6 px-1 items-end h-16">
                     {/* 6 Intermediate Boxes */}
-                    {Array(6).fill(0).map((_, i) => (
-                        <div key={i} className="w-8 h-8 bg-sky-900/40 border border-sky-500/30 rounded shadow-inner" />
+                    {['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'].map((val, i) => (
+                        <div key={i} className="w-8 h-8 bg-sky-900/40 border border-sky-500/30 rounded shadow-inner overflow-hidden">
+                            <canvas
+                                ref={el => { canvasRefs.current[val] = el; }}
+                                width={LEARNING_DATA_SIZE[0]}
+                                height={LEARNING_DATA_SIZE[1]}
+                                className="w-full h-full"
+                            />
+                        </div>
                     ))}
                 </div>
 
@@ -189,4 +232,8 @@ export default function DatasetView({ imageSelected0, imageSelected1, onImageSel
             </div>
         </div>
     );
-}
+});
+
+DatasetView.displayName = 'DatasetView';
+
+export default DatasetView;
