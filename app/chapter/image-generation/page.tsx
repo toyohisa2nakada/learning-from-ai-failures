@@ -1,7 +1,7 @@
 "use client"
 import { useState, useRef } from "react";
 import JsEditor from "@/components/JsEditor";
-import NeuralNetGraph from "@/components/NeuralNetGraph";
+import NeuralNetGraph from "@/app/chapter/image-generation/components/NeuralNetGraph";
 
 import DatasetView, { type DatasetViewHandle } from "@/app/chapter/image-generation/components/DatasetView";
 import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
@@ -121,7 +121,7 @@ const config = {
     units: 8,
     useBias: true,
     learningRate: 0.005,
-    epochs: 10,
+    epochs: 500,
 };
 function getTensor(dataArray) {
     const n = dataArray.length;
@@ -170,6 +170,7 @@ import {trainingData} from "trainingData.js";
 console.log(trainingData);
 const tensors = getTensor(trainingData);
 const model = buildModel({ outputShape: tensors.y.shape[1] });
+console.log("model",model.summary());
 
 function postWeights(){
   const range = [0.0,0.2,0.4,0.6,0.8,1.0];

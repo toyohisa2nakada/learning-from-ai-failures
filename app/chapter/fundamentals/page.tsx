@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Chart, ChartConfiguration } from 'chart.js/auto';
 import JsEditor from "@/components/JsEditor";
-import NeuralNetGraph from "@/components/NeuralNetGraph";
+import NeuralNetGraph from "@/app/chapter/fundamentals/components/NeuralNetGraph";
 
 
 // グラフ描画の設定
