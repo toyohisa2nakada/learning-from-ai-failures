@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/image-generation/components/NeuralNetGraph";
 
-import DatasetView, { type DatasetViewHandle } from "@/app/chapter/image-generation/components/DatasetView";
+import DatasetView, { type DatasetViewHandle } from "@/app/chapter/image-generation/components/DatasetPanel";
 import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
 import { type ImageOption } from "@/components/ImageSelect";
 
@@ -20,6 +20,7 @@ export default function Home() {
   const [imageSelected0, setImageSelected0] = useState<ImageOption | undefined>();
   const [imageSelected1, setImageSelected1] = useState<ImageOption | undefined>();
   const datasetViewRef = useRef<DatasetViewHandle>(null);
+  const imageGridPanelRef = useRef<any>(null);
 
   const handleImageSelectChange = (index: 0 | 1, newValue: ImageOption) => {
     if (index === 0) setImageSelected0(newValue);
@@ -43,6 +44,10 @@ export default function Home() {
 
   function onImageUpdate(images: Record<string, any>) {
     datasetViewRef.current?.updatePredictions(images as Record<string, number[]>);
+  }
+
+  function onIntermediateImageUpdate(images: Record<string, any>) {
+    imageGridPanelRef.current?.updateImages(images as Record<string, number[][]>);
   }
 
   return (
@@ -95,7 +100,7 @@ export default function Home() {
 
             {/* 個別のグラフ */}
             <div id="graph-area-top" className="right-panel">
-              <ImageGridPanel />
+              <ImageGridPanel ref={imageGridPanelRef} />
             </div>
 
           </div>
@@ -114,7 +119,10 @@ export default function Home() {
               </div>
               {programmingMode === 'manual' ? <NeuralNetGraph /> :
                 <JsEditor
-                  updateHandler={{ onUpdate: onImageUpdate, messageType: 'images' }}
+                  updateHandler={[
+                    { onUpdate: onImageUpdate, messageType: 'images' },
+                    { onUpdate: onIntermediateImageUpdate, messageType: 'intermediateImages' }
+                  ]}
                   externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
                   defaultValue={`
 const config = {
@@ -143,14 +151,14 @@ function getTensor(dataArray) {
 }
 function buildModel({ outputShape }) {
     const model = tf.sequential();
-    model.add(
-        tf.layers.dense({
-            inputShape: [1],
-            units: config.units,
-            useBias: config.useBias,
-            activation: "tanh",
-        }),
-    );
+    const intermediateLayer = tf.layers.dense({
+      inputShape: [1],
+      units: config.units,
+      useBias: config.useBias,
+      activation: "tanh",
+      name: 'intermediate',
+    });
+    model.add(intermediateLayer);
     model.add(
         tf.layers.dense({
             units: outputShape,
@@ -162,22 +170,52 @@ function buildModel({ outputShape }) {
         loss: tf.losses.meanSquaredError,
         metrics: ["mse"],
     });
-    return model;
+
+    const intermediateModel = tf.model({
+        inputs: model.input,
+        outputs: intermediateLayer.output,
+    });
+
+    return [model,intermediateModel];
 }
 
-
 import {trainingData} from "trainingData.js";
-console.log(trainingData);
 const tensors = getTensor(trainingData);
-const model = buildModel({ outputShape: tensors.y.shape[1] });
-console.log("model",model.summary());
+const [model,intermediateModel] = buildModel({ outputShape: tensors.y.shape[1] });
+model.summary();
+intermediateModel.summary();
 
 function postWeights(){
   const range = [0.0,0.2,0.4,0.6,0.8,1.0];
-  const images = model.predict(tf.tensor2d(range, [range.length, 1])).arraySync();
-  console.log("images",images);
-  const values = range.reduce((a,e,i)=>({...a,[e]:images[i]}),{})
-  window.parent.postMessage({type:'images',values});
+  const input = tf.tensor2d(range, [range.length, 1]); // [6,1]
+
+  {
+    const images = model.predict(input).arraySync();
+    const values = range.reduce((a,e,i)=>({...a,[e]:images[i]}),{})
+    window.parent.postMessage({type:'images',values});
+  }
+
+  {
+    const intermediateOutput = intermediateModel.predict(input); // [6,8]
+    const expanded = intermediateOutput.expandDims(2); // [6, 8, 1]
+
+    const outputLayer = model.layers[1];
+    const weights = outputLayer.getWeights()[0]; // [8,6912]
+    const weightsExpanded = weights.expandDims(0); // [1, 8, 6912]
+
+    const images = expanded.mul(weightsExpanded).arraySync(); // [6, 8, 6912]
+    const values = range.reduce((a,e,i)=>({...a,[e]:images[i]}),{});
+    window.parent.postMessage({type:'intermediateImages',values});
+
+    // test
+    {
+      // const summed = finalOutput.sum(1); // [6, 6912]
+      // const matmulResult = intermediateOutput.matMul(weights); // [6, 6912]
+      // console.log("summed",summed.arraySync());
+      // console.log("matmulResult",matmulResult.arraySync());
+    }
+  }
+
 }
 
 const history = await model.fit(tensors.x, tensors.y, {

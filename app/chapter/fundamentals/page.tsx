@@ -459,7 +459,7 @@ export default function Home() {
               </div>
               {programmingMode === 'manual' ? <NeuralNetGraph /> :
                 <JsEditor
-                  updateHandler={{ onUpdate: onUpdateWeight, messageType: 'weights' }}
+                  updateHandler={[{ onUpdate: onUpdateWeight, messageType: 'weights' }]}
                   externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
                   defaultValue={`
 // ニューロン数、バイアス有無、学習率、学習回数

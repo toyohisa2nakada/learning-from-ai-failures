@@ -202,7 +202,7 @@ const DatasetView = React.forwardRef<DatasetViewHandle, DatasetViewProps>(({ ima
                 <div className="flex justify-between w-full mb-6 px-1 items-end h-16">
                     {/* 6 Intermediate Boxes */}
                     {['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'].map((val, i) => (
-                        <div key={i} className="w-8 h-8 bg-sky-900/40 border border-sky-500/30 rounded shadow-inner overflow-hidden">
+                        <div key={i} className="bg-sky-900/40 border border-sky-500/30 rounded shadow-inner overflow-hidden">
                             <canvas
                                 ref={el => { canvasRefs.current[val] = el; }}
                                 width={LEARNING_DATA_SIZE[0]}

@@ -9,6 +9,7 @@ export default function NeuralNetGraph() {
             <svg width="90%" style={{ height: "auto", margin: "1rem 1rem" }} viewBox="-5 -5 511 240" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="25" cy="85" r="25" fill="none" stroke="white" />
                 <circle cx="25" cy="180" r="20" fill="none" stroke="white" />
+
                 <path d="M306 20C306 25.5228 301.523 30 296 30C290.477 30 286 25.5228 286 20C286 14.4772 290.477 10 296 10C301.523 10 306 14.4772 306 20Z" fill="#DD0000" />
                 <path d="M296 37.32C296 42.8428 291.523 47.32 286 47.32C280.477 47.32 276 42.8428 276 37.32C276 31.7972 280.477 27.32 286 27.32C291.523 27.32 296 31.7972 296 37.32Z" fill="#00DD00" />
                 <path d="M316 37.32C316 42.8428 311.523 47.32 306 47.32C300.477 47.32 296 42.8428 296 37.32C296 31.7972 300.477 27.32 306 27.32C311.523 27.32 316 31.7972 316 37.32Z" fill="#0000DD" />
@@ -27,40 +28,50 @@ export default function NeuralNetGraph() {
                 <path d="M306 60C306 65.5228 301.523 70 296 70C290.477 70 286 65.5228 286 60C286 54.4772 290.477 50 296 50C301.523 50 306 54.4772 306 60Z" fill="#DD0000" />
                 <path d="M296 77.32C296 82.8428 291.523 87.32 286 87.32C280.477 87.32 276 82.8428 276 77.32C276 71.7972 280.477 67.32 286 67.32C291.523 67.32 296 71.7972 296 77.32Z" fill="#00DD00" />
                 <path d="M316 77.32C316 82.8428 311.523 87.32 306 87.32C300.477 87.32 296 82.8428 296 77.32C296 71.7972 300.477 67.32 306 67.32C311.523 67.32 316 71.7972 316 77.32Z" fill="#0000DD" />
+
                 <line x1="296.5" y1="90" x2="296.5" y2="170" stroke="white" strokeDasharray="2 2" />
                 <line x1="481.5" y1="60" x2="481.5" y2="170" stroke="white" strokeDasharray="2 2" />
                 <line x1="456" y1="30.5" x2="376" y2="30.5" stroke="white" strokeDasharray="2 2" />
                 <line x1="456" y1="202.5" x2="326" y2="202.5" stroke="white" strokeDasharray="2 2" />
-                <path d="M50 85L109.753 31.5655" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M50 85L110 85" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M50 85L180 196" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M50 85L180 145" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+
                 <path d="M160 22L270 29" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M160 205L270 29" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M160 205L273 202" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M160 205L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M160 145L270 29" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M160 145L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M160 145L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M160 22L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M160 22L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
                 <path d="M160 85L270 29" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
                 <path d="M160 85L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
                 <path d="M160 85L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M160 22L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M230 25L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M230 85L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M230 145L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M230 205L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M160 22L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M230 205L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M230 205L270 30" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M230 145L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M230 85L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M230 85L270 30" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M230 22L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M230 22L270 30" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M160 145L270 29" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M160 145L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M160 145L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M160 205L270 29" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M160 205L273 202" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M160 205L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+
+                <path d="M200 22L270 30" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M200 22L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M200 25L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+
+                <path d="M200 85L270 30" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M200 85L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M200 85L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+
+                <path d="M200 145L270 30" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M200 145L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M200 145L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+
+                <path d="M200 205L270 30" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M200 205L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M200 205L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+
+                <path d="M50 85L109 31" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M50 85L110 85" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M50 85L180 196" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M50 85L180 145" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
                 <path d="M50 85L184 75" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
                 <path d="M50 85L177 25" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
                 <path d="M50 85L110 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+                <path d="M50 85L110 142" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
+
                 <path d="M45 180L110 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
                 <path d="M45 180L180 32" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
                 <path d="M45 180L180 90" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
@@ -69,16 +80,15 @@ export default function NeuralNetGraph() {
                 <path d="M45 180L110 32" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
                 <path d="M45 180L110 85" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
                 <path d="M45 180L110 142" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                <path d="M50 85L110 142" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
 
                 <circle cx="135" cy="85" r="25" fill="#0A2C47" stroke="#ADD8E6" />
                 <circle cx="135" cy="25" r="25" fill="#0A2C47" stroke="#ADD8E6" />
                 <circle cx="135" cy="205" r="25" fill="#0A2C47" stroke="#ADD8E6" />
                 <circle cx="135" cy="145" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-                <circle cx="205" cy="85" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-                <circle cx="205" cy="25" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-                <circle cx="205" cy="205" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-                <circle cx="205" cy="145" r="25" fill="#0A2C47" stroke="#ADD8E6" />
+                <circle cx="175" cy="85" r="25" fill="#0A2C47" stroke="#ADD8E6" />
+                <circle cx="175" cy="25" r="25" fill="#0A2C47" stroke="#ADD8E6" />
+                <circle cx="175" cy="205" r="25" fill="#0A2C47" stroke="#ADD8E6" />
+                <circle cx="175" cy="145" r="25" fill="#0A2C47" stroke="#ADD8E6" />
 
                 <text x="408" y="22" fill="white" fontSize="12" fontWeight="normal">48</text>
                 <text x="283" y="139" fill="white" fontSize="12" fontWeight="normal">48</text>
@@ -86,14 +96,14 @@ export default function NeuralNetGraph() {
                 <text x="15" y="85" fill="white" fontSize="12" fontWeight="normal">入力</text>
                 <text x="15" y="180" fill="white" fontSize="12" fontWeight="normal">バイアス</text>
 
-                <text x="108" y="25" fill="white" fontSize="12" fontWeight="normal">ニューロン1</text>
-                <text x="108" y="85" fill="white" fontSize="12" fontWeight="normal">ニューロン2</text>
-                <text x="108" y="145" fill="white" fontSize="12" fontWeight="normal">ニューロン3</text>
-                <text x="108" y="205" fill="white" fontSize="12" fontWeight="normal">ニューロン4</text>
-                <text x="178" y="25" fill="white" fontSize="12" fontWeight="normal">ニューロン5</text>
-                <text x="178" y="85" fill="white" fontSize="12" fontWeight="normal">ニューロン6</text>
-                <text x="178" y="145" fill="white" fontSize="12" fontWeight="normal">ニューロン7</text>
-                <text x="178" y="205" fill="white" fontSize="12" fontWeight="normal">ニューロン8</text>
+                <text x="108" y="20" fill="white" fontSize="12" fontWeight="normal">ニューロン1</text>
+                <text x="108" y="80" fill="white" fontSize="12" fontWeight="normal">ニューロン2</text>
+                <text x="108" y="140" fill="white" fontSize="12" fontWeight="normal">ニューロン3</text>
+                <text x="108" y="200" fill="white" fontSize="12" fontWeight="normal">ニューロン4</text>
+                <text x="148" y="35" fill="white" fontSize="12" fontWeight="normal">ニューロン5</text>
+                <text x="148" y="95" fill="white" fontSize="12" fontWeight="normal">ニューロン6</text>
+                <text x="148" y="155" fill="white" fontSize="12" fontWeight="normal">ニューロン7</text>
+                <text x="148" y="215" fill="white" fontSize="12" fontWeight="normal">ニューロン8</text>
 
                 <text x="320" y="120" fill="white" fontSize="12" fontWeight="normal">32(W) * 32(H) * 3(RGB)</text>
             </svg>
