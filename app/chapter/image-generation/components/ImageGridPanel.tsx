@@ -55,30 +55,37 @@ const ImageGridPanel = forwardRef<ImageGridPanelHandle>((_, ref) => {
             {/* Grid Canvas */}
             <div className="flex-1 flex flex-col items-center justify-center p-2 relative">
                 <div className="flex flex-col w-full h-full justify-between items-center">
-                    {/* 4 Rows */}
+                    <div className="grid grid-cols-6 gap-x-1 w-full px-2">
+                        {stepValues.map((_, groupIndex) => (
+                            <div key={`header-${groupIndex}`} className="flex gap-0 justify-center text-[10px] font-bold">
+                                <div className="w-[50px] text-center text-amber-500/80">+</div >
+                                <div className="w-[50px] text-center text-sky-500/80">-</div>
+                            </div>
+                        ))}
+                    </div>
                     {Array(rows).fill(0).map((_, rowIndex) => (
-                        <div key={`row-${rowIndex}`} className="flex justify-between w-full px-4">
-                            {/* 6 Groups (Steps) */}
+                        <div key={`row-${rowIndex}`} className="grid grid-cols-6 gap-x-1 w-full px-2">
                             {stepValues.map((val, groupIndex) => (
-                                <div key={`group-${rowIndex}-${groupIndex}`} className="flex gap-0">
-                                    {/* 2 Columns per group (Unit i and Unit i+4) */}
-                                    {/* w-4 h-4 */}
-                                    <div className="bg-sky-900/40 border border-sky-500/30 rounded-sm shadow-sm overflow-hidden">
-                                        <canvas
-                                            ref={el => { canvasRefs.current[`${rowIndex}-${val}`] = el; }}
-                                            width={LEARNING_DATA_SIZE[0]}
-                                            height={LEARNING_DATA_SIZE[1]}
-                                            className="w-full h-full object-cover"
-                                        />
+                                <div key={`group-${rowIndex}-${groupIndex}`} className="flex gap-0 justify-center">
+                                    <div className="flex flex-col items-center">
+                                        <div className="bg-sky-900/40 border border-amber-500/30 rounded-sm shadow-sm overflow-hidden">
+                                            <canvas
+                                                ref={el => { canvasRefs.current[`${rowIndex}-${val}`] = el; }}
+                                                width={LEARNING_DATA_SIZE[0]}
+                                                height={LEARNING_DATA_SIZE[1]}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
                                     </div>
-                                    {/* w-4 h-4 */}
-                                    <div className="bg-sky-900/40 border border-sky-500/30 rounded-sm shadow-sm overflow-hidden">
-                                        <canvas
-                                            ref={el => { canvasRefs.current[`${rowIndex + 4}-${val}`] = el; }}
-                                            width={LEARNING_DATA_SIZE[0]}
-                                            height={LEARNING_DATA_SIZE[1]}
-                                            className="w-full h-full object-cover"
-                                        />
+                                    <div className="flex flex-col items-center">
+                                        <div className="bg-sky-900/40 border border-sky-500/30 rounded-sm shadow-sm overflow-hidden">
+                                            <canvas
+                                                ref={el => { canvasRefs.current[`${rowIndex + 4}-${val}`] = el; }}
+                                                width={LEARNING_DATA_SIZE[0]}
+                                                height={LEARNING_DATA_SIZE[1]}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -86,14 +93,13 @@ const ImageGridPanel = forwardRef<ImageGridPanelHandle>((_, ref) => {
                     ))}
                 </div>
 
-                {/* Axis Row */}
-                <div className="w-full px-4 pt-2 relative">
+                < div className="w-full px-4 pt-2 relative" >
                     <div className="h-0.5 w-full bg-slate-500 relative flex items-center">
                         <div className="absolute right-0 -mr-1 w-2 h-2 border-t-2 border-r-2 border-slate-500 transform rotate-45"></div>
                     </div>
-                    <div className="flex justify-between text-[10px] text-slate-400 mt-1 font-mono px-1">
+                    <div className="grid grid-cols-6 gap-x-2 text-[10px] text-slate-400 mt-1 font-mono px-2">
                         {stepValues.map(val => (
-                            <span key={val} className="w-4 text-center">{val}</span>
+                            <span key={val} className="text-center">{val}</span>
                         ))}
                     </div>
                 </div>

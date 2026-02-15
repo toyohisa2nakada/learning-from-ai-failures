@@ -463,7 +463,12 @@ export default function Home() {
                   externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
                   defaultValue={`
 // ニューロン数、バイアス有無、学習率、学習回数
-const [units,useBias,LearningRate,epochs] = [2,true,0.05,500];
+const config = {
+  units: 2,
+  useBias: true,
+  LearningRate: 0.05,
+  epochs: 500,
+};
 
 import {trainingData} from "trainingData.js";
 async function getDataset(data) {
@@ -506,17 +511,17 @@ const { values, ranges, tensors } = await getDataset(trainingData);
 const model = tf.sequential();
 model.add(tf.layers.dense({
     inputShape:[1], activation:"tanh",
-    units,useBias,
+    units:config.units,useBias:config.useBias,
 }),);
 model.add(tf.layers.dense({ units: 1, useBias: false }));
 model.compile({
-    optimizer: tf.train.adam(LearningRate),
+    optimizer: tf.train.adam(config.LearningRate),
     loss: tf.losses.meanSquaredError,
     metrics: ["mse"],
 });
 const history = await model.fit(tensors.x,tensors.y,{
     batchSize: tensors.x.shape[0],shuffle:true,
-    epochs,
+    epochs:config.epochs,
     callbacks:{
         onEpochEnd: ()=>{
             postWeights();
