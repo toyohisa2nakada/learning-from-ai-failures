@@ -178,6 +178,7 @@ function buildModel({ outputShape }) {
 }
 
 import {trainingData} from "trainingData.js";
+import {updateProgress} from "updateProgress.js";
 const tensors = getTensor(trainingData);
 const [model,intermediateModel] = buildModel({ outputShape: tensors.y.shape[1] });
 model.summary();
@@ -222,8 +223,9 @@ const history = await model.fit(tensors.x, tensors.y, {
     shuffle: true,
     callbacks:{
       // onTrainEnd, onEpochEnd
-      onEpochEnd: ()=>{
+      onEpochEnd: (epoch)=>{
         postWeights();
+        updateProgress(100 * (epoch+1) / config.epochs);
       }
     },
 });

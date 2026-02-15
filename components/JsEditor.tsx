@@ -93,6 +93,7 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
     const workerRef = useRef<Worker | null>(null);
     const workerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const statusRef = useRef<HTMLDivElement>(null);
+    const progressRef = useRef<HTMLSpanElement>(null);
 
     function injectImportmap(htmlString: string, files: Record<string, string>): string {
         // '//'のコメントをとる
@@ -121,9 +122,16 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
             clearTimeout(workerTimerRef.current!);
             console.log("Workerによる実行チェックOK");
 
+            // JsEditor標準の外部js
+            const jsEditorExtJsCode = {
+                'updateProgress.js': `export function updateProgress(percent) {
+                    window.parent.postMessage({type:'updateProgress',values:percent});}`
+            }
+
             // 外部のjsファイルをimportmapで取り込む。この例の場合、import {testtemp01234} from 'test.js'; で使用する。
             // const extJsCode = { 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingDataType())};` };
-            const extJsCode = externalScripts instanceof Function ? externalScripts() : externalScripts;
+            const extJsCode = { ...jsEditorExtJsCode, ...(externalScripts instanceof Function ? externalScripts() : externalScripts) };
+
 
             const htmlString = injectImportmap(HTML_TEMPLATE.replace('__EDITOR_VALUE__', editorRef.current?.getValue() || ""), extJsCode);
             const { html: inlined_html, insertions } = inlineHTML(htmlString, extJsCode);
@@ -133,6 +141,9 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
 
         });
         workerRef.current.postMessage({ code: editorRef.current!.getValue() })
+    }
+
+    function updateProgress(percent: number) {
     }
 
     // iframeからのメッセージの取得
@@ -147,6 +158,11 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
                     statusRef.current.textContent = `error L${info.lineno}:C${info.colno}`;
                 }
                 return;
+            } else if (e.data.type === 'updateProgress') {
+                const percent = e.data.values as number;
+                if (progressRef.current) {
+                    progressRef.current.style.width = `${percent}%`;
+                }
             }
             updateHandler?.forEach(handler => {
                 if (e.data.type === handler.messageType) {
@@ -182,8 +198,11 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
                 }}
                 defaultValue={defaultValue}
             />
-            <button className="px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
-                onClick={e => onStartLearn()}>AIが学習する</button>
+            <button className="relative overflow-hidden px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
+                onClick={e => onStartLearn()}>
+                <span ref={progressRef} className="absolute left-0 top-0 h-full bg-blue-600/40 w-0" />
+                <span className="relative z-10">AIが学習する</span>
+            </button>
             <div ref={statusRef} className="overflow-hidden whitespace-nowrap">
             </div>
         </>

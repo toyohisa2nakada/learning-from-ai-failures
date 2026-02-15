@@ -471,6 +471,7 @@ const config = {
 };
 
 import {trainingData} from "trainingData.js";
+import {updateProgress} from "updateProgress.js";
 async function getDataset(data) {
   if (data === undefined) {
     return {};
@@ -523,8 +524,9 @@ const history = await model.fit(tensors.x,tensors.y,{
     batchSize: tensors.x.shape[0],shuffle:true,
     epochs:config.epochs,
     callbacks:{
-        onEpochEnd: ()=>{
+        onEpochEnd: (epoch,logs)=>{
             postWeights();
+            updateProgress(100 * (epoch+1) / config.epochs);
         }
     },
 });`}
