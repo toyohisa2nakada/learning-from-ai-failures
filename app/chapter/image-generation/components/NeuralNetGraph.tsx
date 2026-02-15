@@ -105,7 +105,7 @@ export default function NeuralNetGraph() {
                 <text x="148" y="155" fill="white" fontSize="12" fontWeight="normal">ニューロン7</text>
                 <text x="148" y="215" fill="white" fontSize="12" fontWeight="normal">ニューロン8</text>
 
-                <text x="320" y="120" fill="white" fontSize="12" fontWeight="normal">32(W) * 32(H) * 3(RGB)</text>
+                <text x="320" y="120" fill="white" fontSize="12" fontWeight="normal">48(W) * 48(H) * 3(RGB)</text>
             </svg>
 
             <div>

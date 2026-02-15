@@ -64,29 +64,27 @@ export default function Home() {
           <div id="upper-panel" className="upper-panel items-start">
 
             {/* パラメータ設定 */}
-            <div id="parameter-control" className="left-panel h-[180px] overflow-y-auto">
+            {/* h-[240px] */}
+            <div id="parameter-control" className="left-panel overflow-y-auto">
               <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
 
-              {Array(8).fill(({ borderColor: "border-gray-800", sliderColor: "accent-gray-400" })).map((e, i) => (
+              {/* {Array(8).fill(({ borderColor: "border-gray-800", sliderColor: "accent-gray-400" })).map((e, i) => (
                 <div className={`${e.borderColor} mb-2 p-2 border-1 rounded-lg`} key={i}>
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xs font-semibold">{`グラフ${i + 1}: `}<span className="text-gray-300">y =
                       w2 * tanh(w1 * x + b)</span></h3>
                   </div>
-
                   <div className="flex gap-3">
                     <div className="w-1/3 pr-1">
                       <input type="range" id={`wIn${i}`} min="-10.0" max="10.0" step="0.001"
                         className={`w-full h-[6px] cursor-pointer my-[3px] ${e.sliderColor}`}
                         onChange={e => onChangeWeight(e.target.id, e.target.value)} />
                     </div>
-
                     <div className="w-1/3 pr-1">
                       <input type="range" id={`b${i}`} min="-10.0" max="10.0" step="0.001"
                         className={`w-full h-[6px] cursor-pointer my-[3px] ${e.sliderColor}`}
                         onChange={e => onChangeWeight(e.target.id, e.target.value)} />
                     </div>
-
                     <div className="w-1/3 pr-1">
                       <input type="range" id={`wOut${i}`} min="-10.0" max="10.0" step="0.001"
                         className={`w-full h-[6px] cursor-pointer my-[3px] ${e.sliderColor}`}
@@ -94,7 +92,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              ))}
+              ))} */}
 
             </div>
 
@@ -208,12 +206,12 @@ function postWeights(){
     window.parent.postMessage({type:'intermediateImages',values});
 
     // test
-    {
-      // const summed = finalOutput.sum(1); // [6, 6912]
-      // const matmulResult = intermediateOutput.matMul(weights); // [6, 6912]
-      // console.log("summed",summed.arraySync());
-      // console.log("matmulResult",matmulResult.arraySync());
-    }
+    // {
+    //   const summed = expanded.mul(weightsExpanded).sum(1); // [6, 6912]
+    //   const matmulResult = intermediateOutput.matMul(weights); // [6, 6912]
+    //   console.log("summed",summed.arraySync());
+    //   console.log("matmulResult",matmulResult.arraySync());
+    // }
   }
 
 }
