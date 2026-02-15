@@ -16,24 +16,33 @@ const ImageGridPanel = forwardRef<ImageGridPanelHandle>((_, ref) => {
 
     useImperativeHandle(ref, () => ({
         updateImages: (images: Record<string, number[][]>) => {
+
             Object.entries(images).forEach(([key, unitDataArray]) => {
                 const normalizedKey = parseFloat(key).toFixed(1);
                 unitDataArray.forEach((data, unitIndex) => {
-                    const canvas = canvasRefs.current[`${unitIndex}-${normalizedKey}`];
-                    if (!canvas) return;
-                    const ctx = canvas.getContext('2d');
-                    if (!ctx) return;
+                    for (let p = 0; p < 2; p += 1) {
+                        const canvas = canvasRefs.current[`${unitIndex + p * 4}-${normalizedKey}`];
+                        if (!canvas) return;
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) return;
 
-                    const [width, height] = LEARNING_DATA_SIZE;
-                    const imageData = ctx.createImageData(width, height);
+                        const [width, height] = LEARNING_DATA_SIZE;
+                        const imageData = ctx.createImageData(width, height);
 
-                    for (let i = 0; i < data.length / 3; i++) {
-                        imageData.data[i * 4 + 0] = Math.round(data[i * 3 + 0] * 255);
-                        imageData.data[i * 4 + 1] = Math.round(data[i * 3 + 1] * 255);
-                        imageData.data[i * 4 + 2] = Math.round(data[i * 3 + 2] * 255);
-                        imageData.data[i * 4 + 3] = 255;
+                        for (let i = 0; i < data.length / 3; i++) {
+                            imageData.data[i * 4 + 0] = Math.round(data[i * 3 + 0] * 255 * (p == 0 ? 1 : -1));
+                            imageData.data[i * 4 + 1] = Math.round(data[i * 3 + 1] * 255 * (p == 0 ? 1 : -1));
+                            imageData.data[i * 4 + 2] = Math.round(data[i * 3 + 2] * 255 * (p == 0 ? 1 : -1));
+                            imageData.data[i * 4 + 3] = 255;
+
+                            // debug
+                            // if (data[i * 3 + 0] < -0.01 && data[i * 3 + 1] < -0.01 && data[i * 3 + 2] < -0.01) {
+                            //     console.log(normalizedKey, unitIndex);
+                            // }
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+
                     }
-                    ctx.putImageData(imageData, 0, 0);
                 });
             });
         }

@@ -96,6 +96,10 @@ const DatasetView = React.forwardRef<DatasetViewHandle, DatasetViewProps>(({ ima
                     imageData.data[i * 4 + 1] = Math.round(data[i * 3 + 1] * 255);
                     imageData.data[i * 4 + 2] = Math.round(data[i * 3 + 2] * 255);
                     imageData.data[i * 4 + 3] = 255;
+
+                    // if (data[i * 3 + 0] < -0.1 || data[i * 3 + 1] < -0.1 || data[i * 3 + 2] < -0.1) {
+                    //     console.log(normalizedKey);
+                    // }
                 }
                 ctx.putImageData(imageData, 0, 0);
             });

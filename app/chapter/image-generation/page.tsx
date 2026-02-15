@@ -124,9 +124,9 @@ export default function Home() {
                   externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
                   defaultValue={`
 const config = {
-    units: 8,
+    units: 4,
     useBias: true,
-    learningRate: 0.005,
+    learningRate: 0.05,
     epochs: 500,
 };
 function getTensor(dataArray) {
@@ -221,6 +221,7 @@ const history = await model.fit(tensors.x, tensors.y, {
     epochs: config.epochs,
     shuffle: true,
     callbacks:{
+      // onTrainEnd, onEpochEnd
       onEpochEnd: ()=>{
         postWeights();
       }
