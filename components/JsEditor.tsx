@@ -86,9 +86,10 @@ interface JsEditorProps {
         messageType: string;
     }[];
     externalScripts?: Record<string, string> | (() => Record<string, string>);
+    path?: string;
 }
 
-export default function JsEditor({ defaultValue = "", updateHandler, externalScripts = {} }: JsEditorProps) {
+export default function JsEditor({ defaultValue = "", updateHandler, externalScripts = {}, path }: JsEditorProps) {
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
     const workerRef = useRef<Worker | null>(null);
     const workerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -143,6 +144,13 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
         workerRef.current.postMessage({ code: editorRef.current!.getValue() })
     }
 
+    // defaultValueが変更された場合にエディタの内容を更新する
+    useEffect(() => {
+        if (editorRef.current && defaultValue && editorRef.current.getValue() === "") {
+            editorRef.current.setValue(defaultValue);
+        }
+    }, [defaultValue]);
+
     function updateProgress(percent: number) {
     }
 
@@ -196,6 +204,7 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
                         enabled: false,
                     },
                 }}
+                path={path}
                 defaultValue={defaultValue}
             />
             <button className="relative overflow-hidden px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"

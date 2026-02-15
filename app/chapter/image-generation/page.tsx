@@ -1,11 +1,14 @@
 "use client"
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/image-generation/components/NeuralNetGraph";
 
 import DatasetView, { type DatasetViewHandle } from "@/app/chapter/image-generation/components/DatasetPanel";
 import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
 import { type ImageOption } from "@/components/ImageSelect";
+
+const MAIN_SCRIPT_NAME = 'main.js';
+const SCRIPT_BASE_PATH = '/chapter/image-generation/';
 
 export default function Home() {
   console.log("Editor HOME")
@@ -49,6 +52,19 @@ export default function Home() {
   function onIntermediateImageUpdate(images: Record<string, any>) {
     imageGridPanelRef.current?.updateImages(images as Record<string, number[][]>);
   }
+
+  const [mainScript, setMainScript] = useState<string>('');
+  useEffect(() => {
+    fetch(`${SCRIPT_BASE_PATH}${MAIN_SCRIPT_NAME}`)
+      .then(res => res.text())
+      .then(text => {
+        setMainScript(text);
+      })
+      .catch(error => {
+        console.error('Error loading scripts:', error);
+      })
+
+  }, []);
 
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
@@ -111,127 +127,19 @@ export default function Home() {
               <div className="flex justify-between items-center">
                 <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
                 <div className="text-xs flex">
-                  <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造(手動で学習)</button>
-                  <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>自動(プログラムで学習)</button>
+                  <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造</button>
+                  <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>プログラム</button>
                 </div>
               </div>
               {programmingMode === 'manual' ? <NeuralNetGraph /> :
                 <JsEditor
+                  path="chapter/image-generation/main.js"
                   updateHandler={[
                     { onUpdate: onImageUpdate, messageType: 'images' },
                     { onUpdate: onIntermediateImageUpdate, messageType: 'intermediateImages' }
                   ]}
                   externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
-                  defaultValue={`
-const config = {
-    units: 4,
-    useBias: true,
-    learningRate: 0.05,
-    epochs: 500,
-};
-function getTensor(dataArray) {
-    const n = dataArray.length;
-    const imgArray = [];
-    dataArray.forEach(item => {
-        const rgbData = [];
-        // item.data is [R, G, B, A, R, G, B, A, ...]
-        for (let i = 0; i < item.data.length; i += 4) {
-            rgbData.push(item.data[i + 0] / 255);
-            rgbData.push(item.data[i + 1] / 255);
-            rgbData.push(item.data[i + 2] / 255);
-        }
-        imgArray.push(rgbData);
-    });
-    return {
-        x: tf.tensor2d([...Array(n).keys()], [n, 1]),
-        y: tf.tensor2d(imgArray, [n, dataArray[0].width * dataArray[0].height * 3]),
-    };
-}
-function buildModel({ outputShape }) {
-    const model = tf.sequential();
-    const intermediateLayer = tf.layers.dense({
-      inputShape: [1],
-      units: config.units,
-      useBias: config.useBias,
-      activation: "tanh",
-      name: 'intermediate',
-    });
-    model.add(intermediateLayer);
-    model.add(
-        tf.layers.dense({
-            units: outputShape,
-            useBias: false,
-        }),
-    );
-    model.compile({
-        optimizer: tf.train.adam(config.learningRate),
-        loss: tf.losses.meanSquaredError,
-        metrics: ["mse"],
-    });
-
-    const intermediateModel = tf.model({
-        inputs: model.input,
-        outputs: intermediateLayer.output,
-    });
-
-    return [model,intermediateModel];
-}
-
-import {trainingData} from "trainingData.js";
-import {updateProgress} from "updateProgress.js";
-const tensors = getTensor(trainingData);
-const [model,intermediateModel] = buildModel({ outputShape: tensors.y.shape[1] });
-model.summary();
-intermediateModel.summary();
-
-function postWeights(){
-  const range = [0.0,0.2,0.4,0.6,0.8,1.0];
-  const input = tf.tensor2d(range, [range.length, 1]); // [6,1]
-
-  {
-    const images = model.predict(input).arraySync();
-    const values = range.reduce((a,e,i)=>({...a,[e]:images[i]}),{})
-    window.parent.postMessage({type:'images',values});
-  }
-
-  {
-    const intermediateOutput = intermediateModel.predict(input); // [6,8]
-    const expanded = intermediateOutput.expandDims(2); // [6, 8, 1]
-
-    const outputLayer = model.layers[1];
-    const weights = outputLayer.getWeights()[0]; // [8,6912]
-    const weightsExpanded = weights.expandDims(0); // [1, 8, 6912]
-
-    const images = expanded.mul(weightsExpanded).arraySync(); // [6, 8, 6912]
-    const values = range.reduce((a,e,i)=>({...a,[e]:images[i]}),{});
-    window.parent.postMessage({type:'intermediateImages',values});
-
-    // test
-    // {
-    //   const summed = expanded.mul(weightsExpanded).sum(1); // [6, 6912]
-    //   const matmulResult = intermediateOutput.matMul(weights); // [6, 6912]
-    //   console.log("summed",summed.arraySync());
-    //   console.log("matmulResult",matmulResult.arraySync());
-    // }
-  }
-
-}
-
-const history = await model.fit(tensors.x, tensors.y, {
-    batchSize: tensors.x.shape[0],
-    epochs: config.epochs,
-    shuffle: true,
-    callbacks:{
-      // onTrainEnd, onEpochEnd
-      onEpochEnd: (epoch)=>{
-        postWeights();
-        updateProgress(100 * (epoch+1) / config.epochs);
-      }
-    },
-});
-console.log("history",history);
-console.log("last loss",history.history.loss[history.history.loss.length - 1]);
-`}
+                  defaultValue={mainScript}
                 />
               }
             </div>
