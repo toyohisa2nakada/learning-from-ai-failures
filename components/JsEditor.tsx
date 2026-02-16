@@ -190,30 +190,34 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
     }, []);
 
     return (
-        <>
+        <div className="flex flex-col h-full gap-2 overflow-hidden">
             <iframe className="editor_output" style={{ display: "none" }}></iframe>
-            <Editor
-                height="80%"
-                defaultLanguage="javascript"
-                theme="vs-dark"
-                onMount={(editor, monaco) => editorRef.current = editor}
-                options={{
-                    fontSize: 12,
-                    lineNumbers: 'off',
-                    minimap: {
-                        enabled: false,
-                    },
-                }}
-                path={path}
-                defaultValue={defaultValue}
-            />
-            <button className="relative overflow-hidden px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
-                onClick={e => onStartLearn()}>
-                <span ref={progressRef} className="absolute left-0 top-0 h-full bg-blue-600/40 w-0" />
-                <span className="relative z-10">AIが学習する</span>
-            </button>
-            <div ref={statusRef} className="overflow-hidden whitespace-nowrap">
+            <div className="flex-1 min-h-0">
+                <Editor
+                    height="100%"
+                    defaultLanguage="javascript"
+                    theme="vs-dark"
+                    onMount={(editor, monaco) => editorRef.current = editor}
+                    options={{
+                        fontSize: 12,
+                        lineNumbers: 'off',
+                        minimap: {
+                            enabled: false,
+                        },
+                    }}
+                    path={path}
+                    defaultValue={defaultValue}
+                />
             </div>
-        </>
+            <div className="flex flex-col gap-1">
+                <button className="relative overflow-hidden px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700 w-full"
+                    onClick={e => onStartLearn()}>
+                    <span ref={progressRef} className="absolute left-0 top-0 h-full bg-blue-600/40 w-0" />
+                    <span className="relative z-10">AIが学習する</span>
+                </button>
+                <div ref={statusRef} className="overflow-hidden whitespace-nowrap text-xs text-red-400 min-h-[1em]">
+                </div>
+            </div>
+        </div>
     );
 }

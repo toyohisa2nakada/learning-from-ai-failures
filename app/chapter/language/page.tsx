@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
-import Editor from "@/components/JsEditor";
+import JsEditor from "@/components/JsEditor";
 
 const IMPORT_SCRIPT_NAMES = [
   'MultiHeadAttention.js',
@@ -61,7 +61,7 @@ export default function Home() {
           {/* Left Panel: Merged Height (Full Height of container) */}
           <div className="left-panel h-full flex flex-col">
             <h3 className="text-base font-bold mb-3">Left Panel (Merged)</h3>
-            <Editor
+            <JsEditor
               path="chapter/language/main.js"
               externalScripts={importScripts}
               defaultValue={mainScript}
