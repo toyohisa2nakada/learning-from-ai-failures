@@ -10,13 +10,13 @@ type PokemonData = {
     canvas: HTMLCanvasElement;
 }
 
-export interface DatasetViewProps {
+export interface DatasetPanelProps {
     imageSelected0: ImageOption | undefined;
     imageSelected1: ImageOption | undefined;
     onImageSelectChange: (index: 0 | 1, newValue: ImageOption) => void;
 }
 
-export interface DatasetViewHandle {
+export interface DatasetPanelHandle {
     updatePredictions: (images: Record<string, number[]>) => void;
 }
 
@@ -76,7 +76,7 @@ async function getPokemonData(pokemonNames: string[], learningDataSize: [number,
 }
 
 
-const DatasetView = React.forwardRef<DatasetViewHandle, DatasetViewProps>(({ imageSelected0, imageSelected1, onImageSelectChange }, ref) => {
+const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ imageSelected0, imageSelected1, onImageSelectChange }, ref) => {
     const [imageOptions, setImageOptions] = useState<ImageOption[]>([]);
     const canvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
 
@@ -238,6 +238,5 @@ const DatasetView = React.forwardRef<DatasetViewHandle, DatasetViewProps>(({ ima
     );
 });
 
-DatasetView.displayName = 'DatasetView';
-
-export default DatasetView;
+DatasetPanel.displayName = 'DatasetPanel';
+export default DatasetPanel;

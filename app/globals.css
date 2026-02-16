@@ -41,7 +41,7 @@
   }
 
   .left-panel {
-    @apply p-3 rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent h-full bg-inherit md:w-[55%] shrink-0 flex flex-col;
+    @apply p-3 rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent h-full bg-inherit md:w-[45%] shrink-0 flex flex-col;
   }
 
   .right-panel {

@@ -2,7 +2,7 @@ const config = {
     units: 4,
     useBias: true,
     learningRate: 0.05,
-    epochs: 500,
+    epochs: 200,
 };
 function getTensor(dataArray) {
     const n = dataArray.length;

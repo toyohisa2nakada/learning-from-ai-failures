@@ -28,7 +28,10 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-900 text-slate-100`}>
+        {/* opencv.jsが読み込むwasmの影響?でnode moduleではなくscript srcで読み込む */}
         <Script src="/opencv/opencv.4.13.0.js" strategy="beforeInteractive" />
+        {/* JsEditorの中で使用するtfjsはiframeで実行されるため、キャッシュされるようにnode moduleではなくscript srcで読み込む */}
+        <Script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js" strategy="beforeInteractive" />
         <div className="w-full px-3 py-3 h-screen grid grid-rows-[auto_1fr] gap-1 bg-inherit">
           <Header />
           {children}

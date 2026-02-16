@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useImperativeHandle, useRef, forwardRef } from 'react';
+import { useImperativeHandle, useRef, forwardRef } from 'react';
 
 export interface ImageGridPanelHandle {
     updateImages: (images: Record<string, number[][]>) => void;

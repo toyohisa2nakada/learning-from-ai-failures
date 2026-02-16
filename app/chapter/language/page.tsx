@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from 'react';
-import JsEditor from "@/components/JsEditor";
+import JsEditor from '@/components/JsEditor';
+import DatasetPanel, { type Dataset } from '@/app/chapter/language/components/DatasetPanel';
+import ModelInsightPanel from '@/app/chapter/language/components/ModelInsightPanel';
 
 const IMPORT_SCRIPT_NAMES = [
   'MultiHeadAttention.js',
@@ -22,6 +24,10 @@ export default function Home() {
   console.log("LANGUAGE HOME")
   const [importScripts, setImportScripts] = useState<ImportScripts>(initialImportScripts);
   const [mainScript, setMainScript] = useState<string>('');
+
+  function onDatasetChange(dataset: Dataset) {
+    console.log(dataset);
+  }
 
   useEffect(() => {
     Promise.all(([MAIN_SCRIPT_NAME, ...IMPORT_SCRIPT_NAMES] as const).map(filename =>
@@ -72,11 +78,12 @@ export default function Home() {
           <div className="flex flex-col flex-1 gap-6 h-full min-w-0">
             {/* Upper Right Panel */}
             <div className="right-panel h-auto flex-1 flex flex-col">
-              <h3 className="text-base font-bold mb-3">Upper Right</h3>
+              <ModelInsightPanel />
             </div>
             {/* Lower Right Panel */}
             <div className="right-panel h-auto flex-1 flex flex-col">
-              <h3 className="text-base font-bold mb-3">Lower Right</h3>
+              <DatasetPanel
+                onDatasetChange={onDatasetChange} />
             </div>
           </div>
 

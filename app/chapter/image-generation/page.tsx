@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/image-generation/components/NeuralNetGraph";
 
-import DatasetView, { type DatasetViewHandle } from "@/app/chapter/image-generation/components/DatasetPanel";
+import DatasetPanel, { type DatasetPanelHandle } from "@/app/chapter/image-generation/components/DatasetPanel";
 import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
 import { type ImageOption } from "@/components/ImageSelect";
 
@@ -22,7 +22,7 @@ export default function Home() {
 
   const [imageSelected0, setImageSelected0] = useState<ImageOption | undefined>();
   const [imageSelected1, setImageSelected1] = useState<ImageOption | undefined>();
-  const datasetViewRef = useRef<DatasetViewHandle>(null);
+  const datasetViewRef = useRef<DatasetPanelHandle>(null);
   const imageGridPanelRef = useRef<any>(null);
 
   const handleImageSelectChange = (index: 0 | 1, newValue: ImageOption) => {
@@ -146,7 +146,7 @@ export default function Home() {
 
             {/* 画像生成結果 */}
             <div id="graph-area-bottom" className="right-panel">
-              <DatasetView
+              <DatasetPanel
                 ref={datasetViewRef}
                 imageSelected0={imageSelected0}
                 imageSelected1={imageSelected1}
