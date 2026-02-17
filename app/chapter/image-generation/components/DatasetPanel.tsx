@@ -13,11 +13,11 @@ type PokemonData = {
 export interface DatasetPanelProps {
     imageSelected0: ImageOption | undefined;
     imageSelected1: ImageOption | undefined;
-    onImageSelectChange: (index: 0 | 1, newValue: ImageOption) => void;
+    onImageSelectChange: (index: 0 | 1, newValue: Readonly<ImageOption>) => void;
 }
 
 export interface DatasetPanelHandle {
-    updatePredictions: (images: Record<string, number[]>) => void;
+    updatePredictions: (images: Readonly<Record<string, number[]>>) => void;
 }
 
 const LEARNING_DATA_SIZE: [number, number] = [48, 48];

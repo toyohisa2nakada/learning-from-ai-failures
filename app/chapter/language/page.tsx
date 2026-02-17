@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import JsEditor from '@/components/JsEditor';
 import DatasetPanel, { type Dataset } from '@/app/chapter/language/components/DatasetPanel';
 import ModelInsightPanel from '@/app/chapter/language/components/ModelInsightPanel';
@@ -24,9 +24,10 @@ export default function Home() {
   console.log("LANGUAGE HOME")
   const [importScripts, setImportScripts] = useState<ImportScripts>(initialImportScripts);
   const [mainScript, setMainScript] = useState<string>('');
+  const [dataset, setDataset] = useState<Readonly<Dataset> | null>(null);
 
-  function onDatasetChange(dataset: Dataset) {
-    console.log("TODO onDatasetChange", dataset);
+  function onDatasetChange(dataset: Readonly<Dataset>) {
+    setDataset(dataset);
   }
 
   useEffect(() => {
@@ -68,7 +69,7 @@ export default function Home() {
             <h3 className="text-base font-bold mb-3">Left Panel (Merged)</h3>
             <JsEditor
               path="chapter/language/main.js"
-              externalScripts={importScripts}
+              externalScripts={({ ...importScripts, 'dataset.js': dataset })}
               defaultValue={mainScript}
             />
           </div>

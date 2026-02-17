@@ -22,7 +22,7 @@ export default function Home() {
 
   const [imageSelected0, setImageSelected0] = useState<ImageOption | undefined>();
   const [imageSelected1, setImageSelected1] = useState<ImageOption | undefined>();
-  const datasetViewRef = useRef<DatasetPanelHandle>(null);
+  const datasetPanelRef = useRef<DatasetPanelHandle>(null);
   const imageGridPanelRef = useRef<any>(null);
 
   const handleImageSelectChange = (index: 0 | 1, newValue: ImageOption) => {
@@ -46,7 +46,7 @@ export default function Home() {
   }
 
   function onImageUpdate(images: Record<string, any>) {
-    datasetViewRef.current?.updatePredictions(images as Record<string, number[]>);
+    datasetPanelRef.current?.updatePredictions(images as Record<string, number[]>);
   }
 
   function onIntermediateImageUpdate(images: Record<string, any>) {
@@ -147,7 +147,7 @@ export default function Home() {
             {/* 画像生成結果 */}
             <div id="graph-area-bottom" className="right-panel">
               <DatasetPanel
-                ref={datasetViewRef}
+                ref={datasetPanelRef}
                 imageSelected0={imageSelected0}
                 imageSelected1={imageSelected1}
                 onImageSelectChange={handleImageSelectChange}

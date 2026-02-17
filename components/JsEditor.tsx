@@ -85,7 +85,7 @@ interface JsEditorProps {
         onUpdate: (data: Record<string, number | number[]>) => void;
         messageType: string;
     }[];
-    externalScripts?: Record<string, string> | (() => Record<string, string>);
+    externalScripts?: Record<string, string | object | null> | (() => Record<string, string | object | null>);
     path?: string;
 }
 
@@ -96,12 +96,16 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
     const statusRef = useRef<HTMLDivElement>(null);
     const progressRef = useRef<HTMLSpanElement>(null);
 
-    function injectImportmap(htmlString: string, files: Record<string, string>): string {
+    function injectImportmap(htmlString: string, files: Record<string, string | object>, targetObject?: any): string {
         // '//'のコメントをとる
-        const filesNoComm = Object.entries(files).reduce((a, e) =>
-            ({ ...a, [e[0]]: removeLineComments(e[1]) }), {} as Record<string, string>);
+        const filesNoComm = Object.entries(files).reduce((a, [filename, content]) => {
+            if (typeof content === 'string') {
+                return { ...a, [filename]: removeLineComments(content) };
+            }
+            return { ...a, [filename]: content };
+        }, {} as Record<string, string | object>);
         // importmapを追加して返す
-        return htmlString.replace(/(<html[^>]*>)/i, `$1${buildImportmap(filesNoComm)}`);
+        return htmlString.replace(/(<html[^>]*>)/i, `$1${buildImportmap(filesNoComm, targetObject)}`);
     }
 
     function onStartLearn() {
@@ -124,7 +128,7 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
             console.log("Workerによる実行チェックOK");
 
             // JsEditor標準の外部js
-            const jsEditorExtJsCode = {
+            const jsEditorExtJsCode: Record<string, string | object> = {
                 'updateProgress.js': `export function updateProgress(percent) {
                     window.parent.postMessage({type:'updateProgress',values:percent});}`
             }
@@ -134,8 +138,8 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
             const extJsCode = { ...jsEditorExtJsCode, ...(externalScripts instanceof Function ? externalScripts() : externalScripts) };
 
 
-            const htmlString = injectImportmap(HTML_TEMPLATE.replace('__EDITOR_VALUE__', editorRef.current?.getValue() || ""), extJsCode);
-            const { html: inlined_html, insertions } = inlineHTML(htmlString, extJsCode);
+            const htmlString = injectImportmap(HTML_TEMPLATE.replace('__EDITOR_VALUE__', editorRef.current?.getValue() || ""), extJsCode as Record<string, string | object>, editor_output_elem);
+            const { html: inlined_html, insertions } = inlineHTML(htmlString, extJsCode as Record<string, string | object>);
             const htmlStringWithErrorHandler = inlined_html.replace(/(<html[^>]*>)/i, `$1${BUILD_IFRAME_ERROR_HANDLER_SCRIPT}`);
 
             editor_output_elem!.srcdoc = htmlStringWithErrorHandler;
