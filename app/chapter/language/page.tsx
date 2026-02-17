@@ -26,7 +26,7 @@ export default function Home() {
   const [mainScript, setMainScript] = useState<string>('');
 
   function onDatasetChange(dataset: Dataset) {
-    console.log(dataset);
+    console.log("TODO onDatasetChange", dataset);
   }
 
   useEffect(() => {
@@ -44,7 +44,6 @@ export default function Home() {
         return acc;
       }, ["", {}] as [string, ImportScripts]);
 
-      console.log(loadedScripts)
       setMainScript(loadedScripts[0]);
       setImportScripts(loadedScripts[1]);
     }).catch(error => {
@@ -77,8 +76,12 @@ export default function Home() {
           {/* Right Column Wrapper: Stacks Upper and Lower panels */}
           <div className="flex flex-col flex-1 gap-6 h-full min-w-0">
             {/* Upper Right Panel */}
-            <div className="right-panel h-auto flex-1 flex flex-col">
-              <ModelInsightPanel />
+            <div className="right-panel h-auto flex-1">
+              <div className="flex flex-row flex-wrap gap-2">
+                <ModelInsightPanel />
+                <ModelInsightPanel />
+                <ModelInsightPanel />
+              </div>
             </div>
             {/* Lower Right Panel */}
             <div className="right-panel h-auto flex-1 flex flex-col">
