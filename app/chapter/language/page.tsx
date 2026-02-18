@@ -78,6 +78,7 @@ export default function Home() {
           <div className="flex flex-col flex-1 gap-6 h-full min-w-0">
             {/* Upper Right Panel */}
             <div className="right-panel h-auto flex-1">
+              <div className="font-semibold mb-2">計算プロセス</div>
               <div className="flex flex-row flex-wrap gap-2">
                 <ModelInsightPanel />
                 <ModelInsightPanel />

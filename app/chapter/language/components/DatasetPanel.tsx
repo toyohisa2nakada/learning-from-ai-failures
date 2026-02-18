@@ -136,12 +136,10 @@ function generateHomonymDatasets() {
         ["道路", "車道", "歩道"],
         ["食事", "食卓", "食器"]
     ];
-    const allNoise = ["山", "空", "海", "音", "光", "英", "国", "県", "東", "西", "南", "北", "右", "左", "壱", "弐", "参", "四", "五", "六", "七", "八", "九", "十"];
-    const targetWords = ["わたる", "たべる"];
-
-    const half = Math.floor(allNoise.length / 2);
-    const contextNoise = allNoise.slice(0, half);
-    const noContextNoise = allNoise.slice(half);
+    const lastWord = "ハシ";
+    const targetWords = ["わたる", "たべる", "不明"];
+    const contextNoise = ["山", "空", "海", "音", "光", "英", "国", "県", "東", "西", "南", "北"];
+    const noContextNoise = ["右", "左", "壱", "弐", "参", "四", "五", "六", "七", "八", "九", "十"];
 
     const sentences: string[] = [];
     const test_patterns: string[][] = [];
@@ -155,12 +153,12 @@ function generateHomonymDatasets() {
         const words = shuffle(contextNoise).slice(0, numSlots);
         const ctxIdx = i % contextGroups.length;
         words[shuffle(slotIndices)[0]] = contextGroups[ctxIdx][i % contextGroups[ctxIdx].length];
-        sentences.push(`${words.join(" ")} ハシ ${targetWords[ctxIdx]}`);
+        sentences.push(`${words.join(" ")} ${lastWord} ${targetWords[ctxIdx]}`);
     }
     // 2. ノイズのみのデータの生成 (128個)
     for (let i = 0; i < numDataPerType; i++) {
         let words = shuffle([...contextNoise, ...noContextNoise]).slice(0, numSlots);
-        sentences.push(`${words.join(" ")} ハシ 不明`);
+        sentences.push(`${words.join(" ")} ${lastWord} ${targetWords[targetWords.length - 1]}`);
     }
 
     // contextGroupsにある語を持つレコードを見つける
@@ -179,7 +177,7 @@ function generateHomonymDatasets() {
         const words = shuffle(noContextNoise).slice(0, numSlots);
         const ctxIdx = i % contextGroups.length;
         words[Math.floor(Math.random() * numSlots)] = contextGroups[ctxIdx][Math.floor(Math.random() * contextGroups[ctxIdx].length)];
-        test_patterns.push([...words, "ハシ"]);
+        test_patterns.push([...words, lastWord]);
         correct_answers.push(targetWords[ctxIdx]);
     });
 
@@ -219,7 +217,7 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
 
     return (
         <div>
-            <p>Dataset Panel</p>
+            <div className="font-semibold">データセットと予測結果</div>
         </div>
     );
 });
