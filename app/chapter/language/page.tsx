@@ -33,8 +33,14 @@ export default function Home() {
     setDataset(dataset);
   }
   function onEvaluationUpdate(resultSet: { model: string, results: EvaluationResult[] }) {
-    console.log("onEvaluationUpdate", resultSet);
+    // console.log("onEvaluationUpdate", resultSet);
     datasetPanelRef.current?.updatePredictions(resultSet);
+  }
+  function onLearningStatusUpdate(status: string) {
+    console.log("onLearningStatusUpdate", status);
+    if (status === "started") {
+      datasetPanelRef.current?.clearPredictions();
+    }
   }
 
   useEffect(() => {
@@ -76,14 +82,17 @@ export default function Home() {
             <h3 className="text-base font-bold mb-3">ニューラルネットワークの構造</h3>
             <JsEditor
               path="chapter/language/main.js"
-              updateHandler={[{ onUpdate: onEvaluationUpdate, messageType: "evaluation" }]}
+              updateHandler={[
+                { onUpdate: onEvaluationUpdate, messageType: "evaluation" },
+                { onUpdate: onLearningStatusUpdate, messageType: "learning-status" },
+              ]}
               externalScripts={({ ...importScripts, 'dataset.js': dataset })}
               defaultValue={mainScript}
             />
           </div>
 
           {/* Right Column Wrapper: Stacks Upper and Lower panels */}
-          <div className="flex flex-col gap-4 min-w-0 flex-1">
+          <div className="flex flex-col gap-4 min-w-0 flex-1 bg-inherit">
             {/* Upper Right Panel */}
             <div className="right-panel h-auto flex-none">
               <div className="font-semibold mb-2">計算プロセス</div>
@@ -94,7 +103,7 @@ export default function Home() {
               </div>
             </div>
             {/* Lower Right Panel */}
-            <div className="right-panel h-auto flex-1 flex flex-col min-h-0 overflow-y-auto">
+            <div className="right-panel h-auto flex-1 flex flex-col min-h-0 overflow-y-auto bg-inherit">
               <DatasetPanel
                 ref={datasetPanelRef}
                 onDatasetChange={onDatasetChange} />

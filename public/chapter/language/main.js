@@ -5,7 +5,7 @@ import { TiedEmbeddingOutput } from "TiedEmbeddingOutput.js";
 import { updateProgress } from "updateProgress.js";
 import dataset from "dataset.js";
 dataset.setTf(tf);
-console.log("dataset", dataset)
+// console.log("dataset", dataset)
 let models = undefined;
 
 // vocabSize: 全単語数, inputDim: 入力単語数, numHeads keyDim: MultiHeadAttention paramter, learningRate:学習率
@@ -119,15 +119,15 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
             type: "nor",
             encodingType,
         }),
-        createSimpleLLM({
-            vocabSize: Object.keys(dataset.vocab).length,
-            inputDim: dataset.train_x().shape[1],
-            keyDim,
-            numHeads,
-            learningRate,
-            type: "ext",
-            encodingType,
-        }),
+        // createSimpleLLM({
+        //     vocabSize: Object.keys(dataset.vocab).length,
+        //     inputDim: dataset.train_x().shape[1],
+        //     keyDim,
+        //     numHeads,
+        //     learningRate,
+        //     type: "ext",
+        //     encodingType,
+        // }),
         createSimpleGAP({
             vocabSize: Object.keys(dataset.vocab).length,
             inputDim: dataset.train_x().shape[1],
@@ -136,14 +136,14 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
             type: "ful",
             encodingType,
         }),
-        createSimpleGAP({
-            vocabSize: Object.keys(dataset.vocab).length,
-            inputDim: dataset.train_x().shape[1],
-            keyDim,
-            learningRate,
-            type: "slc",
-            encodingType,
-        }),
+        // createSimpleGAP({
+        //     vocabSize: Object.keys(dataset.vocab).length,
+        //     inputDim: dataset.train_x().shape[1],
+        //     keyDim,
+        //     learningRate,
+        //     type: "slc",
+        //     encodingType,
+        // }),
         createSimpleFNN({
             vocabSize: Object.keys(dataset.vocab).length,
             inputDim: dataset.train_x().shape[1],
@@ -152,14 +152,14 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
             type: "ful",
             encodingType,
         }),
-        createSimpleFNN({
-            vocabSize: Object.keys(dataset.vocab).length,
-            inputDim: dataset.train_x().shape[1],
-            keyDim,
-            learningRate,
-            type: "slc",
-            encodingType,
-        }),
+        // createSimpleFNN({
+        //     vocabSize: Object.keys(dataset.vocab).length,
+        //     inputDim: dataset.train_x().shape[1],
+        //     keyDim,
+        //     learningRate,
+        //     type: "slc",
+        //     encodingType,
+        // }),
     ].filter(e => e !== undefined);
     // if (verbose) {
     //     models.forEach(e => {
@@ -172,6 +172,9 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
 function postEvaluation(resultSet) {
     window.parent.postMessage({ type: 'evaluation', values: resultSet });
 }
+function postLearningStatus(status) {
+    window.parent.postMessage({ type: 'learning-status', values: status });
+}
 
 async function learn({ dataset, learningRate, epochs, verbose = true }) {
     if (dataset === undefined) {
@@ -179,7 +182,7 @@ async function learn({ dataset, learningRate, epochs, verbose = true }) {
         return;
     }
     setModels({ learningRate });
-    // const resultsElem = verbose ? setupResultsPanel({ tfvis, models, test_patterns: datasets.test_patterns, correct_answers: datasets.correct_answers }) : undefined;
+    postLearningStatus("started");
 
     for (let i = 0; i < models.length; i += 1) {
         const model = models[i].model;
@@ -194,13 +197,14 @@ async function learn({ dataset, learningRate, epochs, verbose = true }) {
                 }
             }
         });
-        console.log("history", history);
+        // console.log("history", history);
         model.options?.mha?.setKeepAttentionScores(true);
         if (dataset.test_patterns !== undefined) {
             const results = evaluateModel({ model, dataset });
             postEvaluation({ model: model.name, results });
-            console.log("results", results);
+            // console.log("results", results);
         }
+        postLearningStatus("ended");
     }
     function predict({ models, dataset, input }) {
         return tf.tidy(() => {
@@ -222,12 +226,12 @@ async function learn({ dataset, learningRate, epochs, verbose = true }) {
 
                 results[model.name] = predWords.join(" ");
             })
-            console.log("results", results);
-            // updateModelEvaluationPanel({ modelEvaluationElem, results })
         })
     }
-    // const modelEvaluationElem = setupModelEvaluationPanel({ predict });
 }
 
-// setDatasets({ type: "homonym" });
-await learn({ dataset, learningRate: 0.005, epochs: 300 });
+await learn({
+    dataset,
+    learningRate: 0.005,
+    epochs: 300
+});

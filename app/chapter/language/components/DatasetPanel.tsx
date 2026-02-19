@@ -36,6 +36,7 @@ export interface DatasetPanelProps {
 }
 export interface DatasetPanelHandle {
     updatePredictions: (resultSet: { model: string, results: EvaluationResult[] }) => void;
+    clearPredictions: () => void;
 }
 
 
@@ -205,6 +206,19 @@ function getDatasetHeader(col: string[], i: number) {
     return `入力${i + 1}`;
 }
 
+function getModelIcon(name: string): string {
+    if (name.startsWith("llm")) {
+        return "Ⓛ";
+    }
+    if (name.startsWith("fnn")) {
+        return "Ⓕ";
+    }
+    if (name.startsWith("gap")) {
+        return "Ⓖ";
+    }
+    return "";
+}
+
 const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onDatasetChange }, ref) => {
     const datasetRef = useRef<Dataset | null>(null);
     const [selected, setSelected] = useState("Homonym");
@@ -213,12 +227,21 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
     useImperativeHandle(ref, () => ({
         updatePredictions: (resultSet: { model: string, results: EvaluationResult[] }) => {
             if (evaluationCellRef.current) {
-                evaluationCellRef.current.forEach((cell, i) => {
-                    // cell.replaceChildren();
+                // データの数（予測結果の数）だけループを回す
+                resultSet.results.forEach((result, i) => {
+                    const cell = evaluationCellRef.current[i];
+                    if (!cell) return;
+
                     const div = document.createElement("div");
-                    div.textContent = `${resultSet.results[i].predicted} (${resultSet.model})`;
+                    const textColor = result.correct_answer === result.predicted ? "#16a34a" : "#b91c1cbf";
+                    div.innerHTML = `<small title="${resultSet.model}">${getModelIcon(resultSet.model)}</small><span style="color: ${textColor}">${result.predicted}</span>`;
                     cell.appendChild(div);
                 });
+            }
+        },
+        clearPredictions: () => {
+            if (evaluationCellRef.current) {
+                evaluationCellRef.current.forEach(cell => { if (cell) cell.innerHTML = "" });
             }
         }
     }));
@@ -226,80 +249,76 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
     useEffect(() => {
         // generateFavoriteDatasets, generateHomonymDatasets
         datasetRef.current = selected === "Homonym" ? generateHomonymDatasets() : generateFavoriteDatasets();
-        // console.log(datasetRef.current);
-        if (datasetRef.current) {
-            onDatasetChange(datasetRef.current);
+        if (evaluationCellRef.current) {
+            evaluationCellRef.current.length = datasetRef.current.test_patterns.length;
+            evaluationCellRef.current.forEach(cell => { if (cell) cell.innerHTML = "" });
         }
+        onDatasetChange(datasetRef.current);
     }, [selected]);
 
     return (
-        <div>
+        <div className="bg-inherit">
             <div className="font-semibold">データセットと予測結果</div>
 
-            <div>
+            <div className="bg-inherit">
                 <label htmlFor="dataSelect">データ選択：</label>
-                <select id="dataSelect" value={selected} onChange={(e) => setSelected(e.target.value)}>
+                <select className="bg-inherit" id="dataSelect" value={selected} onChange={(e) => setSelected(e.target.value)}>
                     <option value="Homonym">同音異義語データ</option>
                     <option value="Favorite">好き嫌いデータ</option>
                 </select>
             </div>
 
             <style jsx>{`
-                .inner-table {
+                table {
                     border: 2px solid rgb(140 140 140);
                     border-collapse: collapse;
                 }
                 
-                .inner-table th, .inner-table td {
+                th, td {
                     border: 1px solid rgb(140 140 140);
                     padding: 4px;
                 }
             `}</style>
-            <table width="100%" className="text-xs">
-                <tbody>
-                    <tr style={{ verticalAlign: "top" }}>
-                        <td width="50%">
-                            <strong>学習データ</strong>
-                            <table className="inner-table">
-                                <thead>
-                                    <tr>
-                                        {datasetRef.current?.train_patterns[0].map((_, i) => (
-                                            <th key={i}>{getDatasetHeader(datasetRef.current?.train_patterns[0]!, i)}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {datasetRef.current?.train_patterns.map((row, i) => (
-                                        <tr key={i}>{row.map((cell, j) => <td key={j}>{cell}</td>)}</tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </td>
-
-                        <td width="50%">
-                            <strong>テストデータ</strong>
-                            <table className="inner-table">
-                                <thead>
-                                    <tr>
-                                        {datasetRef.current?.test_patterns[0].map((_, i) => (
-                                            <th key={i}>{getDatasetHeader(datasetRef.current?.test_patterns[0]!, i)}</th>
-                                        ))}
-                                        <th>予測結果</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {datasetRef.current?.test_patterns.map((row, i) => (
-                                        <tr key={i}>
-                                            {row.map((cell, j) => <td key={j}>{cell}</td>)}
-                                            <td ref={el => { evaluationCellRef.current[i] = el as HTMLTableCellElement; }}></td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div className="flex flex-row text-xs">
+                <div>
+                    <strong>学習データ</strong>
+                    <table className="inner-table">
+                        <thead>
+                            <tr>
+                                {datasetRef.current?.train_patterns[0].map((_, i) => (
+                                    <th key={i}>{getDatasetHeader(datasetRef.current?.train_patterns[0]!, i)}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {datasetRef.current?.train_patterns.map((row, i) => (
+                                <tr key={i}>{row.map((cell, j) => <td key={j}>{cell}</td>)}</tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <strong>テストデータ</strong>
+                    <table className="inner-table">
+                        <thead>
+                            <tr>
+                                {datasetRef.current?.test_patterns[0].map((_, i) => (
+                                    <th key={i}>{getDatasetHeader(datasetRef.current?.test_patterns[0]!, i)}</th>
+                                ))}
+                                <th>予測結果</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {datasetRef.current?.test_patterns.map((row, i) => (
+                                <tr key={i}>
+                                    {row.map((cell, j) => <td key={j}>{cell}</td>)}
+                                    <td ref={el => { evaluationCellRef.current[i] = el as HTMLTableCellElement; }}></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div >
     );
 });
