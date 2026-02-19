@@ -280,7 +280,10 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
                                 </thead>
                                 <tbody>
                                     {datasetRef.current?.test_patterns.map((row, i) => (
-                                        <tr key={i}>{row.map((cell, j) => <td key={j}>{cell}</td>)}</tr>
+                                        <tr key={i}>
+                                            {row.map((cell, j) => <td key={j}>{cell}</td>)}
+                                            <td>わたる わたる わたる</td>
+                                        </tr>
                                     ))}
                                 </tbody>
                             </table>

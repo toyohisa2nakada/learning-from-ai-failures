@@ -65,8 +65,8 @@ export default function Home() {
         <div className="container-panel md:flex-row h-full">
 
           {/* Left Panel: Merged Height (Full Height of container) */}
-          <div className="left-panel h-full flex flex-col">
-            <h3 className="text-base font-bold mb-3">Left Panel (Merged)</h3>
+          <div className="left-panel flex flex-col">
+            <h3 className="text-base font-bold mb-3">ニューラルネットワークの構造</h3>
             <JsEditor
               path="chapter/language/main.js"
               externalScripts={({ ...importScripts, 'dataset.js': dataset })}
@@ -75,9 +75,9 @@ export default function Home() {
           </div>
 
           {/* Right Column Wrapper: Stacks Upper and Lower panels */}
-          <div className="flex flex-col flex-1 gap-6 h-full min-w-0">
+          <div className="flex flex-col gap-4 min-w-0 flex-1">
             {/* Upper Right Panel */}
-            <div className="right-panel h-auto flex-1">
+            <div className="right-panel h-auto flex-none">
               <div className="font-semibold mb-2">計算プロセス</div>
               <div className="flex flex-row flex-wrap gap-2">
                 <ModelInsightPanel />
@@ -86,7 +86,7 @@ export default function Home() {
               </div>
             </div>
             {/* Lower Right Panel */}
-            <div className="right-panel h-auto flex-1 flex flex-col">
+            <div className="right-panel h-auto flex-1 flex flex-col min-h-0 overflow-y-auto">
               <DatasetPanel
                 onDatasetChange={onDatasetChange} />
             </div>
