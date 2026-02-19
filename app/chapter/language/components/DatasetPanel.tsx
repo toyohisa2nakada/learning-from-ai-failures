@@ -25,11 +25,17 @@ export interface Dataset {
     tokenize: (input: string) => { tokens: number[], errorMessage?: string };
 }
 
+export type EvaluationResult = {
+    correct_answer: string;
+    predicted: string;
+    test_pattern: string[];
+}
+
 export interface DatasetPanelProps {
     onDatasetChange: (dataset: Readonly<Dataset>) => void;
 }
 export interface DatasetPanelHandle {
-    updatePredictions: () => void;
+    updatePredictions: (resultSet: { model: string, results: EvaluationResult[] }) => void;
 }
 
 
@@ -199,18 +205,21 @@ function getDatasetHeader(col: string[], i: number) {
     return `入力${i + 1}`;
 }
 
-// function getTestHeader(col: string[], i: number) {
-//     if (i === col.length - 1) return "予測結果";
-//     if (i === col.length - 2) return "期待される出力";
-//     return `入力${i + 1}`;
-// }
-
 const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onDatasetChange }, ref) => {
     const datasetRef = useRef<Dataset | null>(null);
     const [selected, setSelected] = useState("Homonym");
+    const evaluationCellRef = useRef<HTMLTableCellElement[]>([]);
 
     useImperativeHandle(ref, () => ({
-        updatePredictions: () => {
+        updatePredictions: (resultSet: { model: string, results: EvaluationResult[] }) => {
+            if (evaluationCellRef.current) {
+                evaluationCellRef.current.forEach((cell, i) => {
+                    // cell.replaceChildren();
+                    const div = document.createElement("div");
+                    div.textContent = `${resultSet.results[i].predicted} (${resultSet.model})`;
+                    cell.appendChild(div);
+                });
+            }
         }
     }));
 
@@ -282,7 +291,7 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
                                     {datasetRef.current?.test_patterns.map((row, i) => (
                                         <tr key={i}>
                                             {row.map((cell, j) => <td key={j}>{cell}</td>)}
-                                            <td>わたる わたる わたる</td>
+                                            <td ref={el => { evaluationCellRef.current[i] = el as HTMLTableCellElement; }}></td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -291,7 +300,7 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
                     </tr>
                 </tbody>
             </table>
-        </div>
+        </div >
     );
 });
 

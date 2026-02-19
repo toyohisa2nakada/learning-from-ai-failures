@@ -59,7 +59,7 @@ const [model, intermediateModel] = buildModel({ outputShape: tensors.y.shape[1] 
 model.summary();
 intermediateModel.summary();
 
-function postWeights() {
+function postImages() {
     const range = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
     const input = tf.tensor2d(range, [range.length, 1]); // [6,1]
 
@@ -80,14 +80,6 @@ function postWeights() {
         const images = expanded.mul(weightsExpanded).arraySync(); // [6, 8, 6912]
         const values = range.reduce((a, e, i) => ({ ...a, [e]: images[i] }), {});
         window.parent.postMessage({ type: 'intermediateImages', values });
-
-        // test
-        // {
-        //   const summed = expanded.mul(weightsExpanded).sum(1); // [6, 6912]
-        //   const matmulResult = intermediateOutput.matMul(weights); // [6, 6912]
-        //   console.log("summed",summed.arraySync());
-        //   console.log("matmulResult",matmulResult.arraySync());
-        // }
     }
 
 }
@@ -99,7 +91,7 @@ const history = await model.fit(tensors.x, tensors.y, {
     callbacks: {
         // onTrainEnd, onEpochEnd
         onEpochEnd: (epoch) => {
-            postWeights();
+            postImages();
             updateProgress(100 * (epoch + 1) / config.epochs);
         }
     },

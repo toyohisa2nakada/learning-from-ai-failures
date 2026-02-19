@@ -82,7 +82,7 @@ function convert_iframe_error_position(lineno: string, colno: string) {
 interface JsEditorProps {
     defaultValue?: string;
     updateHandler?: {
-        onUpdate: (data: Record<string, number | number[]>) => void;
+        onUpdate: (data: any) => void;
         messageType: string;
     }[];
     externalScripts?: Record<string, string | object | null> | (() => Record<string, string | object | null>);

@@ -2,11 +2,10 @@ import { OneHotLayer } from "OneHotLayer.js";
 import { MultiHeadAttention } from "MultiHeadAttention.js";
 import { SliceLayer } from "SliceLayer.js";
 import { TiedEmbeddingOutput } from "TiedEmbeddingOutput.js";
-
-// let datasets = undefined;
+import { updateProgress } from "updateProgress.js";
 import dataset from "dataset.js";
 dataset.setTf(tf);
-console.log(dataset)
+console.log("dataset", dataset)
 let models = undefined;
 
 // vocabSize: 全単語数, inputDim: 入力単語数, numHeads keyDim: MultiHeadAttention paramter, learningRate:学習率
@@ -169,6 +168,11 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
     // }
     return models;
 }
+
+function postEvaluation(resultSet) {
+    window.parent.postMessage({ type: 'evaluation', values: resultSet });
+}
+
 async function learn({ dataset, learningRate, epochs, verbose = true }) {
     if (dataset === undefined) {
         alert("学習データを生成してください。")
@@ -179,23 +183,23 @@ async function learn({ dataset, learningRate, epochs, verbose = true }) {
 
     for (let i = 0; i < models.length; i += 1) {
         const model = models[i].model;
-        models[i].options?.mha?.setKeepAttentionScores(false);
+        model.options?.mha?.setKeepAttentionScores(false);
         const history = await model.fit(dataset.train_x(tf), dataset.train_y(tf), {
             epochs,
             batchSize: 8,
             shuffle: true,
-            // callbacks: tfvis.show.fitCallbacks(
-            //     { name: "学習回数と誤差" },
-            //     ["loss"],
-            //     { height: 80, callbacks: ["onEpochEnd"] },
-            // ),
+            callbacks: {
+                onEpochEnd: (epoch) => {
+                    updateProgress(100 * (epoch + 1) / epochs);
+                }
+            }
         });
-        console.log(history);
-        models[i].options?.mha?.setKeepAttentionScores(true);
+        console.log("history", history);
+        model.options?.mha?.setKeepAttentionScores(true);
         if (dataset.test_patterns !== undefined) {
             const results = evaluateModel({ model, dataset });
-            console.log(results);
-            // updateResultsPanel({ modelEntry: models[i], datasets, resultsElem, results })
+            postEvaluation({ model: model.name, results });
+            console.log("results", results);
         }
     }
     function predict({ models, dataset, input }) {
@@ -218,7 +222,7 @@ async function learn({ dataset, learningRate, epochs, verbose = true }) {
 
                 results[model.name] = predWords.join(" ");
             })
-            console.log(results);
+            console.log("results", results);
             // updateModelEvaluationPanel({ modelEvaluationElem, results })
         })
     }

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
 import JsEditor from '@/components/JsEditor';
-import DatasetPanel, { type Dataset } from '@/app/chapter/language/components/DatasetPanel';
+import DatasetPanel, { type Dataset, type DatasetPanelHandle, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
 import ModelInsightPanel from '@/app/chapter/language/components/ModelInsightPanel';
 
 const IMPORT_SCRIPT_NAMES = [
@@ -20,14 +20,21 @@ const initialImportScripts: ImportScripts = IMPORT_SCRIPT_NAMES.reduce((acc, nam
   return acc;
 }, {} as ImportScripts);
 
+
+
 export default function Home() {
   console.log("LANGUAGE HOME")
   const [importScripts, setImportScripts] = useState<ImportScripts>(initialImportScripts);
   const [mainScript, setMainScript] = useState<string>('');
   const [dataset, setDataset] = useState<Readonly<Dataset> | null>(null);
+  const datasetPanelRef = useRef<DatasetPanelHandle>(null);
 
   function onDatasetChange(dataset: Readonly<Dataset>) {
     setDataset(dataset);
+  }
+  function onEvaluationUpdate(resultSet: { model: string, results: EvaluationResult[] }) {
+    console.log("onEvaluationUpdate", resultSet);
+    datasetPanelRef.current?.updatePredictions(resultSet);
   }
 
   useEffect(() => {
@@ -69,6 +76,7 @@ export default function Home() {
             <h3 className="text-base font-bold mb-3">ニューラルネットワークの構造</h3>
             <JsEditor
               path="chapter/language/main.js"
+              updateHandler={[{ onUpdate: onEvaluationUpdate, messageType: "evaluation" }]}
               externalScripts={({ ...importScripts, 'dataset.js': dataset })}
               defaultValue={mainScript}
             />
@@ -88,6 +96,7 @@ export default function Home() {
             {/* Lower Right Panel */}
             <div className="right-panel h-auto flex-1 flex flex-col min-h-0 overflow-y-auto">
               <DatasetPanel
+                ref={datasetPanelRef}
                 onDatasetChange={onDatasetChange} />
             </div>
           </div>
