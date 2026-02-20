@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import JsEditor from '@/components/JsEditor';
 import DatasetPanel, { type Dataset, type DatasetPanelHandle, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
-import ModelInsightPanel from '@/app/chapter/language/components/ModelInsightPanel';
+import ModelInsightPanel, { type ModelInsightPanelHandle } from '@/app/chapter/language/components/ModelInsightPanel';
 
 const IMPORT_SCRIPT_NAMES = [
   'MultiHeadAttention.js',
@@ -28,9 +28,13 @@ export default function Home() {
   const [mainScript, setMainScript] = useState<string>('');
   const [dataset, setDataset] = useState<Readonly<Dataset> | null>(null);
   const datasetPanelRef = useRef<DatasetPanelHandle>(null);
+  const modelInsightPanelRef = useRef<{ [modelName: string]: ModelInsightPanelHandle }>({});
 
   function onDatasetChange(dataset: Readonly<Dataset>) {
     setDataset(dataset);
+    if (modelInsightPanelRef.current) {
+      Object.values(modelInsightPanelRef.current).forEach(panel => panel.updateDataset(dataset, 0));
+    }
   }
   function onEvaluationUpdate(resultSet: { modelName: string, results: EvaluationResult[] }) {
     // console.log("onEvaluationUpdate", resultSet);
@@ -73,9 +77,9 @@ export default function Home() {
       </section>
 
       {/* Main Content */}
-      <main className="flex bg-inherit overflow-hidden">
+      <main className="flex bg-inherit overflow-hidden bg-inherit">
         {/* Container: Flex Row on MD screens to put Left and Right side-by-side */}
-        <div className="container-panel md:flex-row h-full">
+        <div className="container-panel md:flex-row h-full bg-inherit">
 
           {/* Left Panel: Merged Height (Full Height of container) */}
           <div className="left-panel flex flex-col">
@@ -94,12 +98,28 @@ export default function Home() {
           {/* Right Column Wrapper: Stacks Upper and Lower panels */}
           <div className="flex flex-col gap-4 min-w-0 flex-1 bg-inherit">
             {/* Upper Right Panel */}
-            <div className="right-panel h-auto flex-none">
+            <div className="right-panel h-auto flex-none bg-inherit">
               <div className="font-semibold mb-2">計算プロセス</div>
+              <div className="bg-inherit">
+                <label htmlFor="test-pattern-index">テストパターン</label>
+                <select className="bg-inherit" id="test-pattern-index"
+                  onChange={(e) => {
+                    if (modelInsightPanelRef.current && dataset) {
+                      Object.values(modelInsightPanelRef.current).forEach(panel => panel.updateDataset(dataset, Number(e.target.value)));
+                    }
+                  }}>
+                  {dataset?.test_patterns.map((_, index) => (
+                    <option key={index} value={index}>{index}</option>
+                  ))}
+                </select>
+              </div>
               <div className="flex flex-row flex-wrap gap-2">
-                <ModelInsightPanel />
-                <ModelInsightPanel />
-                <ModelInsightPanel />
+                {["llm", "gap", "fnn"].map(modelName => (
+                  <ModelInsightPanel
+                    key={modelName}
+                    modelName={modelName}
+                    ref={el => { if (el) modelInsightPanelRef.current[modelName] = el; }} />
+                ))}
               </div>
             </div>
             {/* Lower Right Panel */}

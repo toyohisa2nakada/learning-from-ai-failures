@@ -2,6 +2,10 @@
 
 import React, { useEffect, useRef, useState, useImperativeHandle } from 'react';
 
+interface DatasetPanelProps {
+    onDatasetChange: (dataset: Readonly<Dataset>) => void;
+}
+
 declare namespace tf {
     type Tensor2D = any;
     type Tensor1D = any;
@@ -31,9 +35,6 @@ export type EvaluationResult = {
     test_pattern: string[];
 }
 
-export interface DatasetPanelProps {
-    onDatasetChange: (dataset: Readonly<Dataset>) => void;
-}
 export interface DatasetPanelHandle {
     updatePredictions: (resultSet: { modelName: string, results: EvaluationResult[] }) => void;
     clearPredictions: () => void;

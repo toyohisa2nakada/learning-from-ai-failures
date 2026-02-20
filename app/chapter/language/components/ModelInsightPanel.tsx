@@ -1,19 +1,31 @@
 "use client";
 
 import { useImperativeHandle, useRef, forwardRef, useEffect, useState } from 'react';
+import { type Dataset } from '@/app/chapter/language/components/DatasetPanel';
+
+
+interface ModelInsightPanelProps {
+    modelName: string;
+}
 
 export interface ModelInsightPanelHandle {
     updateModelInsight: () => void;
+    updateDataset: (dataset: Dataset, test_pattern_index: number) => void;
 }
 
-const ModelInsightPanel = forwardRef<ModelInsightPanelHandle>(({ }, ref) => {
+const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelProps>(({ modelName }, ref) => {
     const svgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState<number>(100);
+    const [datasetState, setDatasetState] = useState<{ dataset: Dataset, test_pattern_index: number } | null>(null);
 
     useImperativeHandle(ref, () => ({
         updateModelInsight: () => {
             console.log('updateModelInsight');
+        },
+        updateDataset: (dataset: Dataset, test_pattern_index: number) => {
+            console.log('updateDataset', dataset);
+            setDatasetState({ dataset, test_pattern_index });
         }
     }));
 
@@ -93,7 +105,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle>(({ }, ref) => {
         }
 
         // 初回描画
-        drawArrows();
+        // drawArrows();
 
         // リサイズ時に再描画
         window.addEventListener('resize', drawArrows);
@@ -116,15 +128,22 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle>(({ }, ref) => {
             <table className="top-table">
                 <tbody>
                     <tr>
-                        <td>右</td>
-                        <td>十</td>
-                        <td>道路</td>
-                        <td>九</td>
-                        <td>ハシ</td>
+                        {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index) => (
+                            <td key={index}>{word}</td>
+                        ))}
                     </tr>
-                    <tr>
-                        <td colSpan={5} style={{ textAlign: 'center' }} id="average-cell">平均</td>
-                    </tr>
+                    {modelName === 'gap' && (
+                        <tr>
+                            <td colSpan={(datasetState?.dataset.test_patterns[datasetState.test_pattern_index].length || 1) - 1} style={{ textAlign: 'center' }} id="average-cell">平均</td>
+                        </tr>
+                    )}
+                    {modelName === 'llm' && (
+                        <tr>
+                            {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index) => (
+                                <td key={index} style={{ textAlign: 'center' }}>0.2</td>
+                            ))}
+                        </tr>
+                    )}
                 </tbody>
             </table>
 
@@ -145,9 +164,9 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle>(({ }, ref) => {
                         <td id="word-道路">道路</td>
                         <td id="word-食事">食事</td>
                         <td id="word-ハン">ハン</td>
-                        <td id="word-ellipsis">・・・</td>
                         <td id="word-わたる">わたる</td>
                         <td id="word-たべる">たべる</td>
+                        <td id="word-ellipsis">・・・</td>
                     </tr>
                     <tr>
                         <td className="probability-cell">確率</td>

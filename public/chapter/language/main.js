@@ -161,11 +161,6 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
         //     encodingType,
         // }),
     ].filter(e => e !== undefined);
-    // if (verbose) {
-    //     models.forEach(e => {
-    //         tfvis.show.modelSummary({ name: e.model.name }, e.model);
-    //     })
-    // }
     return models;
 }
 
@@ -180,7 +175,7 @@ function postLearningStatus(status) {
 
 async function learn({ dataset, learningRate, epochs, verbose = true }) {
     if (dataset === undefined) {
-        alert("学習データを生成してください。")
+        alert("学習データを生成してください。");
         return;
     }
     setModels({ learningRate });
