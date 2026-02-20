@@ -3,6 +3,7 @@
 import { useImperativeHandle, useRef, forwardRef, useEffect, useState } from 'react';
 import { type Dataset } from '@/app/chapter/language/components/DatasetPanel';
 
+const VOCAB_TOP_N = 5;
 
 interface ModelInsightPanelProps {
     modelName: string;
@@ -18,13 +19,14 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState<number>(100);
     const [datasetState, setDatasetState] = useState<{ dataset: Dataset, test_pattern_index: number } | null>(null);
+    const edgeElementsRef = useRef<{ sources: HTMLTableCellElement[], targets: HTMLTableCellElement[] }>({ sources: [], targets: [] });
 
     useImperativeHandle(ref, () => ({
         updateModelInsight: () => {
-            console.log('updateModelInsight');
+            // console.log('updateModelInsight');
         },
         updateDataset: (dataset: Dataset, test_pattern_index: number) => {
-            console.log('updateDataset', dataset);
+            // console.log('updateDataset', dataset);
             setDatasetState({ dataset, test_pattern_index });
         }
     }));
@@ -35,22 +37,12 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
      * @param endId - 終了要素のID
      * @param endOffsetY - 終点のY座標オフセット（負の値で上に移動）
      */
-    const createEdge = (startId: string, endId: string, endOffsetY: number = -10) => {
+    const createEdge = (startElement: HTMLTableCellElement, endElement: HTMLTableCellElement, endOffsetY: number = -10) => {
         const svg = svgRef.current;
         if (!svg) return;
 
-        // const startElement = document.getElementById(startId);
-        // const endElement = document.getElementById(endId);
         const container = containerRef.current;
         if (!container) return;
-
-        const startElement = container.querySelector(`#${startId}`);
-        const endElement = container.querySelector(`#${endId}`);
-
-        if (!startElement || !endElement) {
-            console.error(`Element not found: ${startId} or ${endId}`);
-            return;
-        }
 
         // 各要素の位置を取得
         const startRect = startElement.getBoundingClientRect();
@@ -73,8 +65,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
         line.setAttribute('x2', endX.toString());
         line.setAttribute('y2', endY.toString());
         line.setAttribute('stroke', 'rgba(140, 140, 140, 1)');
-        line.setAttribute('stroke-width', '1');
-        line.setAttribute('marker-end', 'url(#arrowhead)');
+        line.setAttribute('stroke-width', '0.5');
 
         svg.appendChild(line);
     };
@@ -82,7 +73,8 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
     const drawArrows = () => {
         const svg = svgRef.current;
         const container = containerRef.current;
-        if (!svg || !container) return;
+        const edgeElements = edgeElementsRef.current;
+        if (!svg || !container || !edgeElements) return;
 
         setContainerWidth(container.offsetWidth);
 
@@ -91,12 +83,11 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
         lines.forEach(line => line.remove());
 
         // 矢印を再作成
-        createEdge('average-cell', 'word-道路', -4);
-        createEdge('average-cell', 'word-食事', -4);
-        createEdge('average-cell', 'word-ハン', -4);
-        createEdge('average-cell', 'word-ellipsis', -4);
-        createEdge('average-cell', 'word-わたる', -4);
-        createEdge('average-cell', 'word-たべる', -4);
+        edgeElements.sources.forEach((source) => {
+            edgeElements.targets.forEach((target) => {
+                createEdge(source, target, -4);
+            });
+        });
     };
 
     useEffect(() => {
@@ -111,6 +102,15 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
         window.addEventListener('resize', drawArrows);
         return () => window.removeEventListener('resize', drawArrows);
     }, []);
+
+    useEffect(() => {
+        console.log("edge再描画");
+        console.log(edgeElementsRef.current)
+        drawArrows();
+    }, [datasetState]);
+
+    edgeElementsRef.current.sources.length = 0;
+    edgeElementsRef.current.targets.length = 0;
 
     return (
         <div ref={containerRef} className="text-xs">
@@ -129,31 +129,34 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 <tbody>
                     <tr>
                         {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index) => (
-                            <td key={index}>{word}</td>
+                            <td key={index}
+                                ref={(el) => { if (modelName === "fnn" && el) edgeElementsRef.current.sources.push(el) }}>
+                                {word}
+                            </td>
                         ))}
                     </tr>
-                    {modelName === 'gap' && (
-                        <tr>
-                            <td colSpan={(datasetState?.dataset.test_patterns[datasetState.test_pattern_index].length || 1) - 1} style={{ textAlign: 'center' }} id="average-cell">平均</td>
-                        </tr>
-                    )}
-                    {modelName === 'llm' && (
-                        <tr>
-                            {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index) => (
-                                <td key={index} style={{ textAlign: 'center' }}>0.2</td>
-                            ))}
-                        </tr>
-                    )}
+                    {modelName === 'gap' && (<tr>
+                        <td id="average-cell"
+                            ref={(el) => { if (el) edgeElementsRef.current.sources.push(el) }}
+                            colSpan={(datasetState?.dataset.test_patterns[datasetState.test_pattern_index].length || 1) - 1}
+                            style={{ textAlign: 'center' }}>
+                            平均
+                        </td>
+                    </tr>)}
+                    {modelName === 'llm' && (<tr>
+                        {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index) => (
+                            <td key={index}
+                                ref={(el) => { if (el) edgeElementsRef.current.sources.push(el) }}
+                                style={{ textAlign: 'center' }}>
+                                0.2
+                            </td>
+                        ))}
+                    </tr>)}
                 </tbody>
             </table>
 
             {/* 矢印（SVG） */}
             <svg ref={svgRef} id="arrow-svg" viewBox={`0 0 ${containerWidth} 40`} style={{ height: '40px', width: '100%', display: 'block' }}>
-                <defs>
-                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                        <polygon points="0 0, 10 3, 0 6" fill="rgba(140, 140, 140, 1)" />
-                    </marker>
-                </defs>
             </svg>
 
             {/* 下部の表 */}
@@ -161,21 +164,24 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 <tbody>
                     <tr>
                         <td id="word-単語">単語</td>
-                        <td id="word-道路">道路</td>
-                        <td id="word-食事">食事</td>
-                        <td id="word-ハン">ハン</td>
-                        <td id="word-わたる">わたる</td>
-                        <td id="word-たべる">たべる</td>
-                        <td id="word-ellipsis">・・・</td>
+                        {[...Array(VOCAB_TOP_N).keys()].map((i) =>
+                            <td key={i}
+                                id={`vocab-${i}`}
+                                ref={(el) => { if (el) edgeElementsRef.current.targets.push(el) }}>
+                                {Object.keys(datasetState?.dataset.vocab ?? {})[i] || ""}
+                            </td>
+                        )}
+                        <td key={VOCAB_TOP_N}
+                            id={`vocab-${VOCAB_TOP_N}`}
+                            ref={(el) => { if (el) edgeElementsRef.current.targets.push(el) }}>
+                            ...
+                        </td>
                     </tr>
                     <tr>
                         <td className="probability-cell">確率</td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
+                        {[...Array(VOCAB_TOP_N + 1).keys()].map((i) =>
+                            <td key={i} id={`vocab-prob-${i}`}></td>
+                        )}
                     </tr>
                 </tbody>
             </table>

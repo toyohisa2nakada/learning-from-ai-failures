@@ -44,7 +44,7 @@ export interface DatasetPanelHandle {
 function generateDatasets({ train_patterns, test_patterns, mode = "next" }: { train_patterns: string[][], test_patterns: string[][], mode?: "next" | "last" }): Dataset {
     const maxLen = Math.max(...train_patterns.map(e => e.length));
     const allWords: string[] = [...new Set(train_patterns.flat())].sort();
-    const vocab: { [key: string]: number } = { "<PAD>": 0, ...allWords.reduce((a, e, i) => ({ ...a, [e]: i + 1 }), {}) }
+    const vocab: { [key: string]: number } = { ...allWords.reduce((a, e, i) => ({ ...a, [e]: i + 1 }), {}), "<PAD>": 0 }
 
     function encode(words: string[]): number[] {
         const inputPad = new Array(maxLen - words.length - 1).fill(vocab["<PAD>"]);
@@ -226,6 +226,16 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
     const evaluationResultsRef = useRef<{ [modelName: string]: HTMLDivElement }[]>([]);
     const [selected, setSelected] = useState("Homonym");
 
+    function clearPredictions() {
+        if (datasetRef.current && evaluationCellRef.current && evaluationResultsRef.current) {
+            evaluationCellRef.current.forEach((el, i) => {
+                if (el) el.innerHTML = "";
+                evaluationResultsRef.current[i] = {};
+            });
+            evaluationCellRef.current.length = datasetRef.current.test_patterns.length;
+        }
+    }
+
     useImperativeHandle(ref, () => ({
         updatePredictions: (resultSet: { modelName: string, results: EvaluationResult[] }) => {
             if (!evaluationCellRef.current || !evaluationResultsRef.current) return;
@@ -240,24 +250,13 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
                 evaluationResultsRef.current[i][resultSet.modelName] = div;
             });
         },
-        clearPredictions: () => {
-            if (datasetRef.current && evaluationCellRef.current && evaluationResultsRef.current) {
-                evaluationCellRef.current.length = datasetRef.current.test_patterns.length;
-                evaluationCellRef.current.forEach((el, i) => {
-                    el.innerHTML = "";
-                    evaluationResultsRef.current[i] = {};
-                });
-            }
-        }
+        clearPredictions
     }));
 
     useEffect(() => {
         // generateFavoriteDatasets, generateHomonymDatasets
+        clearPredictions();
         datasetRef.current = selected === "Homonym" ? generateHomonymDatasets() : generateFavoriteDatasets();
-        if (evaluationCellRef.current) {
-            evaluationCellRef.current.length = datasetRef.current.test_patterns.length;
-            evaluationCellRef.current.forEach(cell => { if (cell) cell.innerHTML = "" });
-        }
         onDatasetChange(datasetRef.current);
     }, [selected]);
 
@@ -318,8 +317,10 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
                                 <tr key={i}>
                                     {row.map((cell, j) => <td key={j}>{cell}</td>)}
                                     <td ref={el => {
-                                        evaluationCellRef.current[i] = el as HTMLTableCellElement;
-                                        evaluationResultsRef.current[i] = {};
+                                        if (el) {
+                                            evaluationCellRef.current[i] = el as HTMLTableCellElement;
+                                            evaluationResultsRef.current[i] = {};
+                                        }
                                     }}></td>
                                 </tr>
                             ))}
