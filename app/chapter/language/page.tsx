@@ -39,6 +39,7 @@ export default function Home() {
   function onEvaluationUpdate(resultSet: { modelName: string, results: EvaluationResult[] }) {
     // console.log("onEvaluationUpdate", resultSet);
     datasetPanelRef.current?.updatePredictions(resultSet);
+    modelInsightPanelRef.current[resultSet.modelName].updateModelInsight();
   }
   function onLearningStatusUpdate(status: string) {
     // console.log("onLearningStatusUpdate", status);

@@ -167,7 +167,7 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
 function postEvaluation({ model, dataset }) {
     model.options?.mha?.setKeepAttentionScores(true);
     const results = evaluateModel({ model, dataset });
-    window.parent.postMessage({ type: 'evaluation', values: { modelName: model.name, results } });
+    window.parent.postMessage({ type: 'evaluation', values: { modelName: model.name.split('(')[0], results } });
 }
 function postLearningStatus(status) {
     window.parent.postMessage({ type: 'learning-status', values: status });
@@ -190,8 +190,8 @@ async function learn({ dataset, learningRate, epochs, verbose = true }) {
             shuffle: true,
             callbacks: {
                 onEpochEnd: (epoch) => {
-                    updateProgress(100 * (epoch + 1) / epochs);
                     postEvaluation({ model, dataset });
+                    updateProgress(100 * (epoch + 1) / epochs);
                 }
             }
         });
