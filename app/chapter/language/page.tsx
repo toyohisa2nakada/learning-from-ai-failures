@@ -32,12 +32,12 @@ export default function Home() {
   function onDatasetChange(dataset: Readonly<Dataset>) {
     setDataset(dataset);
   }
-  function onEvaluationUpdate(resultSet: { model: string, results: EvaluationResult[] }) {
+  function onEvaluationUpdate(resultSet: { modelName: string, results: EvaluationResult[] }) {
     // console.log("onEvaluationUpdate", resultSet);
     datasetPanelRef.current?.updatePredictions(resultSet);
   }
   function onLearningStatusUpdate(status: string) {
-    console.log("onLearningStatusUpdate", status);
+    // console.log("onLearningStatusUpdate", status);
     if (status === "started") {
       datasetPanelRef.current?.clearPredictions();
     }

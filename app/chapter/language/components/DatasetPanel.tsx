@@ -35,7 +35,7 @@ export interface DatasetPanelProps {
     onDatasetChange: (dataset: Readonly<Dataset>) => void;
 }
 export interface DatasetPanelHandle {
-    updatePredictions: (resultSet: { model: string, results: EvaluationResult[] }) => void;
+    updatePredictions: (resultSet: { modelName: string, results: EvaluationResult[] }) => void;
     clearPredictions: () => void;
 }
 
@@ -221,27 +221,31 @@ function getModelIcon(name: string): string {
 
 const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onDatasetChange }, ref) => {
     const datasetRef = useRef<Dataset | null>(null);
-    const [selected, setSelected] = useState("Homonym");
     const evaluationCellRef = useRef<HTMLTableCellElement[]>([]);
+    const evaluationResultsRef = useRef<{ [modelName: string]: HTMLDivElement }[]>([]);
+    const [selected, setSelected] = useState("Homonym");
 
     useImperativeHandle(ref, () => ({
-        updatePredictions: (resultSet: { model: string, results: EvaluationResult[] }) => {
-            if (evaluationCellRef.current) {
-                // データの数（予測結果の数）だけループを回す
-                resultSet.results.forEach((result, i) => {
-                    const cell = evaluationCellRef.current[i];
-                    if (!cell) return;
+        updatePredictions: (resultSet: { modelName: string, results: EvaluationResult[] }) => {
+            if (!evaluationCellRef.current || !evaluationResultsRef.current) return;
+            resultSet.results.forEach((result, i) => {
+                const cell = evaluationCellRef.current[i];
+                if (!cell) return;
+                const div = evaluationResultsRef.current[i][resultSet.modelName] ?? cell.appendChild(document.createElement("div"));
+                if (!div) return;
 
-                    const div = document.createElement("div");
-                    const textColor = result.correct_answer === result.predicted ? "#16a34a" : "#b91c1cbf";
-                    div.innerHTML = `<small title="${resultSet.model}">${getModelIcon(resultSet.model)}</small><span style="color: ${textColor}">${result.predicted}</span>`;
-                    cell.appendChild(div);
-                });
-            }
+                const textColor = result.correct_answer === result.predicted ? "#16a34a" : "#b91c1cbf";
+                div.innerHTML = `<small title="${resultSet.modelName}">${getModelIcon(resultSet.modelName)}</small><span style="color: ${textColor}">${result.predicted}</span>`;
+                evaluationResultsRef.current[i][resultSet.modelName] = div;
+            });
         },
         clearPredictions: () => {
-            if (evaluationCellRef.current) {
-                evaluationCellRef.current.forEach(cell => { if (cell) cell.innerHTML = "" });
+            if (datasetRef.current && evaluationCellRef.current && evaluationResultsRef.current) {
+                evaluationCellRef.current.length = datasetRef.current.test_patterns.length;
+                evaluationCellRef.current.forEach((el, i) => {
+                    el.innerHTML = "";
+                    evaluationResultsRef.current[i] = {};
+                });
             }
         }
     }));
@@ -312,7 +316,10 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
                             {datasetRef.current?.test_patterns.map((row, i) => (
                                 <tr key={i}>
                                     {row.map((cell, j) => <td key={j}>{cell}</td>)}
-                                    <td ref={el => { evaluationCellRef.current[i] = el as HTMLTableCellElement; }}></td>
+                                    <td ref={el => {
+                                        evaluationCellRef.current[i] = el as HTMLTableCellElement;
+                                        evaluationResultsRef.current[i] = {};
+                                    }}></td>
                                 </tr>
                             ))}
                         </tbody>

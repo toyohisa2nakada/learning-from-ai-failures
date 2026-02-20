@@ -98,7 +98,7 @@ function evaluateModel({ model, dataset }) {
         const probs = model.predict(inp)
         const predIds = probs.argMax(-1).dataSync();
         const predWords = Array.from(predIds).map((e, i) => dataset.decode(e));
-        console.log(model.name + "\n" + predWords.map((e, i) => `${dataset.test_patterns[i]} ${e}`).join("\n"));
+        // console.log(model.name + "\n" + predWords.map((e, i) => `${dataset.test_patterns[i]} ${e}`).join("\n"));
         return dataset.test_patterns.map((e, i) => ({ test_pattern: dataset.test_patterns[i].slice(0, -1), predicted: predWords[i], correct_answer: dataset.test_patterns[i].at(-1) }));
     })
 }
@@ -169,8 +169,10 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
     return models;
 }
 
-function postEvaluation(resultSet) {
-    window.parent.postMessage({ type: 'evaluation', values: resultSet });
+function postEvaluation({ model, dataset }) {
+    model.options?.mha?.setKeepAttentionScores(true);
+    const results = evaluateModel({ model, dataset });
+    window.parent.postMessage({ type: 'evaluation', values: { modelName: model.name, results } });
 }
 function postLearningStatus(status) {
     window.parent.postMessage({ type: 'learning-status', values: status });
@@ -194,16 +196,10 @@ async function learn({ dataset, learningRate, epochs, verbose = true }) {
             callbacks: {
                 onEpochEnd: (epoch) => {
                     updateProgress(100 * (epoch + 1) / epochs);
+                    postEvaluation({ model, dataset });
                 }
             }
         });
-        // console.log("history", history);
-        model.options?.mha?.setKeepAttentionScores(true);
-        if (dataset.test_patterns !== undefined) {
-            const results = evaluateModel({ model, dataset });
-            postEvaluation({ model: model.name, results });
-            // console.log("results", results);
-        }
         postLearningStatus("ended");
     }
     function predict({ models, dataset, input }) {
@@ -233,5 +229,5 @@ async function learn({ dataset, learningRate, epochs, verbose = true }) {
 await learn({
     dataset,
     learningRate: 0.005,
-    epochs: 300
+    epochs: 50
 });
