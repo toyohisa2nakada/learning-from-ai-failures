@@ -8,7 +8,9 @@ const IMPORT_SCRIPT_NAMES = [
   'MultiHeadAttention.js',
   'SliceLayer.js',
   'TiedEmbeddingOutput.js',
-  'OneHotLayer.js'
+  'OneHotLayer.js',
+  'WeightedLayer.js',
+  'SumLayer.js'
 ] as const;
 const MAIN_SCRIPT_NAME = 'main.js';
 const SCRIPT_BASE_PATH = '/chapter/language/';
@@ -29,9 +31,13 @@ export default function Home() {
   const [dataset, setDataset] = useState<Readonly<Dataset> | null>(null);
   const datasetPanelRef = useRef<DatasetPanelHandle>(null);
   const modelInsightPanelRef = useRef<{ [modelName: string]: ModelInsightPanelHandle }>({});
+  const testPatternSelectRef = useRef<HTMLSelectElement>(null);
 
   function onDatasetChange(dataset: Readonly<Dataset>) {
     setDataset(dataset);
+    if (testPatternSelectRef.current) {
+      testPatternSelectRef.current.value = "0";
+    }
     if (modelInsightPanelRef.current) {
       Object.values(modelInsightPanelRef.current).forEach(panel => panel.updateDataset(dataset, 0));
     }
@@ -103,7 +109,7 @@ export default function Home() {
               <div className="font-semibold mb-2">計算プロセス</div>
               <div className="bg-inherit">
                 <label htmlFor="test-pattern-index">テストパターン</label>
-                <select className="bg-inherit" id="test-pattern-index"
+                <select className="bg-inherit" id="test-pattern-index" ref={testPatternSelectRef}
                   onChange={(e) => {
                     if (modelInsightPanelRef.current && dataset) {
                       Object.values(modelInsightPanelRef.current).forEach(panel => panel.updateDataset(dataset, Number(e.target.value)));

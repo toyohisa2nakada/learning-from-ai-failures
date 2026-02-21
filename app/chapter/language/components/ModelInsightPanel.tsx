@@ -32,7 +32,6 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
             edgeSVGElementsRef.current[0]?.setAttribute('stroke', 'red');
             const w = Number(edgeSVGElementsRef.current[0]?.getAttribute('stroke-width') ?? "0");
             edgeSVGElementsRef.current[0]?.setAttribute('stroke-width', (w + 0.05).toString());
-
         },
         updateDataset: (dataset: Dataset, test_pattern_index: number) => {
             console.log('updateDataset', dataset);
@@ -170,11 +169,17 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                     {modelName === 'llm' && (<tr>
                         {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index) => (
                             <td key={index}
-                                ref={(el) => { if (el) edgeElementsRef.current.sources.push(el) }}
                                 style={{ textAlign: 'center' }}>
-                                0.2
+                                0.20
                             </td>
-                        ))}
+                        ))}</tr>)}
+                    {modelName === 'llm' && (<tr>
+                        <td id="average-cell"
+                            ref={(el) => { if (el) edgeElementsRef.current.sources.push(el) }}
+                            colSpan={(datasetState?.dataset.test_patterns[datasetState.test_pattern_index].length || 1) - 1}
+                            style={{ textAlign: 'center' }}>
+                            重み付き平均
+                        </td>
                     </tr>)}
                 </tbody>
             </table>

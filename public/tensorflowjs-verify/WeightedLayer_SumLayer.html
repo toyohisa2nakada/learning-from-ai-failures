@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<!--
+Dense vs WeightedLayer+SumLayer 検証
+実行方法: http://localhost:3000/tensorflowjs-verify/WeightedLayer_SumLayer.html
+-->
+
+<head>
+  <meta charset="UTF-8">
+  <title>Dense vs WeightedLayer+SumLayer 検証</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.17.0/tf.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --border: #2a2a3a;
+      --accent: #00ffaa;
+      --accent2: #ff6b6b;
+      --accent3: #6b9fff;
+      --text: #e0e0f0;
+      --muted: #666680;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.6rem;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.3rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem;
+    }
+
+    .card h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+      color: var(--accent3);
+    }
+
+    .param-row {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .param-row label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      width: 90px;
+      flex-shrink: 0;
+    }
+
+    .param-row input[type="number"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.6rem;
+      width: 80px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .param-row input[type="number"]:focus {
+      border-color: var(--accent);
+    }
+
+    .param-row input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+    }
+
+    .run-btn {
+      display: block;
+      width: 100%;
+      padding: 0.8rem;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-bottom: 1rem;
+    }
+
+    .run-btn:hover {
+      opacity: 0.85;
+    }
+
+    .run-btn:active {
+      transform: scale(0.98);
+    }
+
+    .run-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .log-area {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem;
+      font-size: 0.72rem;
+      line-height: 1.8;
+      min-height: 200px;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .log-area::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .log-area::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .log-area::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    .log-line {
+      display: block;
+    }
+
+    .log-line.info {
+      color: var(--text);
+    }
+
+    .log-line.header {
+      color: var(--accent3);
+      font-weight: 700;
+      margin-top: 0.5rem;
+    }
+
+    .log-line.good {
+      color: var(--accent);
+    }
+
+    .log-line.warn {
+      color: #ffcc44;
+    }
+
+    .log-line.bad {
+      color: var(--accent2);
+    }
+
+    .log-line.muted {
+      color: var(--muted);
+    }
+
+    .result-badge {
+      display: inline-block;
+      padding: 0.15rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .badge-pass {
+      background: rgba(0, 255, 170, 0.15);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .badge-fail {
+      background: rgba(255, 107, 107, 0.15);
+      color: var(--accent2);
+      border: 1px solid var(--accent2);
+    }
+
+    .diff-visual {
+      margin-top: 0.8rem;
+      padding: 0.8rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .diff-visual .label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .bar-track {
+      background: var(--border);
+      border-radius: 2px;
+      height: 8px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.5s ease;
+      background: linear-gradient(90deg, var(--accent), var(--accent3));
+    }
+
+    .bar-fill.bad {
+      background: linear-gradient(90deg, var(--accent2), #ff9944);
+    }
+
+    .diff-value {
+      font-size: 0.7rem;
+      margin-top: 0.3rem;
+      color: var(--text);
+    }
+
+    .epoch-log {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.8rem;
+    }
+
+    .epoch-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.6rem;
+    }
+
+    .epoch-card .ec-title {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .epoch-card .ec-loss {
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .ec-dense {
+      color: var(--accent3);
+    }
+
+    .ec-decomp {
+      color: #ff9944;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Dense vs Weighted+Sum 検証</h1>
+  <p class="subtitle">同一初期重みで2モデルをfitし、出力の等価性を確認</p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>パラメータ</h2>
+      <div class="param-row">
+        <label>inputDim</label>
+        <input type="number" id="inputDim" value="4" min="1" max="64">
+      </div>
+      <div class="param-row">
+        <label>units</label>
+        <input type="number" id="units" value="3" min="1" max="64">
+      </div>
+      <div class="param-row">
+        <label>batch</label>
+        <input type="number" id="batch" value="8" min="1" max="128">
+      </div>
+      <div class="param-row">
+        <label>epochs</label>
+        <input type="number" id="epochs" value="5" min="1" max="50">
+      </div>
+      <div class="param-row">
+        <label>lr</label>
+        <input type="number" id="lr" value="0.01" min="0.0001" max="1" step="0.001">
+      </div>
+      <div class="param-row">
+        <label>useBias</label>
+        <input type="checkbox" id="useBias" checked>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>結果サマリ</h2>
+      <div id="summary-before" class="diff-visual">
+        <div class="label">fit前 最大誤差</div>
+        <div class="bar-track">
+          <div class="bar-fill" id="bar-before" style="width:0%"></div>
+        </div>
+        <div class="diff-value" id="val-before">—</div>
+      </div>
+      <div id="summary-after" class="diff-visual">
+        <div class="label">fit後 最大誤差</div>
+        <div class="bar-track">
+          <div class="bar-fill" id="bar-after" style="width:0%"></div>
+        </div>
+        <div class="diff-value" id="val-after">—</div>
+      </div>
+      <div class="epoch-log" id="epoch-log"></div>
+    </div>
+  </div>
+
+  <button class="run-btn" id="run-btn">▶ 検証を実行</button>
+
+  <div class="log-area" id="log"></div>
+
+  <script type="module">
+    // ===== WeightedLayer =====
+    import { WeightedLayer } from "/chapter/language/WeightedLayer.js";
+
+    // ===== SumLayer =====
+    import { SumLayer } from "/chapter/language/SumLayer.js";
+
+    // ===== ログ出力 =====
+    const logEl = document.getElementById('log');
+    function log(msg, cls = 'info') {
+      const span = document.createElement('span');
+      span.className = `log-line ${cls}`;
+      span.textContent = msg;
+      logEl.appendChild(span);
+      logEl.appendChild(document.createElement('br'));
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+    function logClear() { logEl.innerHTML = ''; }
+
+    // ===== モデル構築 =====
+    function buildDenseModel(inputDim, units, useBias) {
+      const input = tf.input({ shape: [inputDim] });
+      const denseLayer = tf.layers.dense({ units, useBias, name: "dense" });
+      const output = denseLayer.apply(input);
+      const model = tf.model({ inputs: input, outputs: output });
+      return { model, denseLayer };
+    }
+
+    function buildDecomposedModel(inputDim, units, useBias) {
+      const input = tf.input({ shape: [inputDim] });
+      const weightedLayer = new WeightedLayer({ units, name: "weighted", useBias });
+      const sumLayer = new SumLayer({ name: "sum" });
+      const weighted = weightedLayer.apply(input);
+      const output = sumLayer.apply(weighted);
+      const model = tf.model({ inputs: input, outputs: output });
+      return { model, weightedLayer };
+    }
+
+    // ===== 重み共有 =====
+    function shareWeights(denseLayer, weightedLayer, useBias) {
+      // Denseの重みを取得
+      const denseWeights = denseLayer.getWeights(); // [kernel[inputDim,units], bias[units]?]
+      const kernel = denseWeights[0];
+
+      if (useBias) {
+        const bias = denseWeights[1];
+        // WeightedLayer用: [inputDim+1, units] = concat([kernel, bias.expandDims(0)])
+        const combined = tf.concat([kernel, bias.expandDims(0)], 0);
+        weightedLayer.setWeights([combined]);
+        combined.dispose();
+      } else {
+        weightedLayer.setWeights([kernel]);
+      }
+    }
+
+    // ===== テンソル値の文字列化 =====
+    async function tensorStr(t) {
+      const data = await t.data();
+      return Array.from(data).map(v => v.toFixed(5)).join('  ');
+    }
+
+    // ===== バー更新 =====
+    function updateBar(id, valId, value, threshold = 1e-5) {
+      const pct = Math.min(100, Math.log10(value + 1e-12) / Math.log10(1) * 100 + 100);
+      const bar = document.getElementById(id);
+      bar.style.width = Math.max(1, pct) + '%';
+      bar.className = 'bar-fill' + (value > threshold ? ' bad' : '');
+      const valEl = document.getElementById(valId);
+      const pass = value <= threshold;
+      valEl.innerHTML = `${value.toExponential(4)} <span class="result-badge ${pass ? 'badge-pass' : 'badge-fail'}">${pass ? 'PASS' : 'FAIL'}</span>`;
+    }
+
+    // ===== メイン検証 =====
+    async function runVerification() {
+      logClear();
+      document.getElementById('epoch-log').innerHTML = '';
+      document.getElementById('val-before').innerHTML = '—';
+      document.getElementById('val-after').innerHTML = '—';
+      document.getElementById('bar-before').style.width = '0%';
+      document.getElementById('bar-after').style.width = '0%';
+
+      const btn = document.getElementById('run-btn');
+      btn.disabled = true;
+
+      const inputDim = +document.getElementById('inputDim').value;
+      const units = +document.getElementById('units').value;
+      const batchSize = +document.getElementById('batch').value;
+      const epochs = +document.getElementById('epochs').value;
+      const lr = +document.getElementById('lr').value;
+      const useBias = document.getElementById('useBias').checked;
+
+      log(`inputDim=${inputDim}, units=${units}, batch=${batchSize}, epochs=${epochs}, lr=${lr}, useBias=${useBias}`, 'muted');
+      log('', 'muted');
+
+      // モデル構築
+      const { model: denseModel, denseLayer } = buildDenseModel(inputDim, units, useBias);
+      const { model: decomposedModel, weightedLayer } = buildDecomposedModel(inputDim, units, useBias);
+
+      // 重み共有（Denseのランダム初期値をDecomposedにコピー）
+      shareWeights(denseLayer, weightedLayer, useBias);
+
+      log('▸ モデル構築・重み共有完了', 'header');
+
+      // ダミーデータ
+      const xData = tf.randomNormal([batchSize, inputDim]);
+      const yData = tf.randomNormal([batchSize, units]);
+
+      // ===== fit前 predict比較 =====
+      log('', 'muted');
+      log('━━ fit前 predict ━━━━━━━━━━━━━', 'header');
+
+      const densePredBefore = denseModel.predict(xData);
+      const decomposedPredBefore = decomposedModel.predict(xData);
+
+      log('[Dense]', 'muted');
+      const dpbStr = await tensorStr(densePredBefore.slice([0, 0], [1, -1]));
+      log(`  row0: ${dpbStr}`, 'info');
+
+      log('[Decomposed]', 'muted');
+      const dpbStr2 = await tensorStr(decomposedPredBefore.slice([0, 0], [1, -1]));
+      log(`  row0: ${dpbStr2}`, 'info');
+
+      const diffBefore = densePredBefore.sub(decomposedPredBefore).abs().max();
+      const diffBeforeVal = (await diffBefore.data())[0];
+      log(`最大誤差(fit前): ${diffBeforeVal.toExponential(6)}`, diffBeforeVal < 1e-5 ? 'good' : 'bad');
+      updateBar('bar-before', 'val-before', diffBeforeVal);
+
+      densePredBefore.dispose();
+      decomposedPredBefore.dispose();
+      diffBefore.dispose();
+
+      // ===== fit =====
+      log('', 'muted');
+      log('━━ fitting ━━━━━━━━━━━━━━━━━━', 'header');
+
+      denseModel.compile({ optimizer: tf.train.sgd(lr), loss: 'meanSquaredError' });
+      decomposedModel.compile({ optimizer: tf.train.sgd(lr), loss: 'meanSquaredError' });
+
+      const denseLosses = [];
+      const decomposedLosses = [];
+
+      log('[Dense] fit開始...', 'muted');
+      await denseModel.fit(xData, yData, {
+        epochs,
+        verbose: 0,
+        callbacks: {
+          onEpochEnd: async (epoch, logs) => {
+            denseLosses.push(logs.loss);
+            log(`  epoch ${epoch + 1}/${epochs}  loss=${logs.loss.toFixed(6)}`, 'info');
+            await tf.nextFrame();
+          }
+        }
+      });
+
+      log('[Decomposed] fit開始...', 'muted');
+      await decomposedModel.fit(xData, yData, {
+        epochs,
+        verbose: 0,
+        callbacks: {
+          onEpochEnd: async (epoch, logs) => {
+            decomposedLosses.push(logs.loss);
+            log(`  epoch ${epoch + 1}/${epochs}  loss=${logs.loss.toFixed(6)}`, 'info');
+            await tf.nextFrame();
+          }
+        }
+      });
+
+      // epoch損失比較カード
+      const epochLogEl = document.getElementById('epoch-log');
+      for (let i = 0; i < epochs; i++) {
+        const dl = denseLosses[i]?.toFixed(6) ?? '—';
+        const dcl = decomposedLosses[i]?.toFixed(6) ?? '—';
+        const match = Math.abs((denseLosses[i] ?? 0) - (decomposedLosses[i] ?? 0)) < 1e-4;
+        epochLogEl.innerHTML += `
+      <div class="epoch-card">
+        <div class="ec-title">Epoch ${i + 1}</div>
+        <div class="ec-loss ec-dense">Dense: ${dl}</div>
+        <div class="ec-loss ec-decomp">Decomp: ${dcl}</div>
+        <div style="font-size:0.65rem;margin-top:0.2rem">${match ? '<span style="color:var(--accent)">✓ 一致</span>' : '<span style="color:var(--accent2)">✗ 差異</span>'}</div>
+      </div>`;
+      }
+
+      // ===== fit後 predict比較 =====
+      log('', 'muted');
+      log('━━ fit後 predict ━━━━━━━━━━━━━', 'header');
+
+      const densePredAfter = denseModel.predict(xData);
+      const decomposedPredAfter = decomposedModel.predict(xData);
+
+      log('[Dense]', 'muted');
+      const dpaStr = await tensorStr(densePredAfter.slice([0, 0], [1, -1]));
+      log(`  row0: ${dpaStr}`, 'info');
+
+      log('[Decomposed]', 'muted');
+      const dpaStr2 = await tensorStr(decomposedPredAfter.slice([0, 0], [1, -1]));
+      log(`  row0: ${dpaStr2}`, 'info');
+
+      const diffAfter = densePredAfter.sub(decomposedPredAfter).abs().max();
+      const diffAfterVal = (await diffAfter.data())[0];
+      log(`最大誤差(fit後): ${diffAfterVal.toExponential(6)}`, diffAfterVal < 1e-5 ? 'good' : 'bad');
+      updateBar('bar-after', 'val-after', diffAfterVal);
+
+      densePredAfter.dispose();
+      decomposedPredAfter.dispose();
+      diffAfter.dispose();
+
+      log('', 'muted');
+      log('━━ 検証完了 ━━━━━━━━━━━━━━━━━━', 'header');
+      if (diffAfterVal < 1e-5) {
+        log('✓ 等価性確認: fit後も誤差は許容範囲内です', 'good');
+      } else {
+        log('✗ 等価性NG: fit後に誤差が広がっています（勾配計算の違いの可能性）', 'bad');
+      }
+
+      // クリーンアップ
+      xData.dispose();
+      yData.dispose();
+      denseModel.dispose();
+      decomposedModel.dispose();
+
+      btn.disabled = false;
+    }
+
+    document.getElementById('run-btn').addEventListener('click', runVerification);
+  </script>
+</body>
+
+</html>

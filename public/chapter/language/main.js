@@ -2,6 +2,9 @@ import { OneHotLayer } from "OneHotLayer.js";
 import { MultiHeadAttention } from "MultiHeadAttention.js";
 import { SliceLayer } from "SliceLayer.js";
 import { TiedEmbeddingOutput } from "TiedEmbeddingOutput.js";
+import { WeightedLayer } from "WeightedLayer.js";
+import { SumLayer } from "SumLayer.js";
+
 import { updateProgress } from "updateProgress.js";
 import dataset from "dataset.js";
 dataset.setTf(tf);
@@ -18,7 +21,9 @@ function createSimpleFNN({ vocabSize, inputDim, keyDim, learningRate, type, enco
         charEmbed = (new SliceLayer({ startIndex: charEmbed.shape[1] - 1 })).apply(charEmbed);
     }
     const flat = tf.layers.flatten().apply(charEmbed);
-    const logits = tf.layers.dense({ units: vocabSize }).apply(flat);
+    // const logits = tf.layers.dense({ units: vocabSize }).apply(flat);
+    const weighted = (new WeightedLayer({ units: vocabSize, name: "weighted" })).apply(flat);
+    const logits = (new SumLayer({ name: "sum" })).apply(weighted);
     const output = tf.layers.activation({ activation: "softmax" }).apply(logits);
     const model = tf.model({ inputs: input, outputs: output, name: `fnn(${type ?? ""})` });
 
@@ -27,13 +32,12 @@ function createSimpleFNN({ vocabSize, inputDim, keyDim, learningRate, type, enco
         loss: "sparseCategoricalCrossentropy",
         metrics: ["accuracy"],
     })
+    model.summary();
     return { model };
 }
 function createSimpleGAP({ vocabSize, inputDim, keyDim, learningRate, type, encodingType }) {
     const input = tf.input({ shape: [inputDim], dtype: "int32", name: "char_input" });
     // [Batch, inputDim, embDim]
-    // const embedding = encodingType === "embedding" ? tf.layers.embedding({ inputDim: vocabSize, outputDim: keyDim, maskZero: true }) : undefined;
-    // const charEmbed = embedding ? embedding.apply(input) : new OneHotLayer({ numClasses: vocabSize }).apply(input);
     let charEmbed = encodingType === "embedding" ? tf.layers.embedding({ inputDim: vocabSize, outputDim: keyDim, maskZero: true }).apply(input) : new OneHotLayer({ numClasses: vocabSize }).apply(input);
 
     // [Batch, embDim, embDim]
@@ -77,8 +81,6 @@ function createSimpleLLM({ vocabSize, inputDim, numHeads, keyDim, learningRate, 
     const added = tf.layers.add().apply([lastAttn, lastEmbed])
     const pooled = tf.layers.flatten().apply(added);
 
-    // const logits = tf.layers.dense({ units: vocabSize }).apply(pooled);
-
     const logits = embedding ? new TiedEmbeddingOutput(embedding).apply(pooled) : pooled;
 
     const output = tf.layers.activation({ activation: "softmax" }).apply(logits);
@@ -105,43 +107,25 @@ function evaluateModel({ model, dataset }) {
 
 function setModels({ learningRate = 0.001, verbose = true } = {}) {
     const keyDim = 4;
-    // epochs 300, learningRate 0.005, そしてnumHeads 8で感覚的に8割は評価データで成功する。
     const numHeads = 8;
     // encodingType: embedding / onehot
     const encodingType = "onehot";
     models = [
-        createSimpleLLM({
-            vocabSize: Object.keys(dataset.vocab).length,
-            inputDim: dataset.train_x().shape[1],
-            keyDim,
-            numHeads,
-            learningRate,
-            type: "nor",
-            encodingType,
-        }),
         // createSimpleLLM({
         //     vocabSize: Object.keys(dataset.vocab).length,
         //     inputDim: dataset.train_x().shape[1],
         //     keyDim,
         //     numHeads,
         //     learningRate,
-        //     type: "ext",
+        //     type: "nor",
         //     encodingType,
         // }),
-        createSimpleGAP({
-            vocabSize: Object.keys(dataset.vocab).length,
-            inputDim: dataset.train_x().shape[1],
-            keyDim,
-            learningRate,
-            type: "ful",
-            encodingType,
-        }),
         // createSimpleGAP({
         //     vocabSize: Object.keys(dataset.vocab).length,
         //     inputDim: dataset.train_x().shape[1],
         //     keyDim,
         //     learningRate,
-        //     type: "slc",
+        //     type: "ful",
         //     encodingType,
         // }),
         createSimpleFNN({
@@ -152,14 +136,6 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
             type: "ful",
             encodingType,
         }),
-        // createSimpleFNN({
-        //     vocabSize: Object.keys(dataset.vocab).length,
-        //     inputDim: dataset.train_x().shape[1],
-        //     keyDim,
-        //     learningRate,
-        //     type: "slc",
-        //     encodingType,
-        // }),
     ].filter(e => e !== undefined);
     return models;
 }
