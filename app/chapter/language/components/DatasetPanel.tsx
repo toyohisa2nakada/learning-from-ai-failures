@@ -33,6 +33,7 @@ export type EvaluationResult = {
     correct_answer: string;
     predicted: string;
     test_pattern: string[];
+    topKIndices: number[];
 }
 
 export interface DatasetPanelHandle {
@@ -44,7 +45,7 @@ export interface DatasetPanelHandle {
 function generateDatasets({ train_patterns, test_patterns, mode = "next" }: { train_patterns: string[][], test_patterns: string[][], mode?: "next" | "last" }): Dataset {
     const maxLen = Math.max(...train_patterns.map(e => e.length));
     const allWords: string[] = [...new Set(train_patterns.flat())].sort();
-    const vocab: { [key: string]: number } = { ...allWords.reduce((a, e, i) => ({ ...a, [e]: i + 1 }), {}), "<P>": 0 }
+    const vocab: { [key: string]: number } = { "<P>": 0, ...allWords.reduce((a, e, i) => ({ ...a, [e]: i + 1 }), {}) }
 
     function encode(words: string[]): number[] {
         const inputPad = new Array(maxLen - words.length - 1).fill(vocab["<P>"]);

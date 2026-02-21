@@ -1,7 +1,7 @@
 "use client";
 
 import { useImperativeHandle, useRef, forwardRef, useEffect, useState } from 'react';
-import { type Dataset } from '@/app/chapter/language/components/DatasetPanel';
+import { type Dataset, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
 
 const VOCAB_TOP_N = 5;
 
@@ -10,7 +10,7 @@ interface ModelInsightPanelProps {
 }
 
 export interface ModelInsightPanelHandle {
-    updateModelInsight: () => void;
+    updateModelInsight: (resultSet: { modelName: string, results: EvaluationResult[] }) => void;
     updateDataset: (dataset: Dataset, test_pattern_index: number) => void;
 }
 
@@ -20,18 +20,22 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
     const [containerWidth, setContainerWidth] = useState<number>(100);
     const [datasetState, setDatasetState] = useState<{ dataset: Dataset, test_pattern_index: number } | null>(null);
     const [vocabCellMinWidth, setVocabCellMinWidth] = useState<number | undefined>(undefined);
-    const edgeElementsRef = useRef<{ sources: HTMLTableCellElement[], targets: HTMLTableCellElement[] }>({ sources: [], targets: [] });
+    const edgeElementsRef = useRef<{ sources: (HTMLTableCellElement | null)[], targets: (HTMLTableCellElement | null)[] }>({ sources: [], targets: [] });
     const edgeSVGElementsRef = useRef<SVGLineElement[]>([]);
     const measureSpanRef = useRef<HTMLSpanElement>(null);
+    const lastResultSetRef = useRef<{ modelName: string, results: EvaluationResult[] } | null>(null);
+
+    const applyResultSet = (resultSet: { modelName: string, results: EvaluationResult[] }, patternIndex: number) => {
+        edgeElementsRef.current.targets.slice(0, -1).forEach((e, i) => {
+            if (e) e.textContent = datasetState?.dataset.decode(resultSet.results[patternIndex].topKIndices[i]) ?? '';
+        });
+        console.log(resultSet);
+    };
 
     useImperativeHandle(ref, () => ({
-        updateModelInsight: () => {
-            // console.log('updateModelInsight');
-
-            // test
-            edgeSVGElementsRef.current[0]?.setAttribute('stroke', 'red');
-            const w = Number(edgeSVGElementsRef.current[0]?.getAttribute('stroke-width') ?? "0");
-            edgeSVGElementsRef.current[0]?.setAttribute('stroke-width', (w + 0.05).toString());
+        updateModelInsight: (resultSet: { modelName: string, results: EvaluationResult[] }) => {
+            lastResultSetRef.current = resultSet;
+            applyResultSet(resultSet, datasetState?.test_pattern_index ?? 0);
         },
         updateDataset: (dataset: Dataset, test_pattern_index: number) => {
             // console.log('updateDataset', dataset);
@@ -94,7 +98,9 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
 
         // 矢印を再作成
         edgeElements.sources.forEach((source) => {
+            if (!source) return;
             edgeElements.targets.forEach((target) => {
+                if (!target) return;
                 const el = createEdge(source, target, -2);
                 if (el) edgeSVGElementsRef.current.push(el);
             });
@@ -123,15 +129,16 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
             }
             setVocabCellMinWidth(maxWidth);
         }
-        // drawArrows();
+        if (lastResultSetRef.current && datasetState) {
+            applyResultSet(lastResultSetRef.current, datasetState.test_pattern_index);
+        }
+        // console.log(edgeElementsRef.current?.targets.length)
     }, [datasetState]);
 
     useEffect(() => {
         drawArrows();
     }, [vocabCellMinWidth])
 
-    edgeElementsRef.current.sources.length = 0;
-    edgeElementsRef.current.targets.length = 0;
 
     return (
         <div ref={containerRef} className="text-xs">
@@ -153,14 +160,16 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                     <tr>
                         {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index) => (
                             <td key={index}
-                                ref={(el) => { if (modelName === "fnn" && el) edgeElementsRef.current.sources.push(el) }}>
+                                ref={(el) => {
+                                    if (modelName === "fnn") edgeElementsRef.current.sources[index] = el;
+                                }}>
                                 {word}
                             </td>
                         ))}
                     </tr>
                     {modelName === 'gap' && (<tr>
                         <td id="average-cell"
-                            ref={(el) => { if (el) edgeElementsRef.current.sources.push(el) }}
+                            ref={(el) => { edgeElementsRef.current.sources[0] = el; }}
                             colSpan={(datasetState?.dataset.test_patterns[datasetState.test_pattern_index].length || 1) - 1}
                             style={{ textAlign: 'center' }}>
                             平均
@@ -175,7 +184,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                         ))}</tr>)}
                     {modelName === 'llm' && (<tr>
                         <td id="average-cell"
-                            ref={(el) => { if (el) edgeElementsRef.current.sources.push(el) }}
+                            ref={(el) => { edgeElementsRef.current.sources[0] = el; }}
                             colSpan={(datasetState?.dataset.test_patterns[datasetState.test_pattern_index].length || 1) - 1}
                             style={{ textAlign: 'center' }}>
                             重み付き平均
@@ -196,14 +205,14 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                         {[...Array(VOCAB_TOP_N).keys()].map((i) =>
                             <td key={i}
                                 id={`vocab-${i}`}
-                                ref={(el) => { if (el) edgeElementsRef.current.targets.push(el) }}
+                                ref={(el) => { edgeElementsRef.current.targets[i] = el; }}
                                 style={vocabCellMinWidth !== undefined ? { minWidth: `${vocabCellMinWidth}px` } : undefined}>
                                 {Object.keys(datasetState?.dataset.vocab ?? {})[i] || ""}
                             </td>
                         )}
                         <td key={VOCAB_TOP_N}
                             id={`vocab-${VOCAB_TOP_N}`}
-                            ref={(el) => { if (el) edgeElementsRef.current.targets.push(el) }}
+                            ref={(el) => { edgeElementsRef.current.targets[VOCAB_TOP_N] = el; }}
                             style={vocabCellMinWidth !== undefined ? { minWidth: `${vocabCellMinWidth}px` } : undefined}>
                             ...
                         </td>

@@ -26,7 +26,7 @@ function createSimpleFNN({ vocabSize, inputDim, keyDim, learningRate, type, enco
     const weighted = (new WeightedLayer({ units: vocabSize, name: "weighted", embeddingDim: charEmbed.shape[2] }));
     const weightedApplied = weighted.apply(flat);
     const logits = (new SumLayer({ name: "sum" })).apply(weightedApplied);
-    console.log("input", input.shape, "charembeded", charEmbed.shape, "flat", flat.shape, "weighted", weightedApplied.shape, "logits", logits.shape);
+    // console.log("input", input.shape, "charembeded", charEmbed.shape, "flat", flat.shape, "weighted", weightedApplied.shape, "logits", logits.shape);
     const output = tf.layers.activation({ activation: "softmax" }).apply(logits);
     const model = tf.model({ inputs: input, outputs: output, name: `fnn(${type ?? ""})` });
 
@@ -100,11 +100,19 @@ function createSimpleLLM({ vocabSize, inputDim, numHeads, keyDim, learningRate, 
 function evaluateModel({ model, dataset }) {
     return tf.tidy(() => {
         const inp = dataset.toTensor(dataset.test_patterns.map(e => dataset.encode(e.slice(0, -1))))
-        const probs = model.predict(inp)
-        const predIds = probs.argMax(-1).dataSync();
-        const predWords = Array.from(predIds).map((e, i) => dataset.decode(e));
+        const probs = model.predict(inp);
+        const { indices } = tf.topk(probs, probs.shape[probs.shape.length - 1], true);
+        const topKAllIndices = indices.arraySync();
+        const predWords = topKAllIndices.map(e => dataset.decode(e[0]));
+        // const predIds = probs.argMax(-1).dataSync();
+        // const predWords = Array.from(predIds).map((e, i) => dataset.decode(e));
         // console.log(model.name + "\n" + predWords.map((e, i) => `${dataset.test_patterns[i]} ${e}`).join("\n"));
-        return dataset.test_patterns.map((e, i) => ({ test_pattern: dataset.test_patterns[i].slice(0, -1), predicted: predWords[i], correct_answer: dataset.test_patterns[i].at(-1) }));
+        return dataset.test_patterns.map((e, i) => ({
+            test_pattern: dataset.test_patterns[i].slice(0, -1),
+            predicted: predWords[i],
+            correct_answer: dataset.test_patterns[i].at(-1),
+            topKIndices: topKAllIndices[i],
+        }));
     })
 }
 
@@ -148,8 +156,11 @@ function postEvaluation({ model, options, dataset }) {
     options?.WeightedLayer?.setKeepWeights(true);
     const results = evaluateModel({ model, dataset });
     // console.log(model.name, options?.MultiHeadAttention?.getAttentionScores());
-    console.log(model.name, options?.WeightedLayer?.getWeights());
-    window.parent.postMessage({ type: 'evaluation', values: { modelName: model.name.split('(')[0], results } });
+    // console.log(model.name, options?.WeightedLayer?.getWeights());
+    window.parent.postMessage({
+        type: 'evaluation',
+        values: { modelName: model.name.split('(')[0], results }
+    });
 }
 function postLearningStatus(status) {
     window.parent.postMessage({ type: 'learning-status', values: status });
