@@ -34,6 +34,9 @@ export type EvaluationResult = {
     predicted: string;
     test_pattern: string[];
     topKIndices: number[];
+    topKValues: number[];
+    attentionScores: number[][][]; // head, query, key
+    weights: number[][]; // neuron+bias, vocab
 }
 
 export interface DatasetPanelHandle {

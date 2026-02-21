@@ -97,21 +97,30 @@ function createSimpleLLM({ vocabSize, inputDim, numHeads, keyDim, learningRate, 
     return { model, options: { MultiHeadAttention: mha } };
 }
 
-function evaluateModel({ model, dataset }) {
+function evaluateModel({ model, options, dataset }) {
     return tf.tidy(() => {
+        options?.MultiHeadAttention?.setKeepAttentionScores(true);
+        options?.WeightedLayer?.setKeepWeights(true);
+
         const inp = dataset.toTensor(dataset.test_patterns.map(e => dataset.encode(e.slice(0, -1))))
         const probs = model.predict(inp);
-        const { indices } = tf.topk(probs, probs.shape[probs.shape.length - 1], true);
+
+        const { values, indices } = tf.topk(probs, probs.shape[probs.shape.length - 1], true);
+        const topKAllValues = values.arraySync();
         const topKAllIndices = indices.arraySync();
         const predWords = topKAllIndices.map(e => dataset.decode(e[0]));
-        // const predIds = probs.argMax(-1).dataSync();
-        // const predWords = Array.from(predIds).map((e, i) => dataset.decode(e));
-        // console.log(model.name + "\n" + predWords.map((e, i) => `${dataset.test_patterns[i]} ${e}`).join("\n"));
+
+        const attentionScoresSet = options?.MultiHeadAttention?.getAttentionScores();
+        const weightsSet = options?.WeightedLayer?.getWeights();
+
         return dataset.test_patterns.map((e, i) => ({
             test_pattern: dataset.test_patterns[i].slice(0, -1),
             predicted: predWords[i],
             correct_answer: dataset.test_patterns[i].at(-1),
             topKIndices: topKAllIndices[i],
+            topKValues: topKAllValues[i],
+            attentionScores: attentionScoresSet?.[i],
+            weights: weightsSet?.[i],
         }));
     })
 }
@@ -152,11 +161,7 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
 }
 
 function postEvaluation({ model, options, dataset }) {
-    options?.MultiHeadAttention?.setKeepAttentionScores(true);
-    options?.WeightedLayer?.setKeepWeights(true);
-    const results = evaluateModel({ model, dataset });
-    // console.log(model.name, options?.MultiHeadAttention?.getAttentionScores());
-    // console.log(model.name, options?.WeightedLayer?.getWeights());
+    const results = evaluateModel({ model, options, dataset });
     window.parent.postMessage({
         type: 'evaluation',
         values: { modelName: model.name.split('(')[0], results }

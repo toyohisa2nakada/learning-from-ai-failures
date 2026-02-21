@@ -21,15 +21,32 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
     const [datasetState, setDatasetState] = useState<{ dataset: Dataset, test_pattern_index: number } | null>(null);
     const [vocabCellMinWidth, setVocabCellMinWidth] = useState<number | undefined>(undefined);
     const edgeElementsRef = useRef<{ sources: (HTMLTableCellElement | null)[], targets: (HTMLTableCellElement | null)[] }>({ sources: [], targets: [] });
-    const edgeSVGElementsRef = useRef<SVGLineElement[]>([]);
+    const edgeSVGElementsRef = useRef<SVGLineElement[][]>([]);
     const measureSpanRef = useRef<HTMLSpanElement>(null);
     const lastResultSetRef = useRef<{ modelName: string, results: EvaluationResult[] } | null>(null);
 
     const applyResultSet = (resultSet: { modelName: string, results: EvaluationResult[] }, patternIndex: number) => {
         edgeElementsRef.current.targets.slice(0, -1).forEach((e, i) => {
-            if (e) e.textContent = datasetState?.dataset.decode(resultSet.results[patternIndex].topKIndices[i]) ?? '';
+            if (e) {
+                e.textContent = datasetState?.dataset.decode(resultSet.results[patternIndex].topKIndices[i]) ?? '';
+                const lower_el = (e.parentElement?.nextElementSibling as HTMLTableRowElement)?.cells[e.cellIndex];
+                if (lower_el) {
+                    lower_el.textContent = resultSet.results[patternIndex].topKValues[i].toFixed(2);
+                }
+            }
         });
-        console.log(resultSet);
+        const weights = resultSet.results[patternIndex].weights;
+        if (weights) {
+            resultSet.results[patternIndex].topKIndices.slice(0, VOCAB_TOP_N).forEach((targetIndex, colIndex) => {
+                resultSet.results[patternIndex].test_pattern.forEach((_, sourceIndex) => {
+                    const line = edgeSVGElementsRef.current[sourceIndex][colIndex];
+                    const w = weights[sourceIndex][targetIndex];
+                    line.setAttribute('stroke-width', (w * 2).toString());
+                    if (w >= 0) line.setAttribute('stroke', 'rgba(245, 158, 11, 0.8)');
+                    else line.setAttribute('stroke', 'rgba(14, 165, 233, 0.8)');
+                })
+            })
+        }
     };
 
     useImperativeHandle(ref, () => ({
@@ -99,10 +116,11 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
         // 矢印を再作成
         edgeElements.sources.forEach((source) => {
             if (!source) return;
+            edgeSVGElementsRef.current.push([]);
             edgeElements.targets.forEach((target) => {
                 if (!target) return;
                 const el = createEdge(source, target, -2);
-                if (el) edgeSVGElementsRef.current.push(el);
+                if (el) edgeSVGElementsRef.current[edgeSVGElementsRef.current.length - 1].push(el);
             });
         });
     };
@@ -132,7 +150,6 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
         if (lastResultSetRef.current && datasetState) {
             applyResultSet(lastResultSetRef.current, datasetState.test_pattern_index);
         }
-        // console.log(edgeElementsRef.current?.targets.length)
     }, [datasetState]);
 
     useEffect(() => {
