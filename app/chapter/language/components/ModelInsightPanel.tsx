@@ -26,7 +26,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
 
     useImperativeHandle(ref, () => ({
         updateModelInsight: () => {
-            console.log('updateModelInsight');
+            // console.log('updateModelInsight');
 
             // test
             edgeSVGElementsRef.current[0]?.setAttribute('stroke', 'red');
@@ -34,7 +34,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
             edgeSVGElementsRef.current[0]?.setAttribute('stroke-width', (w + 0.05).toString());
         },
         updateDataset: (dataset: Dataset, test_pattern_index: number) => {
-            console.log('updateDataset', dataset);
+            // console.log('updateDataset', dataset);
             setDatasetState({ dataset, test_pattern_index });
         }
     }));

@@ -16,14 +16,17 @@ function createSimpleFNN({ vocabSize, inputDim, keyDim, learningRate, type, enco
     const input = tf.input({ shape: [inputDim], dtype: "int32", name: "char_input" });
     // [Batch, inputDim, embDim]
     let charEmbed = encodingType === "embedding" ? tf.layers.embedding({ inputDim: vocabSize, outputDim: keyDim, maskZero: true }).apply(input) : new OneHotLayer({ numClasses: vocabSize }).apply(input);
+
     // [Batch, inputDim*embDim]
     if (type === "slc") {
         charEmbed = (new SliceLayer({ startIndex: charEmbed.shape[1] - 1 })).apply(charEmbed);
     }
     const flat = tf.layers.flatten().apply(charEmbed);
     // const logits = tf.layers.dense({ units: vocabSize }).apply(flat);
-    const weighted = (new WeightedLayer({ units: vocabSize, name: "weighted" })).apply(flat);
-    const logits = (new SumLayer({ name: "sum" })).apply(weighted);
+    const weighted = (new WeightedLayer({ units: vocabSize, name: "weighted", embeddingDim: charEmbed.shape[2] }));
+    const weightedApplied = weighted.apply(flat);
+    const logits = (new SumLayer({ name: "sum" })).apply(weightedApplied);
+    console.log("input", input.shape, "charembeded", charEmbed.shape, "flat", flat.shape, "weighted", weightedApplied.shape, "logits", logits.shape);
     const output = tf.layers.activation({ activation: "softmax" }).apply(logits);
     const model = tf.model({ inputs: input, outputs: output, name: `fnn(${type ?? ""})` });
 
@@ -33,7 +36,7 @@ function createSimpleFNN({ vocabSize, inputDim, keyDim, learningRate, type, enco
         metrics: ["accuracy"],
     })
     model.summary();
-    return { model };
+    return { model, options: { WeightedLayer: weighted } };
 }
 function createSimpleGAP({ vocabSize, inputDim, keyDim, learningRate, type, encodingType }) {
     const input = tf.input({ shape: [inputDim], dtype: "int32", name: "char_input" });
@@ -91,7 +94,7 @@ function createSimpleLLM({ vocabSize, inputDim, numHeads, keyDim, learningRate, 
         loss: "sparseCategoricalCrossentropy",
         metrics: ["accuracy"],
     })
-    return { model, options: { mha } };
+    return { model, options: { MultiHeadAttention: mha } };
 }
 
 function evaluateModel({ model, dataset }) {
@@ -140,9 +143,12 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
     return models;
 }
 
-function postEvaluation({ model, dataset }) {
-    model.options?.mha?.setKeepAttentionScores(true);
+function postEvaluation({ model, options, dataset }) {
+    options?.MultiHeadAttention?.setKeepAttentionScores(true);
+    options?.WeightedLayer?.setKeepWeights(true);
     const results = evaluateModel({ model, dataset });
+    // console.log(model.name, options?.MultiHeadAttention?.getAttentionScores());
+    console.log(model.name, options?.WeightedLayer?.getWeights());
     window.parent.postMessage({ type: 'evaluation', values: { modelName: model.name.split('(')[0], results } });
 }
 function postLearningStatus(status) {
@@ -158,15 +164,16 @@ async function learn({ dataset, learningRate, epochs, verbose = true }) {
     postLearningStatus("started");
 
     for (let i = 0; i < models.length; i += 1) {
-        const model = models[i].model;
-        model.options?.mha?.setKeepAttentionScores(false);
+        const { model, options } = models[i];
+        options?.MultiHeadAttention?.setKeepAttentionScores(false);
+        options?.WeightedLayer?.setKeepWeights(false);
         const history = await model.fit(dataset.train_x(tf), dataset.train_y(tf), {
             epochs,
             batchSize: 8,
             shuffle: true,
             callbacks: {
                 onEpochEnd: (epoch) => {
-                    postEvaluation({ model, dataset });
+                    postEvaluation({ model, options, dataset });
                     updateProgress(100 * (epoch + 1) / epochs);
                 }
             }

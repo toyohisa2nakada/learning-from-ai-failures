@@ -3,6 +3,8 @@ export class WeightedLayer extends tf.layers.Layer {
         super(config);
         this.units = config.units ?? 1;
         this.useBias = config?.useBias ?? true;
+        this.embeddingDim = config.embeddingDim;
+        this.keepWeights = config.keepWeights ?? false;
     }
 
     build(inputShape) {
@@ -30,7 +32,27 @@ export class WeightedLayer extends tf.layers.Layer {
 
             const xExpanded = xReady.expandDims(2);
             const kernelExpanded = this.kernel.read().expandDims(0);
-            return xExpanded.mul(kernelExpanded);
+            const output = xExpanded.mul(kernelExpanded);
+            // console.log(output.shape);
+            if (this.keepWeights) {
+                const [B, L, O] = output.shape;
+                const chunkSize = this.embeddingDim;
+                const numFullChunks = Math.floor(L / chunkSize);
+                const remainder = L % chunkSize;
+
+                const fullPart = output.slice([0, 0, 0], [B, numFullChunks * chunkSize, O]);
+                const reshaped = fullPart.reshape([B, numFullChunks, chunkSize, O]);
+                const summed = reshaped.sum(2);
+
+                this.backupedWeights = (remainder > 0
+                    ? tf.concat([
+                        summed,
+                        output.slice([0, numFullChunks * chunkSize, 0], [B, remainder, O])
+                    ], 1)
+                    : summed
+                ).arraySync();
+            }
+            return output;
         });
     }
 
@@ -40,6 +62,16 @@ export class WeightedLayer extends tf.layers.Layer {
     }
 
     getConfig() {
-        return { ...super.getConfig(), units: this.units, useBias: this.useBias };
+        return { ...super.getConfig(), units: this.units, useBias: this.useBias, embeddingDim: this.embeddingDim, keepWeights: this.keepWeights };
+    }
+
+    getKeepWeights() {
+        return this.keepWeights;
+    }
+    setKeepWeights(value) {
+        this.keepWeights = value;
+    }
+    getWeights() {
+        return this.backupedWeights;
     }
 }

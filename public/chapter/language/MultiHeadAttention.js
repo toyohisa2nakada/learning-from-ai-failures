@@ -140,98 +140,101 @@ export class MultiHeadAttention extends tf.layers.Layer {
     }
 
     call(inputs, kwargs) {
-        // const [query, key, value] = inputs;
-        const query = inputs[0].clone();
-        const key = inputs[1].clone();
-        const value = inputs[2].clone();
+        return tf.tidy(() => {
 
-        const batchSize = query.shape[0] || -1;
-        // Note: In tfjs-layers, batchSize might be null during build, but we are in call() now.
+            // const [query, key, value] = inputs;
+            const query = inputs[0].clone();
+            const key = inputs[1].clone();
+            const value = inputs[2].clone();
 
-        // Helper for 3D matmul (BS, D) x (D, O) -> (BS, O)
-        // Reshapes to (B*S, D) -> matmul -> (B*S, O) -> (B, S, O)
-        const safeMatMul = (t, w) => {
-            const seq = t.shape[1];
-            const d = t.shape[2];
-            // if t rank is 2 (e.g. [batch, dim]), just matmul
-            if (t.shape.length === 2) {
-                return tf.matMul(t, w);
+            const batchSize = query.shape[0] || -1;
+            // Note: In tfjs-layers, batchSize might be null during build, but we are in call() now.
+
+            // Helper for 3D matmul (BS, D) x (D, O) -> (BS, O)
+            // Reshapes to (B*S, D) -> matmul -> (B*S, O) -> (B, S, O)
+            const safeMatMul = (t, w) => {
+                const seq = t.shape[1];
+                const d = t.shape[2];
+                // if t rank is 2 (e.g. [batch, dim]), just matmul
+                if (t.shape.length === 2) {
+                    return tf.matMul(t, w);
+                }
+                const flat = tf.reshape(t, [-1, d]);
+                const res = tf.matMul(flat, w);
+                return tf.reshape(res, [-1, seq, w.shape[1]]);
+            };
+
+            // 1. Project Q, K, V
+            let Q = safeMatMul(query, this.kernelQ.read());
+            if (this.biasQ) Q = tf.add(Q, this.biasQ.read());
+
+            let K = safeMatMul(key, this.kernelK.read());
+            if (this.biasK) {
+                // console.log(K.shape, this.biasK.shape)
+                K = tf.add(K, this.biasK.read());
             }
-            const flat = tf.reshape(t, [-1, d]);
-            const res = tf.matMul(flat, w);
-            return tf.reshape(res, [-1, seq, w.shape[1]]);
-        };
 
-        // 1. Project Q, K, V
-        let Q = safeMatMul(query, this.kernelQ.read());
-        if (this.biasQ) Q = tf.add(Q, this.biasQ.read());
+            let V = safeMatMul(value, this.kernelV.read());
+            if (this.biasV) V = tf.add(V, this.biasV.read());
 
-        let K = safeMatMul(key, this.kernelK.read());
-        if (this.biasK) {
-            // console.log(K.shape, this.biasK.shape)
-            K = tf.add(K, this.biasK.read());
-        }
+            // 2. Split Heads
+            // Current shape: [batch, seq_len, numHeads * dim]
+            // Target shape: [batch, num_heads, seq_len, dim]
 
-        let V = safeMatMul(value, this.kernelV.read());
-        if (this.biasV) V = tf.add(V, this.biasV.read());
+            Q = this.splitHeads(Q, batchSize, this.numHeads, this.keyDim);
+            K = this.splitHeads(K, batchSize, this.numHeads, this.keyDim);
+            V = this.splitHeads(V, batchSize, this.numHeads, this.valueDim);
 
-        // 2. Split Heads
-        // Current shape: [batch, seq_len, numHeads * dim]
-        // Target shape: [batch, num_heads, seq_len, dim]
+            // 3. Scaled Dot-Product Attention
+            // Q: [batch, heads, seqQ, dk]
+            // K: [batch, heads, seqK, dk]
+            // K_T: [batch, heads, dk, seqK]
+            // scores = Q * K^T
 
-        Q = this.splitHeads(Q, batchSize, this.numHeads, this.keyDim);
-        K = this.splitHeads(K, batchSize, this.numHeads, this.keyDim);
-        V = this.splitHeads(V, batchSize, this.numHeads, this.valueDim);
+            // tf.matMul supports broadcasting for batch and heads if rank >= 3
+            // matMul(a, b, transposeA, transposeB)
+            let scores = tf.matMul(Q, K, false, true);
+            // scores shape: [batch, heads, seqQ, seqK]
 
-        // 3. Scaled Dot-Product Attention
-        // Q: [batch, heads, seqQ, dk]
-        // K: [batch, heads, seqK, dk]
-        // K_T: [batch, heads, dk, seqK]
-        // scores = Q * K^T
+            // Scale
+            const scale = tf.scalar(Math.sqrt(this.keyDim));
+            scores = tf.div(scores, scale);
 
-        // tf.matMul supports broadcasting for batch and heads if rank >= 3
-        // matMul(a, b, transposeA, transposeB)
-        let scores = tf.matMul(Q, K, false, true);
-        // scores shape: [batch, heads, seqQ, seqK]
+            // const eye = tf.eye(scores.shape[2]);
+            // const mask = tf.mul(eye, -1e9);
+            // scores = tf.add(scores, mask);
 
-        // Scale
-        const scale = tf.scalar(Math.sqrt(this.keyDim));
-        scores = tf.div(scores, scale);
+            // Optional: Masking (not implemented for simplicity, but place for it is here)
+            // if (mask) { ... }
 
-        // const eye = tf.eye(scores.shape[2]);
-        // const mask = tf.mul(eye, -1e9);
-        // scores = tf.add(scores, mask);
+            // Softmax shape [batch, heads, inputDim, inputDim]
+            const attentionWeights = tf.softmax(scores, -1); // last dim
+            if (this.keepAttentionScores) {
+                // console.log("attn", attentionWeights.shape)
+                this.attentionScores = attentionWeights.arraySync();
+            }
+            // console.log(attentionWeights)
 
-        // Optional: Masking (not implemented for simplicity, but place for it is here)
-        // if (mask) { ... }
+            // 4. Context
+            // weights: [batch, heads, seqQ, seqK]
+            // V: [batch, heads, seqK, dv]
+            // context = weights * V
+            let context = tf.matMul(attentionWeights, V);
+            // context shape: [batch, heads, seqQ, dv]
 
-        // Softmax shape [batch, heads, inputDim, inputDim]
-        const attentionWeights = tf.softmax(scores, -1); // last dim
-        if (this.keepAttentionScores) {
-            // console.log("attn", attentionWeights.shape)
-            this.attentionScores = attentionWeights.arraySync();
-        }
-        // console.log(attentionWeights)
+            // 5. Combine Heads
+            // Target: [batch, seqQ, heads * dv]
+            context = this.combineHeads(context);
 
-        // 4. Context
-        // weights: [batch, heads, seqQ, seqK]
-        // V: [batch, heads, seqK, dv]
-        // context = weights * V
-        let context = tf.matMul(attentionWeights, V);
-        // context shape: [batch, heads, seqQ, dv]
+            // 6. Output projection
+            let output = safeMatMul(context, this.kernelO.read());
+            if (this.biasO) output = tf.add(output, this.biasO.read());
 
-        // 5. Combine Heads
-        // Target: [batch, seqQ, heads * dv]
-        context = this.combineHeads(context);
-
-        // 6. Output projection
-        let output = safeMatMul(context, this.kernelO.read());
-        if (this.biasO) output = tf.add(output, this.biasO.read());
-
-        // tf.layers.addの問題はカスタムレイヤーでtf.tidyを使っていたのが原因だったもよう。
-        // そしてそのaddを外し、sliceも外して、通常のmultiheadattentionの出力に戻した。
-        // よってこの出力に残差を付ける場合、このレイヤのあとで、tf.layers.add().apply([output,query])をする。
-        return output;
+            // tf.layers.addの問題はカスタムレイヤーでtf.tidyを使っていたのが原因だったもよう。
+            // そしてそのaddを外し、sliceも外して、通常のmultiheadattentionの出力に戻した。
+            // よってこの出力に残差を付ける場合、このレイヤのあとで、tf.layers.add().apply([output,query])をする。
+            return output;
+        })
     }
 
     splitHeads(x, batchSize, numHeads, dim) {
