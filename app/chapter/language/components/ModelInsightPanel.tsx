@@ -41,7 +41,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 resultSet.results[patternIndex].test_pattern.forEach((_, sourceIndex) => {
                     const line = edgeSVGElementsRef.current[sourceIndex][colIndex];
                     const w = weights[sourceIndex][targetIndex];
-                    line.setAttribute('stroke-width', (w * 2).toString());
+                    line.setAttribute('stroke-width', (Math.abs(w) * 2).toString());
                     if (w >= 0) line.setAttribute('stroke', 'rgba(245, 158, 11, 0.8)');
                     else line.setAttribute('stroke', 'rgba(14, 165, 233, 0.8)');
                 })
