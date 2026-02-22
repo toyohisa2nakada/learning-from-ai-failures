@@ -1,3 +1,8 @@
+const config = {
+    learningRate: 0.005,
+    epochs: 50
+};
+
 import { OneHotLayer } from "OneHotLayer.js";
 import { MultiHeadAttention } from "MultiHeadAttention.js";
 import { SliceLayer } from "SliceLayer.js";
@@ -8,8 +13,7 @@ import { SumLayer } from "SumLayer.js";
 import { updateProgress } from "updateProgress.js";
 import dataset from "dataset.js";
 dataset.setTf(tf);
-// console.log("dataset", dataset)
-let models = undefined;
+// let models = undefined;
 
 // vocabSize: 全単語数, inputDim: 入力単語数, numHeads keyDim: MultiHeadAttention paramter, learningRate:学習率
 function createSimpleFNN({ vocabSize, inputDim, keyDim, learningRate, type, encodingType }) {
@@ -35,7 +39,6 @@ function createSimpleFNN({ vocabSize, inputDim, keyDim, learningRate, type, enco
         loss: "sparseCategoricalCrossentropy",
         metrics: ["accuracy"],
     })
-    model.summary();
     return { model, options: { WeightedLayer: weighted } };
 }
 function createSimpleGAP({ vocabSize, inputDim, keyDim, learningRate, type, encodingType }) {
@@ -52,7 +55,11 @@ function createSimpleGAP({ vocabSize, inputDim, keyDim, learningRate, type, enco
         pooled = (new SliceLayer({ startIndex: charEmbed.shape[1] - 1 })).apply(charEmbed);
         pooled = tf.layers.flatten().apply(pooled);
     }
-    const logits = tf.layers.dense({ units: vocabSize }).apply(pooled);
+    // const logits = tf.layers.dense({ units: vocabSize }).apply(pooled);
+    // const weighted = undefined;
+    const weighted = (new WeightedLayer({ units: vocabSize, name: "weighted", embeddingDim: charEmbed.shape[2] }));
+    const weightedApplied = weighted.apply(pooled);
+    const logits = (new SumLayer({ name: "sum" })).apply(weightedApplied);
     const output = tf.layers.activation({ activation: "softmax" }).apply(logits);
     const model = tf.model({ inputs: input, outputs: output, name: `gap(${type})` });
 
@@ -61,7 +68,8 @@ function createSimpleGAP({ vocabSize, inputDim, keyDim, learningRate, type, enco
         loss: "sparseCategoricalCrossentropy",
         metrics: ["accuracy"],
     })
-    return { model };
+    model.summary();
+    return { model, options: { WeightedLayer: weighted } };
 }
 // type: nor / ext, encodingType: embedding / onehot
 function createSimpleLLM({ vocabSize, inputDim, numHeads, keyDim, learningRate, type, encodingType }) {
@@ -130,24 +138,24 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
     const numHeads = 8;
     // encodingType: embedding / onehot
     const encodingType = "onehot";
-    models = [
-        // createSimpleLLM({
-        //     vocabSize: Object.keys(dataset.vocab).length,
-        //     inputDim: dataset.train_x().shape[1],
-        //     keyDim,
-        //     numHeads,
-        //     learningRate,
-        //     type: "nor",
-        //     encodingType,
-        // }),
-        // createSimpleGAP({
-        //     vocabSize: Object.keys(dataset.vocab).length,
-        //     inputDim: dataset.train_x().shape[1],
-        //     keyDim,
-        //     learningRate,
-        //     type: "ful",
-        //     encodingType,
-        // }),
+    const models = [
+        createSimpleLLM({
+            vocabSize: Object.keys(dataset.vocab).length,
+            inputDim: dataset.train_x().shape[1],
+            keyDim,
+            numHeads,
+            learningRate,
+            type: "nor",
+            encodingType,
+        }),
+        createSimpleGAP({
+            vocabSize: Object.keys(dataset.vocab).length,
+            inputDim: dataset.train_x().shape[1],
+            keyDim,
+            learningRate,
+            type: "ful",
+            encodingType,
+        }),
         createSimpleFNN({
             vocabSize: Object.keys(dataset.vocab).length,
             inputDim: dataset.train_x().shape[1],
@@ -171,12 +179,12 @@ function postLearningStatus(status) {
     window.parent.postMessage({ type: 'learning-status', values: status });
 }
 
-async function learn({ dataset, learningRate, epochs, verbose = true }) {
+async function learn(dataset, { learningRate, epochs, verbose = true } = {}) {
     if (dataset === undefined) {
         alert("学習データを生成してください。");
         return;
     }
-    setModels({ learningRate });
+    const models = setModels({ learningRate });
     postLearningStatus("started");
 
     for (let i = 0; i < models.length; i += 1) {
@@ -220,8 +228,4 @@ async function learn({ dataset, learningRate, epochs, verbose = true }) {
     }
 }
 
-await learn({
-    dataset,
-    learningRate: 0.005,
-    epochs: 50
-});
+await learn(dataset, config);

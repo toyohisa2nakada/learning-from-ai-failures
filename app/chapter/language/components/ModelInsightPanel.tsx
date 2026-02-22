@@ -38,7 +38,8 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
         const weights = resultSet.results[patternIndex].weights;
         if (weights) {
             resultSet.results[patternIndex].topKIndices.slice(0, VOCAB_TOP_N).forEach((targetIndex, colIndex) => {
-                resultSet.results[patternIndex].test_pattern.forEach((_, sourceIndex) => {
+                const sourceSize = Math.min(edgeElementsRef.current.sources.length, resultSet.results[patternIndex].test_pattern.length);
+                [...Array(sourceSize).keys()].forEach(sourceIndex => {
                     const line = edgeSVGElementsRef.current[sourceIndex][colIndex];
                     const w = weights[sourceIndex][targetIndex];
                     line.setAttribute('stroke-width', (Math.abs(w) * 2).toString());
