@@ -68,7 +68,6 @@ function createSimpleGAP({ vocabSize, inputDim, keyDim, learningRate, type, enco
         loss: "sparseCategoricalCrossentropy",
         metrics: ["accuracy"],
     })
-    model.summary();
     return { model, options: { WeightedLayer: weighted } };
 }
 // type: nor / ext, encodingType: embedding / onehot
@@ -101,7 +100,7 @@ function createSimpleLLM({ vocabSize, inputDim, numHeads, keyDim, learningRate, 
         optimizer: tf.train.adam(learningRate),
         loss: "sparseCategoricalCrossentropy",
         metrics: ["accuracy"],
-    })
+    });
     return { model, options: { MultiHeadAttention: mha } };
 }
 
