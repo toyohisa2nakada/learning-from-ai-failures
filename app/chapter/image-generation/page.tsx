@@ -72,78 +72,39 @@ export default function Home() {
       <section className="action-section">
         指令：ポケモン進化を作る
       </section>
-      {/* 操作と可視化 */}
+
+      {/* Main Content */}
       <main className="flex bg-inherit">
-        <div id="container" className="container-panel">
+        <div id="container" className="container-panel md:flex-row h-full bg-inherit">
 
-          {/* 上部パネル */}
-          <div id="upper-panel" className="upper-panel items-start">
-
-            {/* パラメータ設定 */}
-            {/* h-[240px] */}
-            <div id="parameter-control" className="left-panel overflow-y-auto">
-              <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
-
-              {/* {Array(8).fill(({ borderColor: "border-gray-800", sliderColor: "accent-gray-400" })).map((e, i) => (
-                <div className={`${e.borderColor} mb-2 p-2 border-1 rounded-lg`} key={i}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xs font-semibold">{`グラフ${i + 1}: `}<span className="text-gray-300">y =
-                      w2 * tanh(w1 * x + b)</span></h3>
-                  </div>
-                  <div className="flex gap-3">
-                    <div className="w-1/3 pr-1">
-                      <input type="range" id={`wIn${i}`} min="-10.0" max="10.0" step="0.001"
-                        className={`w-full h-[6px] cursor-pointer my-[3px] ${e.sliderColor}`}
-                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                    </div>
-                    <div className="w-1/3 pr-1">
-                      <input type="range" id={`b${i}`} min="-10.0" max="10.0" step="0.001"
-                        className={`w-full h-[6px] cursor-pointer my-[3px] ${e.sliderColor}`}
-                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                    </div>
-                    <div className="w-1/3 pr-1">
-                      <input type="range" id={`wOut${i}`} min="-10.0" max="10.0" step="0.001"
-                        className={`w-full h-[6px] cursor-pointer my-[3px] ${e.sliderColor}`}
-                        onChange={e => onChangeWeight(e.target.id, e.target.value)} />
-                    </div>
-                  </div>
-                </div>
-              ))} */}
-
+          {/* Left Panel: Merged Height (Full Height of container) */}
+          <div className="left-panel flex flex-col">
+            <div className="flex justify-between items-center">
+              <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
+              <div className="text-xs flex">
+                <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造</button>
+                <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>プログラム</button>
+              </div>
             </div>
+            {programmingMode === 'manual' ? <NeuralNetGraph /> :
+              <JsEditor
+                path="chapter/image-generation/main.js"
+                updateHandler={[
+                  { onUpdate: onImageUpdate, messageType: 'images' },
+                  { onUpdate: onIntermediateImageUpdate, messageType: 'intermediateImages' }
+                ]}
+                externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
+                defaultValue={mainScript}
+              />
+            }
+          </div>
 
+          {/* Right Column Wrapper: Stacks Upper and Lower panels */}
+          <div className="flex flex-col gap-4 min-w-0 flex-1 bg-inherit">
             {/* 個別のグラフ */}
             <div id="graph-area-top" className="right-panel">
               <ImageGridPanel ref={imageGridPanelRef} />
             </div>
-
-          </div>
-
-          {/* 下部パネル */}
-          <div id="lower-panel" className="lower-panel">
-
-            {/* ニューラルネットワークの構造 */}
-            <div id="drawing-area" className="left-panel relative">
-              <div className="flex justify-between items-center">
-                <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
-                <div className="text-xs flex">
-                  <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造</button>
-                  <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>プログラム</button>
-                </div>
-              </div>
-              {programmingMode === 'manual' ? <NeuralNetGraph /> :
-                <JsEditor
-                  path="chapter/image-generation/main.js"
-                  updateHandler={[
-                    { onUpdate: onImageUpdate, messageType: 'images' },
-                    { onUpdate: onIntermediateImageUpdate, messageType: 'intermediateImages' }
-                  ]}
-                  externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
-                  defaultValue={mainScript}
-                />
-              }
-            </div>
-
             {/* 画像生成結果 */}
             <div id="graph-area-bottom" className="right-panel">
               <DatasetPanel
@@ -153,7 +114,19 @@ export default function Home() {
                 onImageSelectChange={handleImageSelectChange}
               />
             </div>
+
           </div>
+
+
+          {/* 上部パネル */}
+          {/* <div id="upper-panel" className="upper-panel items-start">
+            <div id="parameter-control" className="left-panel overflow-y-auto">
+              <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
+            </div>
+          </div> */}
+          {/* 下部パネル */}
+          {/* <div id="lower-panel" className="lower-panel">
+          </div> */}
         </div>
       </main>
     </div>
