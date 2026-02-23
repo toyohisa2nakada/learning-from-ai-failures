@@ -4,6 +4,13 @@ import { useImperativeHandle, useRef, forwardRef, useEffect, useState } from 're
 import { type Dataset, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
 
 const VOCAB_TOP_N = 5;
+const INPUT_COLORS = [
+    "rgba(228, 26, 28, 0.6)",
+    "rgba(55, 126, 184, 0.6)",
+    "rgba(77, 175, 74, 0.6)",
+    "rgba(152, 78, 163, 0.6)",
+    "rgba(255, 127, 0, 0.6)"
+];
 
 interface ModelInsightPanelProps {
     modelName: string;
@@ -74,6 +81,20 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 if (score >= 0) line.setAttribute('stroke', 'rgba(245, 158, 11, 0.8)');
                 else line.setAttribute('stroke', 'rgba(14, 165, 233, 0.8)');
             });
+
+            const total = lastRow.reduce((a, b) => a + b, 0);
+            let cumulative = 0;
+            const stops = lastRow.map((score, i) => {
+                const start = cumulative;
+                cumulative += (score / total) * 100;
+                return `${INPUT_COLORS[i]} ${start.toFixed(2)}% ${cumulative.toFixed(2)}%`;
+            });
+            const gradientStr = `linear-gradient(to right, ${stops.join(', ')})`;
+
+            const backgroundTargetCells = [llmEdgeElementsRef.current.targets[0], edgeElementsRef.current.targets[0]];
+            backgroundTargetCells.filter(e => e != null).forEach(cell => {
+                cell.style.backgroundImage = gradientStr;
+            });
         }
     };
 
@@ -83,7 +104,14 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
             applyResultSet(resultSet, datasetState?.test_pattern_index ?? 0);
         },
         updateDataset: (dataset: Dataset, test_pattern_index: number) => {
-            // console.log('updateDataset', dataset);
+            if (dataset !== datasetState?.dataset) {
+                const backgroundTargetCells = [llmEdgeElementsRef.current.targets[0], edgeElementsRef.current.targets[0]];
+                backgroundTargetCells.filter(e => e != null).forEach(cell => {
+                    cell.style.backgroundImage = "";
+                });
+                // データセット自体が変わる。これ以外は、test_pattern_indexが変わる。
+                lastResultSetRef.current = null;
+            }
             setDatasetState({ dataset, test_pattern_index });
         }
     }));
@@ -206,6 +234,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
             }
             setVocabCellMinWidth(maxWidth);
         }
+
         if (lastResultSetRef.current && datasetState) {
             applyResultSet(lastResultSetRef.current, datasetState.test_pattern_index);
         }
@@ -217,7 +246,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
 
 
     return (
-        <div ref={containerRef} className="text-xs">
+        <div ref={containerRef} className="text-s">
             {/* 幅計測用の非表示スパン（実際のフォントサイズで測定するためDOMに配置） */}
             <span ref={measureSpanRef} style={{ visibility: 'hidden', position: 'absolute', whiteSpace: 'nowrap', fontSize: 'inherit' }} />
             <style jsx>{`
@@ -239,7 +268,8 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                                 if (modelName === "fnn" || modelName === "llm") {
                                     edgeElementsRef.current.sources[index] = el;
                                 }
-                            }}>
+                            }}
+                            style={{ backgroundColor: INPUT_COLORS[index] }}>
                             {word}
                         </td>
                     ))}</tr>
@@ -269,11 +299,14 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                                         if (index === arr.length - 1) {
                                             llmEdgeElementsRef.current.sources[0] = el;
                                         }
-                                        if (index === datasetState?.dataset.test_patterns[datasetState.test_pattern_index].length - 2) {
+                                        if (index === arr.length - 1) {
                                             edgeElementsRef.current.targets[0] = el;
                                         }
                                     }}
-                                    style={{ textAlign: 'center' }}>
+                                    style={{
+                                        textAlign: 'center',
+                                        opacity: index === arr.length - 1 ? 1.0 : 0.2
+                                    }}>
                                     {word}
                                 </td>
                             ))}
@@ -290,21 +323,21 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                     <tbody>
                         <tr>
                             <td id="word-単語">単語</td>
-                            {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(-2, -1).map((word, index) => (
-                                <td key={index}
+                            {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(-2, -1).map((word, index) => {
+                                return (<td key={index}
                                     ref={(el) => {
-                                        if (modelName === "llm") {
-                                            llmEdgeElementsRef.current.targets[0] = el;
-                                        }
+                                        llmEdgeElementsRef.current.targets[0] = el;
                                     }}
                                     style={{ textAlign: 'center' }}>
                                     {word}
                                 </td>
-                            ))}
+                                )
+                            })}
                         </tr>
                     </tbody>
                 </table>
-            )}
+            )
+            }
             {modelName === "llm" && (
                 <div>一致度トップ{VOCAB_TOP_N}</div>
             )}
@@ -351,7 +384,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                     </tr>
                 </tbody>
             </table>
-        </div>
+        </div >
     );
 });
 
