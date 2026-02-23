@@ -14,6 +14,7 @@ declare namespace tf {
 }
 
 export interface Dataset {
+    name: string;
     setTf: (tf: any) => void;
     train_x: () => tf.Tensor2D;
     train_y: () => tf.Tensor1D;
@@ -45,17 +46,19 @@ export interface DatasetPanelHandle {
 }
 
 
-function generateDatasets({ train_patterns, test_patterns, mode = "next" }: { train_patterns: string[][], test_patterns: string[][], mode?: "next" | "last" }): Dataset {
+function generateDatasets({ name, train_patterns, test_patterns, mode = "next" }: { name: string, train_patterns: string[][], test_patterns: string[][], mode?: "next" | "last" }): Dataset {
     const maxLen = Math.max(...train_patterns.map(e => e.length));
-    const allWords: string[] = [...new Set(train_patterns.flat())].sort();
-    const vocab: { [key: string]: number } = { "<P>": 0, ...allWords.reduce((a, e, i) => ({ ...a, [e]: i + 1 }), {}) }
+    const sortedWords = [...new Set(train_patterns.flat())].sort();
+    const paddingToken = '<P>';
+    const allWords: string[] = [paddingToken, ...sortedWords];
+    const vocab: { [key: string]: number } = allWords.reduce((a, e, i) => ({ ...a, [e]: i }), {});
 
     function encode(words: string[]): number[] {
-        const inputPad = new Array(maxLen - words.length - 1).fill(vocab["<P>"]);
+        const inputPad = new Array(maxLen - words.length - 1).fill(vocab[paddingToken]);
         return [...inputPad, ...words.map(w => vocab[w])];
     }
     function decode(code: number): string {
-        return allWords[code - 1];
+        return allWords[code];
     }
     function tokenize(input: string): { tokens: number[], errorMessage?: string } {
         const words = Object.keys(vocab).sort((a, b) => b.length - a.length);
@@ -99,6 +102,7 @@ function generateDatasets({ train_patterns, test_patterns, mode = "next" }: { tr
     let train_y_backup: any = null;
     let tf_backup: any = null;
     return {
+        name,
         setTf: (tf: any) => { if (tf_backup !== null) { train_x_backup = null; train_y_backup = null; } tf_backup = tf; },
         train_x: () => train_x_backup ?? (train_x_backup = tf_backup.tensor2d(sequences.map(e => e.inputSeq), [sequences.length, maxLen - 1], 'int32')),
         train_y: () => train_y_backup ?? (train_y_backup = tf_backup.tensor1d(sequences.map(e => e.targetWord), 'float32')),
@@ -135,7 +139,7 @@ function generateFavoriteDatasets() {
             train_patterns.push([sub, oi, verbs[i]]);
         })
     });
-    return generateDatasets({ train_patterns, test_patterns, mode: "next" });
+    return generateDatasets({ name: "Favorite", train_patterns, test_patterns, mode: "next" });
 }
 function generateHomonymDatasets() {
     const numSlots = 4; // ハシの前の語数
@@ -202,7 +206,7 @@ function generateHomonymDatasets() {
         // correct_answers.push(seq[numSlots + 1])
     });
 
-    return generateDatasets({ train_patterns, test_patterns, mode: "last" })
+    return generateDatasets({ name: "Homonym", train_patterns, test_patterns, mode: "last" })
 }
 
 

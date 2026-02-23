@@ -109,7 +109,12 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 backgroundTargetCells.filter(e => e != null).forEach(cell => {
                     cell.style.backgroundImage = "";
                 });
-                // データセット自体が変わる。これ以外は、test_pattern_indexが変わる。
+                probElementsRef.current.slice(0, -1).filter(e => e !== null).forEach((e, i) => {
+                    e.textContent = "";
+                });
+                // wordElementsRef.current.slice(0, -1).filter(e => e !== null).forEach((e, i) => {
+                //     e.textContent = "";
+                // });
                 lastResultSetRef.current = null;
             }
             setDatasetState({ dataset, test_pattern_index });
@@ -347,19 +352,22 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 <tbody>
                     <tr>
                         <td id="word-単語">単語</td>
-                        {[...Array(VOCAB_TOP_N).keys()].map((i) =>
-                            <td key={i}
-                                id={`vocab-${i}`}
-                                ref={(el) => {
-                                    if (modelName === "fnn" || modelName === "gap") {
-                                        edgeElementsRef.current.targets[i] = el;
-                                    }
-                                    wordElementsRef.current[i] = el;
-                                }}
-                                style={vocabCellMinWidth !== undefined ? { minWidth: `${vocabCellMinWidth}px` } : undefined}>
-                                {Object.keys(datasetState?.dataset.vocab ?? {})[i] || ""}
-                            </td>
-                        )}
+                        {[...Array(VOCAB_TOP_N).keys()].map((i) => {
+                            const word = Object.keys(datasetState?.dataset.vocab ?? {})[i] || "?";
+                            return (
+                                <td key={`${datasetState?.dataset.name}-${i}`}
+                                    id={`vocab-${i}`}
+                                    ref={(el) => {
+                                        if (modelName === "fnn" || modelName === "gap") {
+                                            edgeElementsRef.current.targets[i] = el;
+                                        }
+                                        wordElementsRef.current[i] = el;
+                                    }}
+                                    style={vocabCellMinWidth !== undefined ? { minWidth: `${vocabCellMinWidth}px` } : undefined}>
+                                    {word}
+                                </td>
+                            );
+                        })}
                         <td key={VOCAB_TOP_N}
                             id={`vocab-${VOCAB_TOP_N}`}
                             ref={(el) => {
