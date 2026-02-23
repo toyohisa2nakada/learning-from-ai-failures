@@ -16,18 +16,21 @@ export interface ModelInsightPanelHandle {
 
 const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelProps>(({ modelName }, ref) => {
     const svgRef = useRef<SVGSVGElement>(null);
+    const llmSvgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState<number>(100);
     const [datasetState, setDatasetState] = useState<{ dataset: Dataset, test_pattern_index: number } | null>(null);
     const [vocabCellMinWidth, setVocabCellMinWidth] = useState<number | undefined>(undefined);
     const edgeElementsRef = useRef<{ sources: (HTMLTableCellElement | null)[], targets: (HTMLTableCellElement | null)[] }>({ sources: [], targets: [] });
+    const wordElementsRef = useRef<(HTMLTableCellElement | null)[]>([]);
     const probElementsRef = useRef<(HTMLTableCellElement | null)[]>([]);
-    const edgeSVGElementsRef = useRef<SVGLineElement[][]>([]);
+    const edgeSVGElementsRef = useRef<(SVGLineElement | SVGPathElement)[][]>([]);
+    const llmEdgeElementsRef = useRef<{ sources: (HTMLTableCellElement | null)[], targets: (HTMLTableCellElement | null)[] }>({ sources: [], targets: [] });
     const measureSpanRef = useRef<HTMLSpanElement>(null);
     const lastResultSetRef = useRef<{ modelName: string, results: EvaluationResult[] } | null>(null);
 
     const applyResultSet = (resultSet: { modelName: string, results: EvaluationResult[] }, patternIndex: number) => {
-        edgeElementsRef.current.targets.slice(0, -1).filter(e => e !== null).forEach((e, i) => {
+        wordElementsRef.current.slice(0, -1).filter(e => e !== null).forEach((e, i) => {
             e.textContent = datasetState?.dataset.decode(resultSet.results[patternIndex].topKIndices[i]) ?? '';
         });
         probElementsRef.current.slice(0, -1).filter(e => e !== null).forEach((e, i) => {
@@ -45,6 +48,32 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                     else line.setAttribute('stroke', 'rgba(14, 165, 233, 0.8)');
                 })
             })
+        }
+        const attentionScores = resultSet.results[patternIndex].attentionScores;
+        if (attentionScores) {
+            // head軸でsumして [l, l] を作る
+            const seqLen = attentionScores[0].length;
+            const summed: number[][] = Array.from({ length: seqLen }, (_, i) =>
+                Array.from({ length: seqLen }, (_, j) =>
+                    attentionScores.reduce((acc, head) => acc + head[i][j], 0) / attentionScores.length
+                )
+            );
+            // multiheadのモデルでは残差を使用しているので、対角成分に1を加える
+            summed.forEach((row, i) => {
+                row[i] += 1;
+            });
+
+            // 最後のquery行 [seqLen] の各値をedgeSVGElementsRef.current[sourceIndex][0]に反映
+            const lastRow = summed[seqLen - 1];
+            lastRow.forEach((score, sourceIndex) => {
+                const edges = edgeSVGElementsRef.current[sourceIndex];
+                if (!edges || edges.length === 0) return;
+                const line = edges[0];
+                if (!line) return;
+                line.setAttribute('stroke-width', (Math.abs(score)).toString());
+                if (score >= 0) line.setAttribute('stroke', 'rgba(245, 158, 11, 0.8)');
+                else line.setAttribute('stroke', 'rgba(14, 165, 233, 0.8)');
+            });
         }
     };
 
@@ -65,9 +94,14 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
      * @param endId - 終了要素のID
      * @param endOffsetY - 終点のY座標オフセット（負の値で上に移動）
      */
-    const createEdge = (startElement: HTMLTableCellElement, endElement: HTMLTableCellElement, endOffsetY: number = -10): SVGLineElement | null => {
-        const svg = svgRef.current;
-        if (!svg) return null;
+    const createEdge = (
+        startElement: HTMLTableCellElement,
+        endElement: HTMLTableCellElement,
+        endOffsetY: number = -10,
+        lineShape: 'straight' | 'polyline' = 'straight',
+        targetSvg = svgRef.current)
+        : SVGLineElement | SVGPathElement | null => {
+        if (!targetSvg) return null;
 
         const container = containerRef.current;
         if (!container) return null;
@@ -75,7 +109,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
         // 各要素の位置を取得
         const startRect = startElement.getBoundingClientRect();
         const endRect = endElement.getBoundingClientRect();
-        const svgRect = svg.getBoundingClientRect();
+        const svgRect = targetSvg.getBoundingClientRect();
 
         // SVGを基準とした相対座標を計算
         // 開始点：「平均」セルの中央下部
@@ -87,16 +121,26 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
         const endY = endRect.top - svgRect.top + endOffsetY;
 
         // 線を作成
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', startX.toString());
-        line.setAttribute('y1', startY.toString());
-        line.setAttribute('x2', endX.toString());
-        line.setAttribute('y2', endY.toString());
-        line.setAttribute('stroke', 'rgba(140, 140, 140, 1)');
-        line.setAttribute('stroke-width', '0.5');
-
-        svg.appendChild(line);
-        return line;
+        let path = null;
+        if (lineShape === 'straight') {
+            path = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            path.setAttribute('x1', startX.toString());
+            path.setAttribute('y1', startY.toString());
+            path.setAttribute('x2', endX.toString());
+            path.setAttribute('y2', endY.toString());
+            path.setAttribute('stroke', 'rgba(140, 140, 140, 1)');
+            path.setAttribute('stroke-width', '0.5');
+        } else if (lineShape === 'polyline') {
+            path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const midY = startY + svgRect.height / 2;
+            const d = `M ${startX} ${startY} L ${startX} ${midY} L ${endX} ${midY} L ${endX} ${endY}`;
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', 'rgba(140, 140, 140, 1)');
+            path.setAttribute('stroke-width', '0.5');
+            path.setAttribute('fill', 'none');
+        }
+        if (path !== null) targetSvg.appendChild(path);
+        return path;
     };
 
     const drawArrows = () => {
@@ -108,10 +152,9 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
         setContainerWidth(container.offsetWidth);
 
         // 既存の矢印を削除
-        const lines = svg.querySelectorAll('line');
+        const lines = svg.querySelectorAll('line, path');
         lines.forEach(line => line.remove());
         edgeSVGElementsRef.current.length = 0;
-
 
         // 矢印を再作成
         edgeElements.sources.forEach((source) => {
@@ -123,6 +166,22 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 if (el) edgeSVGElementsRef.current[edgeSVGElementsRef.current.length - 1].push(el);
             });
         });
+
+        // llm用SVGにmiddle-top-tableの最後の列セルとbottom-tableの最後の列を結ぶpolylineを描画
+        if (modelName === 'llm') {
+            const llmSvg = llmSvgRef.current;
+            if (llmSvg) {
+                const existingPaths = llmSvg.querySelectorAll('line, path');
+                existingPaths.forEach(p => p.remove());
+            }
+            llmEdgeElementsRef.current.sources.forEach((source) => {
+                if (!source) return;
+                llmEdgeElementsRef.current.targets.forEach((target) => {
+                    if (!target) return;
+                    createEdge(source, target, -2, 'polyline', llmSvgRef.current);
+                })
+            })
+        }
     };
 
     useEffect(() => {
@@ -196,7 +255,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
             </table>
 
             {/* 矢印（SVG） */}
-            <svg ref={svgRef} id="arrow-svg" viewBox={`0 0 ${containerWidth} 40`} style={{ height: '40px', width: '100%', display: 'block' }}>
+            <svg ref={svgRef} id="arrow-svg" viewBox={`0 0 ${containerWidth} 30`} style={{ height: '30px', width: '100%', display: 'block' }}>
             </svg>
 
             {/* llm用の中間の表とsvg */}
@@ -204,11 +263,14 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 <table className="middle-top-table">
                     <tbody>
                         <tr>
-                            {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index) => (
+                            {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index, arr) => (
                                 <td key={index}
                                     ref={(el) => {
+                                        if (index === arr.length - 1) {
+                                            llmEdgeElementsRef.current.sources[0] = el;
+                                        }
                                         if (index === datasetState?.dataset.test_patterns[datasetState.test_pattern_index].length - 2) {
-                                            edgeElementsRef.current.targets[index] = el;
+                                            edgeElementsRef.current.targets[0] = el;
                                         }
                                     }}
                                     style={{ textAlign: 'center' }}>
@@ -220,7 +282,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 </table>
             )}
             {modelName === "llm" && (
-                <svg id="arrow-svg" viewBox={`0 0 ${containerWidth} 20`} style={{ height: '20px', width: '100%', display: 'block' }}>
+                <svg ref={llmSvgRef} id="llm-arrow-svg" viewBox={`0 0 ${containerWidth} 20`} style={{ height: '20px', width: '100%', display: 'block' }}>
                 </svg>
             )}
             {modelName === "llm" && (
@@ -230,6 +292,11 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                             <td id="word-単語">単語</td>
                             {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(-2, -1).map((word, index) => (
                                 <td key={index}
+                                    ref={(el) => {
+                                        if (modelName === "llm") {
+                                            llmEdgeElementsRef.current.targets[0] = el;
+                                        }
+                                    }}
                                     style={{ textAlign: 'center' }}>
                                     {word}
                                 </td>
@@ -254,6 +321,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                                     if (modelName === "fnn" || modelName === "gap") {
                                         edgeElementsRef.current.targets[i] = el;
                                     }
+                                    wordElementsRef.current[i] = el;
                                 }}
                                 style={vocabCellMinWidth !== undefined ? { minWidth: `${vocabCellMinWidth}px` } : undefined}>
                                 {Object.keys(datasetState?.dataset.vocab ?? {})[i] || ""}
