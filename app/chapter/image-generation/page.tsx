@@ -7,14 +7,13 @@ import DatasetPanel, { type DatasetPanelHandle } from "@/app/chapter/image-gener
 import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
 import { type ImageOption } from "@/components/ImageSelect";
 
+import { useResizer } from '@/lib/hooks/useResizer';
+
 const MAIN_SCRIPT_NAME = 'main.js';
 const SCRIPT_BASE_PATH = '/chapter/image-generation/';
 
 export default function Home() {
   console.log("Editor HOME")
-  // 手動で重みの変更
-  function onChangeWeight(id: string, value: string): void {
-  }
   // 手動学習、自動（プログラム）学習の切り替え (manual / programming)
   const [programmingMode, setProgrammingMode] = useState('programming');
   const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
@@ -24,6 +23,8 @@ export default function Home() {
   const [imageSelected1, setImageSelected1] = useState<ImageOption | undefined>();
   const datasetPanelRef = useRef<DatasetPanelHandle>(null);
   const imageGridPanelRef = useRef<any>(null);
+
+  const { leftWidth, containerRef, handleMouseDown } = useResizer(50, 20, 80);
 
   const handleImageSelectChange = (index: 0 | 1, newValue: ImageOption) => {
     if (index === 0) setImageSelected0(newValue);
@@ -75,10 +76,10 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex bg-inherit">
-        <div id="container" className="container-panel md:flex-row h-full bg-inherit">
+        <div ref={containerRef} id="container" className="container-panel md:flex-row h-full bg-inherit">
 
           {/* Left Panel: Merged Height (Full Height of container) */}
-          <div className="left-panel flex flex-col">
+          <div className="left-panel flex flex-col" style={{ width: `${leftWidth}%`, flexShrink: 0 }}>
             <div className="flex justify-between items-center">
               <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
               <div className="text-xs flex">
@@ -99,6 +100,12 @@ export default function Home() {
             }
           </div>
 
+          {/* リサイザー */}
+          <div
+            onMouseDown={handleMouseDown}
+            className="w-2 flex-shrink-0 cursor-col-resize hover:bg-blue-900 active:bg-blue-500 transition-colors duration-150 rounded"
+          />
+
           {/* Right Column Wrapper: Stacks Upper and Lower panels */}
           <div className="flex flex-col gap-4 min-w-0 flex-1 bg-inherit">
             {/* 個別のグラフ */}
@@ -117,16 +124,6 @@ export default function Home() {
 
           </div>
 
-
-          {/* 上部パネル */}
-          {/* <div id="upper-panel" className="upper-panel items-start">
-            <div id="parameter-control" className="left-panel overflow-y-auto">
-              <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
-            </div>
-          </div> */}
-          {/* 下部パネル */}
-          {/* <div id="lower-panel" className="lower-panel">
-          </div> */}
         </div>
       </main>
     </div>

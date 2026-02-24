@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import JsEditor from '@/components/JsEditor';
 import DatasetPanel, { type Dataset, type DatasetPanelHandle, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
 import ModelInsightPanel, { type ModelInsightPanelHandle } from '@/app/chapter/language/components/ModelInsightPanel';
+import { useResizer } from '@/lib/hooks/useResizer';
 
 const IMPORT_SCRIPT_NAMES = [
   'MultiHeadAttention.js',
@@ -32,6 +33,7 @@ export default function Home() {
   const datasetPanelRef = useRef<DatasetPanelHandle>(null);
   const modelInsightPanelRef = useRef<{ [modelName: string]: ModelInsightPanelHandle }>({});
   const testPatternSelectRef = useRef<HTMLSelectElement>(null);
+  const { leftWidth, containerRef, handleMouseDown } = useResizer(50, 20, 80);
 
   function onDatasetChange(dataset: Readonly<Dataset>) {
     setDataset(dataset);
@@ -80,16 +82,16 @@ export default function Home() {
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
       {/* Action Section */}
       <section className="action-section">
-        指令：言語モデル
+        指令：言語モデルを作る
       </section>
 
       {/* Main Content */}
       <main className="flex bg-inherit overflow-hidden bg-inherit">
         {/* Container: Flex Row on MD screens to put Left and Right side-by-side */}
-        <div className="container-panel md:flex-row h-full bg-inherit">
+        <div ref={containerRef} className="container-panel md:flex-row h-full bg-inherit">
 
           {/* Left Panel: Merged Height (Full Height of container) */}
-          <div className="left-panel flex flex-col">
+          <div className="left-panel flex flex-col" style={{ width: `${leftWidth}%`, flexShrink: 0 }} >
             <h3 className="text-base font-bold mb-3">ニューラルネットワークの構造</h3>
             <JsEditor
               path="chapter/language/main.js"
@@ -101,6 +103,12 @@ export default function Home() {
               defaultValue={mainScript}
             />
           </div>
+
+          {/* リサイザー */}
+          <div
+            onMouseDown={handleMouseDown}
+            className="w-2 flex-shrink-0 cursor-col-resize hover:bg-blue-900 active:bg-blue-500 transition-colors duration-150 rounded"
+          />
 
           {/* Right Column Wrapper: Stacks Upper and Lower panels */}
           <div className="flex flex-col gap-4 min-w-0 flex-1 bg-inherit">
@@ -138,7 +146,7 @@ export default function Home() {
           </div>
 
         </div>
-      </main>
-    </div>
+      </main >
+    </div >
   );
 }
