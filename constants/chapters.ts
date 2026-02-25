@@ -1,2 +1,2 @@
 // constants/chapters.ts (別ファイルに分けると管理しやすいです)
-export const CHAPTERS = ["language", "image-generation", "fundamentals"];
+export const CHAPTERS = ["fundamentals", "image-generation", "language"];

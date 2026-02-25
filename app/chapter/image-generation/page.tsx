@@ -8,6 +8,17 @@ import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridP
 import { type ImageOption } from "@/components/ImageSelect";
 
 import { useResizer } from '@/lib/hooks/useResizer';
+import { useGuide, type Guide } from "@/lib/hooks/useGuide";
+
+
+const guides: Guide[][] = [
+  [
+    { element: '#graph-area-bottom', popover: { title: '画像を選んでね', description: '進化させたい画像の元になる画像を２つ選んでね' } },
+  ],
+  [
+    { element: '#graph-area-top', popover: { title: '各ニューロンの働き', description: '各ニューロンがどのような特徴を捉えているか見てみよう' } },
+  ],
+];
 
 const MAIN_SCRIPT_NAME = 'main.js';
 const SCRIPT_BASE_PATH = '/chapter/image-generation/';
@@ -67,11 +78,16 @@ export default function Home() {
 
   }, []);
 
+  const { startGuide, startQuiz } = useGuide({ guides });
+
+
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
       {/* 指令エリア */}
       <section className="action-section">
         指令：ポケモン進化を作る
+        <button onClick={startGuide}>説明を見る</button>
+        <button onClick={startQuiz}>課題に挑戦</button>
       </section>
 
       {/* Main Content */}
@@ -82,7 +98,7 @@ export default function Home() {
           <div className="left-panel flex flex-col" style={{ width: `${leftWidth}%`, flexShrink: 0 }}>
             <div className="flex justify-between items-center">
               <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
-              <div className="text-xs flex">
+              <div id="programming-mode-toggle" className="text-xs flex">
                 <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造</button>
                 <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>プログラム</button>
               </div>

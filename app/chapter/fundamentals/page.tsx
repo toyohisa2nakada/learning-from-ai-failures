@@ -3,7 +3,19 @@ import { useEffect, useState, useRef } from "react";
 import { Chart, ChartConfiguration } from 'chart.js/auto';
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/fundamentals/components/NeuralNetGraph";
+import { useGuide, type Guide } from "@/lib/hooks/useGuide";
 
+
+const guides: Guide[][] = [
+  [
+    { element: '#programming-mode-toggle', popover: { title: 'プログラムモードへの変更', description: 'ここを押してプログラムモードへ！' } },
+    { element: '#target-settings', popover: { title: '教師データの選択', description: 'ここで教師データも変えられます' } },
+  ],
+  [
+    { element: '#parameter-control', popover: { title: 'パラメータの設定', description: 'ここのスライダを移動させると、' } },
+    { element: '#graph-area-top', popover: { title: '個別のグラフ', description: 'ここのグラフが変化します' } }
+  ],
+];
 
 // グラフ描画の設定
 const DATA_POINTS = 300;
@@ -237,7 +249,7 @@ export default function Home() {
   }
 
   // 手動学習、自動（プログラム）学習の切り替え (manual / programming)
-  const [programmingMode, setProgrammingMode] = useState('programming');
+  const [programmingMode, setProgrammingMode] = useState('manual');
   const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
   const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
   // iframe->カスタムタグのEditor->経由で受け取るプログラムでアップデートした重み
@@ -349,6 +361,8 @@ export default function Home() {
   // 重み部分のinput
   const weight_input_css = "no-spin font-bold w-12 text-right p-0 bg-transparent text-sm rounded border border-[#1f2a44] border-solid";
 
+  const { startGuide, startQuiz } = useGuide({ guides });
+
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
       <style>{`
@@ -375,14 +389,16 @@ export default function Home() {
       {/* 指令エリア */}
       <section className="action-section">
         指令：パラメータを変更して、グラフの可算結果が教師データを通るようにする。
+        <button onClick={startGuide}>説明を見る</button>
+        <button onClick={startQuiz}>課題に挑戦</button>
       </section>
 
       {/* 操作と可視化 */}
-      <main className="flex bg-inherit">
-        <div id="container" className="container-panel">
+      <main className="flex bg-inherit min-h-0 overflow-hidden">
+        <div id="container" className="container-panel h-full">
 
           {/* 上部パネル */}
-          <div id="upper-panel" className="upper-panel">
+          <div id="upper-panel" className="upper-panel min-h-0 overflow-hidden">
 
             {/* パラメータ設定 */}
             <div id="parameter-control" className="left-panel">
@@ -460,13 +476,13 @@ export default function Home() {
           </div>
 
           {/* 下部パネル */}
-          <div id="lower-panel" className="lower-panel">
+          <div id="lower-panel" className="lower-panel min-h-0 overflow-hidden">
 
             {/* ニューラルネットワークの構造 */}
             <div id="drawing-area" className="left-panel relative">
               <div className="flex justify-between items-center">
                 <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
-                <div className="text-xs flex">
+                <div id="programming-mode-toggle" className="text-xs flex">
                   <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造(手動で学習)</button>
                   <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>自動(プログラムで学習)</button>
                 </div>
@@ -492,7 +508,7 @@ export default function Home() {
 
               <div
                 className="target-settings mb-1 p-2 border-none rounded-lg shadow-sm text-xs bg-inherit w-full">
-                <div className="flex items-center bg-inherit">
+                <div id="target-settings" className="flex items-center bg-inherit">
                   <label htmlFor="target-select"
                     className="mr-2 font-medium whitespace-nowrap">目標点データ:</label>
                   <select id="target-select" defaultValue="0"

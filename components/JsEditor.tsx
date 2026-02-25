@@ -164,7 +164,7 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
     return (
         <div className="flex flex-col h-full gap-2 overflow-hidden">
             <iframe className="editor_output" style={{ display: "none" }}></iframe>
-            <div className="flex-1 min-h-0">
+            <div className="flex-1 min-h-0 relative">
                 <Editor
                     height="100%"
                     defaultLanguage="javascript"
@@ -176,6 +176,9 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
                         minimap: {
                             enabled: false,
                         },
+                        automaticLayout: true,
+                        scrollBeyondLastLine: false,
+                        fixedOverflowWidgets: true,
                     }}
                     path={path}
                     defaultValue={defaultValue}

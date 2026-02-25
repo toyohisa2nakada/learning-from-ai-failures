@@ -4,6 +4,17 @@ import JsEditor from '@/components/JsEditor';
 import DatasetPanel, { type Dataset, type DatasetPanelHandle, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
 import ModelInsightPanel, { type ModelInsightPanelHandle } from '@/app/chapter/language/components/ModelInsightPanel';
 import { useResizer } from '@/lib/hooks/useResizer';
+import { useGuide, type Guide } from "@/lib/hooks/useGuide";
+
+const guides: Guide[][] = [
+  [
+    { element: '#dataset-container', popover: { title: '単語の並び', description: '入力単語の並びです' } },
+  ],
+  [
+    { element: '#model-insight-container', popover: { title: '各モデルの計算の仕方', description: '各モデルがどのような計算をしているか見てみよう' } },
+  ],
+];
+
 
 const IMPORT_SCRIPT_NAMES = [
   'MultiHeadAttention.js',
@@ -78,11 +89,15 @@ export default function Home() {
     })
   }, []);
 
+  const { startGuide, startQuiz } = useGuide({ guides });
+
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
       {/* Action Section */}
       <section className="action-section">
         指令：言語モデルを作る
+        <button onClick={startGuide}>説明を見る</button>
+        <button onClick={startQuiz}>課題に挑戦</button>
       </section>
 
       {/* Main Content */}
@@ -113,7 +128,7 @@ export default function Home() {
           {/* Right Column Wrapper: Stacks Upper and Lower panels */}
           <div className="flex flex-col gap-4 min-w-0 flex-1 bg-inherit">
             {/* Upper Right Panel */}
-            <div className="right-panel h-auto flex-none bg-inherit">
+            <div id="model-insight-container" className="right-panel h-auto flex-none bg-inherit">
               <div className="font-semibold mb-2">計算プロセス</div>
               <div className="bg-inherit">
                 <label htmlFor="test-pattern-index">テストパターン</label>
@@ -138,7 +153,7 @@ export default function Home() {
               </div>
             </div>
             {/* Lower Right Panel */}
-            <div className="right-panel h-auto flex-1 flex flex-col min-h-0 overflow-y-auto bg-inherit">
+            <div id="dataset-container" className="right-panel h-auto flex-1 flex flex-col min-h-0 overflow-y-auto bg-inherit">
               <DatasetPanel
                 ref={datasetPanelRef}
                 onDatasetChange={onDatasetChange} />
