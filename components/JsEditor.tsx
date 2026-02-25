@@ -48,42 +48,6 @@ const HTML_TEMPLATE = `
     <script type="module">__EDITOR_VALUE__</script>
 </html>`.replace(/[\r\n\t]+/g, "");
 
-/*
-let latest_insertions = [];
-function convert_iframe_error_position(lineno: string, colno: string) {
-    const line_number = Number(lineno);
-    const column_number = Number(colno);
-    if (!Number.isFinite(line_number) || !Number.isFinite(column_number)) {
-        return { lineno, colno };
-    }
-
-    let line_index = line_number - 1;
-    const sorted_insertions = [...latest_insertions]
-        .sort((a, b) => a.startLine - b.startLine || a.startColumn - b.startColumn);
-
-    for (const insertion of sorted_insertions) {
-        const diff = insertion.newLineCount - insertion.originalLineCount;
-        const start = insertion.startLine;
-        const end = insertion.startLine + insertion.newLineCount - 1;
-
-        if (line_index < start) {
-            continue;
-        }
-
-        if (line_index > end) {
-            line_index -= diff;
-            continue;
-        }
-
-        line_index = start;
-        return { lineno: line_index + 1, colno };
-    }
-
-    return { lineno: line_index + 1, colno };
-}
-    */
-
-
 interface JsEditorProps {
     defaultValue?: string;
     updateHandler?: {
@@ -149,7 +113,6 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
             const { html: inlined_html, insertions } = inlineHTML(htmlString, extJsCode as Record<string, string | object>);
             const htmlStringWithErrorHandler = inlined_html.replace(/(<html[^>]*>)/i, `$1${BUILD_IFRAME_ERROR_HANDLER_SCRIPT}`);
 
-            // if (progressRef.current) progressRef.current.style.width = "50%";
             if (buttonLabelRef.current) buttonLabelRef.current.textContent = BUTTON_LABELS.preparing;
             editor_output_elem!.srcdoc = htmlStringWithErrorHandler;
         });

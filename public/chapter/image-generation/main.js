@@ -57,8 +57,8 @@ import { updateProgress } from "updateProgress.js";
 import { postLearningStatus } from "postLearningStatus.js";
 const tensors = getTensor(trainingData);
 const [model, intermediateModel] = buildModel({ outputShape: tensors.y.shape[1] });
-model.summary();
-intermediateModel.summary();
+// model.summary();
+// intermediateModel.summary();
 
 function postImages() {
     const range = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0];
