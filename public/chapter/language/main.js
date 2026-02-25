@@ -11,9 +11,9 @@ import { WeightedLayer } from "WeightedLayer.js";
 import { SumLayer } from "SumLayer.js";
 
 import { updateProgress } from "updateProgress.js";
+import { postLearningStatus } from "postLearningStatus.js";
 import dataset from "dataset.js";
 dataset.setTf(tf);
-// let models = undefined;
 
 // vocabSize: 全単語数, inputDim: 入力単語数, numHeads keyDim: MultiHeadAttention paramter, learningRate:学習率
 function createSimpleFNN({ vocabSize, inputDim, keyDim, learningRate, type, encodingType }) {
@@ -174,9 +174,8 @@ function postEvaluation({ model, options, dataset }) {
         values: { modelName: model.name.split('(')[0], results }
     });
 }
-function postLearningStatus(status) {
-    window.parent.postMessage({ type: 'learning-status', values: status });
-}
+
+//function postLearningStatus(status) { window.parent.postMessage({ type: 'learning-status', values: status });}
 
 async function learn(dataset, { learningRate, epochs, verbose = true } = {}) {
     if (dataset === undefined) {
@@ -201,8 +200,8 @@ async function learn(dataset, { learningRate, epochs, verbose = true } = {}) {
                 }
             }
         });
-        postLearningStatus("ended");
     }
+    postLearningStatus("ended");
     function predict({ models, dataset, input }) {
         return tf.tidy(() => {
             const { tokens, errorMessage } = dataset.tokenize(input);

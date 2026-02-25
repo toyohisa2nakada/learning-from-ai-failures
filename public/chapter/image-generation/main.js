@@ -54,6 +54,7 @@ function buildModel({ outputShape }) {
 
 import { trainingData } from "trainingData.js";
 import { updateProgress } from "updateProgress.js";
+import { postLearningStatus } from "postLearningStatus.js";
 const tensors = getTensor(trainingData);
 const [model, intermediateModel] = buildModel({ outputShape: tensors.y.shape[1] });
 model.summary();
@@ -83,7 +84,7 @@ function postImages() {
     }
 
 }
-
+postLearningStatus("started");
 const history = await model.fit(tensors.x, tensors.y, {
     batchSize: tensors.x.shape[0],
     epochs: config.epochs,
@@ -98,3 +99,4 @@ const history = await model.fit(tensors.x, tensors.y, {
 });
 console.log("history", history);
 console.log("last loss", history.history.loss[history.history.loss.length - 1]);
+postLearningStatus("ended");

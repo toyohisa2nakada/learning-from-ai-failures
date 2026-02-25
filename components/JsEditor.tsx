@@ -19,6 +19,11 @@ if (typeof window !== 'undefined' && !window.__MONACO_EDITOR_INITIALIZED__) {
     window.__MONACO_EDITOR_INITIALIZED__ = true;
 }
 
+const BUTTON_LABELS = {
+    ended: 'AIが学習する',
+    preparing: '準備中...',
+    started: '学習中...',
+} as const;
 
 // iframeに追加するエラー発生時に親ウィンドウにメッセージを送信するコード
 const BUILD_IFRAME_ERROR_HANDLER_SCRIPT = `
@@ -95,6 +100,7 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
     const workerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const statusRef = useRef<HTMLDivElement>(null);
     const progressRef = useRef<HTMLSpanElement>(null);
+    const buttonLabelRef = useRef<HTMLButtonElement>(null);
 
     function injectImportmap(htmlString: string, files: Record<string, string | object>, targetObject?: any): string {
         // '//'のコメントをとる
@@ -130,20 +136,22 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
             // JsEditor標準の外部js
             const jsEditorExtJsCode: Record<string, string | object> = {
                 'updateProgress.js': `export function updateProgress(percent) {
-                    window.parent.postMessage({type:'updateProgress',values:percent});}`
+                    window.parent.postMessage({type:'updateProgress',values:percent});}`,
+                'postLearningStatus.js': `export function postLearningStatus(status) {
+                    window.parent.postMessage({ type: 'learning-status', values: status });}`,
             }
 
             // 外部のjsファイルをimportmapで取り込む。この例の場合、import {testtemp01234} from 'test.js'; で使用する。
             // const extJsCode = { 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingDataType())};` };
             const extJsCode = { ...jsEditorExtJsCode, ...(externalScripts instanceof Function ? externalScripts() : externalScripts) };
 
-
             const htmlString = injectImportmap(HTML_TEMPLATE.replace('__EDITOR_VALUE__', editorRef.current?.getValue() || ""), extJsCode as Record<string, string | object>, editor_output_elem);
             const { html: inlined_html, insertions } = inlineHTML(htmlString, extJsCode as Record<string, string | object>);
             const htmlStringWithErrorHandler = inlined_html.replace(/(<html[^>]*>)/i, `$1${BUILD_IFRAME_ERROR_HANDLER_SCRIPT}`);
 
+            // if (progressRef.current) progressRef.current.style.width = "50%";
+            if (buttonLabelRef.current) buttonLabelRef.current.textContent = BUTTON_LABELS.preparing;
             editor_output_elem!.srcdoc = htmlStringWithErrorHandler;
-
         });
         workerRef.current.postMessage({ code: editorRef.current!.getValue() })
     }
@@ -154,9 +162,6 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
             editorRef.current.setValue(defaultValue);
         }
     }, [defaultValue]);
-
-    function updateProgress(percent: number) {
-    }
 
     // iframeからのメッセージの取得
     useEffect(() => {
@@ -175,6 +180,9 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
                 if (progressRef.current) {
                     progressRef.current.style.width = `${percent}%`;
                 }
+            } else if (e.data.type === 'learning-status') {
+                const status = e.data.values as string;
+                if (buttonLabelRef.current) buttonLabelRef.current.textContent = BUTTON_LABELS[status as keyof typeof BUTTON_LABELS];
             }
             updateHandler?.forEach(handler => {
                 if (e.data.type === handler.messageType) {
@@ -182,10 +190,6 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
                     handler.onUpdate(data);
                 }
             })
-            /*
-            editorに書くテスト用コード
-            window.parent.postMessage({type:'weights',values:{ wIn1: 3.1, wOut1: -2.4 }});
-            */
         }
         window.addEventListener('message', handleMessage);
         return () => {
@@ -217,7 +221,7 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
                 <button className="relative overflow-hidden px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700 w-full"
                     onClick={e => onStartLearn()}>
                     <span ref={progressRef} className="absolute left-0 top-0 h-full bg-blue-600/40 w-0" />
-                    <span className="relative z-10">AIが学習する</span>
+                    <span ref={buttonLabelRef} className="relative z-10">{BUTTON_LABELS.ended}</span>
                 </button>
                 <div ref={statusRef} className="overflow-hidden whitespace-nowrap text-xs text-red-400 min-h-[1em]">
                 </div>

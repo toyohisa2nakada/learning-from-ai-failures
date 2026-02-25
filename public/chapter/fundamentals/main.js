@@ -8,6 +8,7 @@ const config = {
 
 import { trainingData } from "trainingData.js";
 import { updateProgress } from "updateProgress.js";
+import { postLearningStatus } from "postLearningStatus.js";
 async function getDataset(data) {
     if (data === undefined) {
         return {};
@@ -44,6 +45,7 @@ function postWeights() {
     }
     window.parent.postMessage({ type: 'weights', values: weightValues });
 }
+postLearningStatus("started");
 const { values, ranges, tensors } = await getDataset(trainingData);
 const model = tf.sequential();
 model.add(tf.layers.dense({
@@ -66,3 +68,4 @@ const history = await model.fit(tensors.x, tensors.y, {
         }
     },
 });
+postLearningStatus("ended");
