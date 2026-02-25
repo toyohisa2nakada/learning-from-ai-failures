@@ -146,6 +146,7 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
             } else if (e.data.type === 'learning-status') {
                 const status = e.data.values as string;
                 if (buttonLabelRef.current) buttonLabelRef.current.textContent = BUTTON_LABELS[status as keyof typeof BUTTON_LABELS];
+                if (statusRef.current) statusRef.current.textContent = "";
             }
             updateHandler?.forEach(handler => {
                 if (e.data.type === handler.messageType) {
