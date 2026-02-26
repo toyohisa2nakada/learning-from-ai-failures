@@ -1,113 +1,253 @@
 "use client";
+import { useEffect, useRef } from 'react';
 
+/**
+ * drawNetwork
+ * @param {Object} options
+ * @param {number}   options.input  - 入力ニューロン数
+ * @param {boolean}  options.bias   - バイアスノードを表示するか
+ * @param {number}   options.unit   - 中間層ニューロン数
+ * @param {number[]} options.output - 出力画像サイズ [width, height]
+ * @returns {SVGElement}
+ */
+function drawNetwork({ input, bias, unit, output }: { input: number, bias: boolean, unit: number, output: number[] }): SVGSVGElement {
+    const [outW, outH] = output;
+
+    // ── レイアウト定数 ──────────────────────────────────────
+    const SVG_W = 600;
+    const SVG_H = 360;
+    const NODE_R = 24;
+    const BIAS_R = 20;
+    const NODE_GAP = 72;
+    const N_RENDERED_OUTPUT_CELLS = 8;
+
+    // 出力ボックスのSVG内サイズ
+    const BOX_MAX = 100;
+    const BOX_SCALE = Math.min(BOX_MAX / outW, BOX_MAX / outH);
+    const BOX_W = outW * BOX_SCALE;
+    const BOX_H = outH * BOX_SCALE;
+    const CH_OFFSET = 14; // RGBチャンネルの奥行きオフセット
+
+    // 各層のX座標
+    const X_INPUT = 30;
+    const X_HIDDEN = 120;
+    const X_OUT_RED = SVG_W - 280 - BOX_W - CH_OFFSET * 2; // 最前面(Red)のox
+
+    // RGB各チャンネル（後→前の順）
+    const channels = [
+        { label: 'Blue', color: '#3b82f6', ox: X_OUT_RED, oy: SVG_H / 2 - BOX_H / 2 - CH_OFFSET },
+        { label: 'Green', color: '#22c55e', ox: X_OUT_RED + CH_OFFSET, oy: SVG_H / 2 - BOX_H / 2 },
+        { label: 'Red', color: '#ef4444', ox: X_OUT_RED + CH_OFFSET * 2, oy: SVG_H / 2 - BOX_H / 2 + CH_OFFSET },
+    ];
+
+
+    // ノード座標
+    const inputNodes = input + (bias ? 1 : 0);
+    function layerYs(count: number, centerY: number, gap: number) {
+        const h = (count - 1) * gap;
+        return Array.from({ length: count }, (_, i) => centerY - h / 2 + i * gap);
+    }
+    const inputYs = layerYs(inputNodes, SVG_H / 2, NODE_GAP);
+    const hiddenYs = layerYs(unit, SVG_H / 2, NODE_GAP);
+
+    // ── SVGユーティリティ ──────────────────────────────────
+    const ns = 'http://www.w3.org/2000/svg';
+    function el(tag: string, attrs: { [key: string]: string | number } = {}) {
+        const e = document.createElementNS(ns, tag);
+        for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v.toString());
+        return e;
+    }
+    function txt(str: string, attrs = {}) {
+        const t = el('text', attrs);
+        t.textContent = str;
+        return t;
+    }
+    function ln(x1: number, y1: number, x2: number, y2: number, attrs = {}) {
+        return el('line', { x1, y1, x2, y2, ...attrs });
+    }
+
+    // ── SVGルート ─────────────────────────────────────────
+    const svg = el('svg', {
+        width: SVG_W, height: SVG_H,
+        viewBox: `0 0 ${SVG_W} ${SVG_H}`,
+        xmlns: ns,
+    }) as SVGSVGElement;
+
+    // ── defs：グリッドパターン ─────────────────────────────
+    const defs = el('defs');
+    const gridPat = el('pattern', { id: 'grid', width: '30', height: '30', patternUnits: 'userSpaceOnUse' });
+    const gp = el('path', { d: 'M 30 0 L 0 0 0 30', fill: 'none', stroke: '#1e3a5f', 'stroke-width': '0.5' });
+    gridPat.appendChild(gp);
+    defs.appendChild(gridPat);
+    svg.appendChild(defs);
+
+    // 背景グリッド
+    // svg.appendChild(el('rect', { width: SVG_W, height: SVG_H, fill: 'url(#grid)', opacity: '0.4', rx: '12' }));
+
+    // ── エッジ（直線）：入力層 → 中間層 ───────────────────
+    const edgeColor = 'rgba(160,210,255,0.22)';
+    const edgeG1 = el('g');
+    for (const iy of inputYs) {
+        for (const hy of hiddenYs) {
+            edgeG1.appendChild(ln(
+                X_INPUT + NODE_R, iy,
+                X_HIDDEN - NODE_R, hy,
+                { stroke: edgeColor, 'stroke-width': '1' }
+            ));
+        }
+    }
+    svg.appendChild(edgeG1);
+
+    // ── エッジ（直線）：中間層 → 出力層（各ニューロン → 3チャンネル全て） ──
+    // 接続先：各チャンネルボックスの左辺中央
+    const cellSize = [BOX_W / N_RENDERED_OUTPUT_CELLS, BOX_H / N_RENDERED_OUTPUT_CELLS];
+    const edgeG2 = el('g');
+    for (const hy of hiddenYs) {
+        for (const ch of channels) {
+            const tx = ch.ox;
+            const ty = ch.oy;
+            for (let x = 0; x < N_RENDERED_OUTPUT_CELLS; x += 1) {
+                for (let y = 0; y < N_RENDERED_OUTPUT_CELLS; y += 1) {
+                    edgeG2.appendChild(ln(
+                        X_HIDDEN + NODE_R, hy,
+                        tx + x * cellSize[0] + cellSize[0] / 2, ty + y * cellSize[1] + cellSize[1] / 2,
+                        { stroke: edgeColor, 'stroke-width': '0.2' }
+                    ));
+                }
+            }
+        }
+    }
+    svg.appendChild(edgeG2);
+
+    // ── 出力層：RGBボックス（後→前の順で描画） ────────────
+    function drawBoxGrid(x: number, y: number, w: number, h: number, color: string) {
+        const g = el('g', { opacity: '0.28' });
+        for (let c = 1; c < N_RENDERED_OUTPUT_CELLS; c++) {
+            const px = x + (w / N_RENDERED_OUTPUT_CELLS) * c;
+            g.appendChild(ln(px, y, px, y + h, { stroke: color, 'stroke-width': '0.7' }));
+        }
+        for (let r = 1; r < N_RENDERED_OUTPUT_CELLS; r++) {
+            const py = y + (h / N_RENDERED_OUTPUT_CELLS) * r;
+            g.appendChild(ln(x, py, x + w, py, { stroke: color, 'stroke-width': '0.7' }));
+        }
+        return g;
+    }
+
+    const outGroup = el('g');
+    for (const ch of channels) {
+        outGroup.appendChild(el('rect', {
+            x: ch.ox, y: ch.oy, width: BOX_W, height: BOX_H,
+            fill: ch.color, opacity: '0.12', rx: '2'
+        }));
+        outGroup.appendChild(drawBoxGrid(ch.ox, ch.oy, BOX_W, BOX_H, ch.color));
+        outGroup.appendChild(el('rect', {
+            x: ch.ox, y: ch.oy, width: BOX_W, height: BOX_H,
+            fill: 'none', stroke: ch.color, 'stroke-width': '1.8', rx: '2', opacity: '0.9'
+        }));
+    }
+
+    // W/H ラベル（最前面 Red ボックス基準）
+    const fc = channels[2]; // Red
+    outGroup.appendChild(txt(`W: ${outW}`, {
+        x: fc.ox + BOX_W / 2, y: fc.oy + BOX_H + 20,
+        fill: '#94a3b8', 'font-size': '13', 'text-anchor': 'middle'
+    }));
+    outGroup.appendChild(txt(`H: ${outH}`, {
+        x: fc.ox - 10, y: fc.oy + BOX_H / 2,
+        fill: '#94a3b8', 'font-size': '13', 'text-anchor': 'end', 'dominant-baseline': 'middle'
+    }));
+    svg.appendChild(outGroup);
+
+    // ── 中間層ノード（白枠、塗りなし） ───────────────────────
+    const hiddenG = el('g');
+    for (const i in hiddenYs) {
+        hiddenG.appendChild(el('circle', {
+            cx: X_HIDDEN, cy: hiddenYs[i], r: NODE_R,
+            fill: 'none',
+            stroke: 'rgba(255,255,255,0.85)',
+            'stroke-width': '1.8'
+        }));
+        hiddenG.appendChild(txt(`ニューロン${Number(i) + 1}`, {
+            x: X_HIDDEN, y: hiddenYs[i],
+            fill: 'rgba(255,255,255,0.85)',
+            'font-size': 8,
+            'text-anchor': 'middle',
+            'dominant-baseline': 'middle'
+        }))
+    }
+    svg.appendChild(hiddenG);
+
+    // ── 入力層ノード（白枠、白文字） ────────────────────────
+    const inputG = el('g');
+    for (let i = 0; i < inputNodes; i++) {
+        const y = inputYs[i];
+        const isBias = bias && i === inputNodes - 1;
+        const r = isBias ? BIAS_R : NODE_R;
+        const label = isBias ? 'バイアス' : '入力';
+        const fontSize = isBias ? '10' : '11';
+
+        inputG.appendChild(el('circle', {
+            cx: X_INPUT, cy: y, r,
+            fill: 'none',
+            stroke: 'rgba(255,255,255,0.85)',
+            'stroke-width': '1.8'
+        }));
+        inputG.appendChild(txt(label, {
+            x: X_INPUT, y: y + 1,
+            fill: 'rgba(255,255,255,0.90)',
+            'font-size': fontSize,
+            'text-anchor': 'middle',
+            'dominant-baseline': 'middle'
+        }));
+    }
+    svg.appendChild(inputG);
+
+    // ── レイヤーラベル ────────────────────────────────────
+    const LABEL_Y = 32;
+    svg.appendChild(txt(`中間層 (${unit})`, {
+        x: X_HIDDEN, y: LABEL_Y,
+        fill: '#94a3b8', 'font-size': '13', 'text-anchor': 'middle'
+    }));
+    svg.appendChild(txt(`出力層 (${outW} × ${outH} × 3)`, {
+        x: X_OUT_RED + BOX_W / 2 + CH_OFFSET,
+        y: LABEL_Y,
+        fill: '#e2e8f0', 'font-size': '15', 'text-anchor': 'middle', 'font-weight': '700'
+    }));
+
+    // ── 凡例（RGB）────────────────────────────────────────
+    const legendStartX = X_OUT_RED;
+    const legendY = 100;
+    const legendItems = [...channels].reverse();
+    for (let i = 0; i < legendItems.length; i++) {
+        const lx = legendStartX + [0, 44, 98][i];
+        svg.appendChild(el('rect', {
+            x: lx, y: legendY, width: 13, height: 13,
+            fill: legendItems[i].color, rx: '2', opacity: '0.9'
+        }));
+        svg.appendChild(txt(legendItems[i].label, {
+            x: lx + 16, y: legendY + 7,
+            fill: '#cbd5e1', 'font-size': '12', 'dominant-baseline': 'middle'
+        }));
+    }
+
+    return svg;
+}
 export default function NeuralNetGraph() {
+    const svgRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (svgRef.current && !svgRef.current.hasChildNodes()) {
+            svgRef.current.appendChild(drawNetwork({
+                input: 1, bias: true, unit: 4, output: [48, 48]
+            }));
+        }
+    }, []);
     return (
         <div className="flex flex-col h-full min-h-0">
             <div className="text-xs shrink-0 mb-2">
                 入力xに値がセットされ、バイアスには常に1が設定されます。各ニューロンは、その値を使って指定された計算式で値を求め、それらをすべて足し合わせたものが出力yとなります。
             </div>
-            <div className="flex-1 min-h-0">
-                <svg viewBox="-5 -5 511 240" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                    <circle cx="25" cy="85" r="25" fill="none" stroke="white" />
-                    <circle cx="25" cy="180" r="20" fill="none" stroke="white" />
-
-                    <path d="M306 20C306 25.5228 301.523 30 296 30C290.477 30 286 25.5228 286 20C286 14.4772 290.477 10 296 10C301.523 10 306 14.4772 306 20Z" fill="#DD0000" />
-                    <path d="M296 37.32C296 42.8428 291.523 47.32 286 47.32C280.477 47.32 276 42.8428 276 37.32C276 31.7972 280.477 27.32 286 27.32C291.523 27.32 296 31.7972 296 37.32Z" fill="#00DD00" />
-                    <path d="M316 37.32C316 42.8428 311.523 47.32 306 47.32C300.477 47.32 296 42.8428 296 37.32C296 31.7972 300.477 27.32 306 27.32C311.523 27.32 316 31.7972 316 37.32Z" fill="#0000DD" />
-                    <path d="M351 20C351 25.5228 346.523 30 341 30C335.477 30 331 25.5228 331 20C331 14.4772 335.477 10 341 10C346.523 10 351 14.4772 351 20Z" fill="#DD0000" />
-                    <path d="M341 37.32C341 42.8428 336.523 47.32 331 47.32C325.477 47.32 321 42.8428 321 37.32C321 31.7972 325.477 27.32 331 27.32C336.523 27.32 341 31.7972 341 37.32Z" fill="#00DD00" />
-                    <path d="M361 37.32C361 42.8428 356.523 47.32 351 47.32C345.477 47.32 341 42.8428 341 37.32C341 31.7972 345.477 27.32 351 27.32C356.523 27.32 361 31.7972 361 37.32Z" fill="#0000DD" />
-                    <path d="M306 193C306 198.523 301.523 203 296 203C290.477 203 286 198.523 286 193C286 187.477 290.477 183 296 183C301.523 183 306 187.477 306 193Z" fill="#DD0000" />
-                    <path d="M296 210.32C296 215.843 291.523 220.32 286 220.32C280.477 220.32 276 215.843 276 210.32C276 204.797 280.477 200.32 286 200.32C291.523 200.32 296 204.797 296 210.32Z" fill="#00DD00" />
-                    <path d="M316 210.32C316 215.843 311.523 220.32 306 220.32C300.477 220.32 296 215.843 296 210.32C296 204.797 300.477 200.32 306 200.32C311.523 200.32 316 204.797 316 210.32Z" fill="#0000DD" />
-                    <path d="M491 23C491 28.5228 486.523 33 481 33C475.477 33 471 28.5228 471 23C471 17.4772 475.477 13 481 13C486.523 13 491 17.4772 491 23Z" fill="#DD0000" />
-                    <path d="M481 40.32C481 45.8428 476.523 50.32 471 50.32C465.477 50.32 461 45.8428 461 40.32C461 34.7972 465.477 30.32 471 30.32C476.523 30.32 481 34.7972 481 40.32Z" fill="#00DD00" />
-                    <path d="M501 40.32C501 45.8428 496.523 50.32 491 50.32C485.477 50.32 481 45.8428 481 40.32C481 34.7972 485.477 30.32 491 30.32C496.523 30.32 501 34.7972 501 40.32Z" fill="#0000DD" />
-                    <path d="M491 193C491 198.523 486.523 203 481 203C475.477 203 471 198.523 471 193C471 187.477 475.477 183 481 183C486.523 183 491 187.477 491 193Z" fill="#DD0000" />
-                    <path d="M481 210.32C481 215.843 476.523 220.32 471 220.32C465.477 220.32 461 215.843 461 210.32C461 204.797 465.477 200.32 471 200.32C476.523 200.32 481 204.797 481 210.32Z" fill="#00DD00" />
-                    <path d="M501 210.32C501 215.843 496.523 220.32 491 220.32C485.477 220.32 481 215.843 481 210.32C481 204.797 485.477 200.32 491 200.32C496.523 200.32 501 204.797 501 210.32Z" fill="#0000DD" />
-                    <path d="M306 60C306 65.5228 301.523 70 296 70C290.477 70 286 65.5228 286 60C286 54.4772 290.477 50 296 50C301.523 50 306 54.4772 306 60Z" fill="#DD0000" />
-                    <path d="M296 77.32C296 82.8428 291.523 87.32 286 87.32C280.477 87.32 276 82.8428 276 77.32C276 71.7972 280.477 67.32 286 67.32C291.523 67.32 296 71.7972 296 77.32Z" fill="#00DD00" />
-                    <path d="M316 77.32C316 82.8428 311.523 87.32 306 87.32C300.477 87.32 296 82.8428 296 77.32C296 71.7972 300.477 67.32 306 67.32C311.523 67.32 316 71.7972 316 77.32Z" fill="#0000DD" />
-
-                    <line x1="296.5" y1="90" x2="296.5" y2="170" stroke="white" strokeDasharray="2 2" />
-                    <line x1="481.5" y1="60" x2="481.5" y2="170" stroke="white" strokeDasharray="2 2" />
-                    <line x1="456" y1="30.5" x2="376" y2="30.5" stroke="white" strokeDasharray="2 2" />
-                    <line x1="456" y1="202.5" x2="326" y2="202.5" stroke="white" strokeDasharray="2 2" />
-
-                    <path d="M160 22L270 29" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M160 22L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M160 22L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M160 85L270 29" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M160 85L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M160 85L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M160 145L270 29" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M160 145L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M160 145L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M160 205L270 29" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M160 205L273 202" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M160 205L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-
-                    <path d="M200 22L270 30" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M200 22L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M200 25L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-
-                    <path d="M200 85L270 30" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M200 85L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M200 85L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-
-                    <path d="M200 145L270 30" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M200 145L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M200 145L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-
-                    <path d="M200 205L270 30" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M200 205L270 69" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M200 205L276 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-
-                    <path d="M50 85L109 31" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M50 85L110 85" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M50 85L180 196" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M50 85L180 145" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M50 85L184 75" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M50 85L177 25" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M50 85L110 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M50 85L110 142" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-
-                    <path d="M45 180L110 200" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M45 180L180 32" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M45 180L180 90" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M45 180L180 145" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M45 180L180 205" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M45 180L110 32" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M45 180L110 85" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-                    <path d="M45 180L110 142" stroke="white" strokeWidth="0.5" strokeDasharray="4 4" />
-
-                    <circle cx="135" cy="85" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-                    <circle cx="135" cy="25" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-                    <circle cx="135" cy="205" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-                    <circle cx="135" cy="145" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-                    <circle cx="175" cy="85" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-                    <circle cx="175" cy="25" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-                    <circle cx="175" cy="205" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-                    <circle cx="175" cy="145" r="25" fill="#0A2C47" stroke="#ADD8E6" />
-
-                    <text x="408" y="22" fill="white" fontSize="12" fontWeight="normal">48</text>
-                    <text x="283" y="139" fill="white" fontSize="12" fontWeight="normal">48</text>
-
-                    <text x="15" y="85" fill="white" fontSize="12" fontWeight="normal">入力</text>
-                    <text x="15" y="180" fill="white" fontSize="12" fontWeight="normal">バイアス</text>
-
-                    <text x="108" y="20" fill="white" fontSize="12" fontWeight="normal">ニューロン1</text>
-                    <text x="108" y="80" fill="white" fontSize="12" fontWeight="normal">ニューロン2</text>
-                    <text x="108" y="140" fill="white" fontSize="12" fontWeight="normal">ニューロン3</text>
-                    <text x="108" y="200" fill="white" fontSize="12" fontWeight="normal">ニューロン4</text>
-                    <text x="148" y="35" fill="white" fontSize="12" fontWeight="normal">ニューロン5</text>
-                    <text x="148" y="95" fill="white" fontSize="12" fontWeight="normal">ニューロン6</text>
-                    <text x="148" y="155" fill="white" fontSize="12" fontWeight="normal">ニューロン7</text>
-                    <text x="148" y="215" fill="white" fontSize="12" fontWeight="normal">ニューロン8</text>
-
-                    <text x="320" y="120" fill="white" fontSize="12" fontWeight="normal">48(W) * 48(H) * 3(RGB)</text>
-                </svg>
+            <div className="flex-1 min-h-0" ref={svgRef}>
             </div>
 
             <div className="shrink-0 mt-2">

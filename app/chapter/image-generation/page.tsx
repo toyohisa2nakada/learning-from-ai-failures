@@ -26,7 +26,7 @@ const SCRIPT_BASE_PATH = '/chapter/image-generation/';
 export default function Home() {
   console.log("Editor HOME")
   // 手動学習、自動（プログラム）学習の切り替え (manual / programming)
-  const [programmingMode, setProgrammingMode] = useState('programming');
+  const [programmingMode, setProgrammingMode] = useState('manual');
   const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
   const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
 
@@ -95,7 +95,7 @@ export default function Home() {
         <div ref={containerRef} id="container" className="container-panel md:flex-row h-full bg-inherit">
 
           {/* Left Panel: Merged Height (Full Height of container) */}
-          <div className="left-panel flex flex-col" style={{ width: `${leftWidth}%`, flexShrink: 0 }}>
+          <div className="left-panel flex flex-col overflow-hidden" style={{ width: `${leftWidth}%`, flexShrink: 0 }}>
             <div className="flex justify-between items-center">
               <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
               <div id="programming-mode-toggle" className="text-xs flex">
