@@ -4,16 +4,23 @@ import JsEditor from '@/components/JsEditor';
 import DatasetPanel, { type Dataset, type DatasetPanelHandle, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
 import ModelInsightPanel, { type ModelInsightPanelHandle } from '@/app/chapter/language/components/ModelInsightPanel';
 import { useResizer } from '@/lib/hooks/useResizer';
-import { useGuide, type Guide } from "@/lib/hooks/useTutorial";
+import { useTutorial, type Tutorial } from "@/lib/hooks/useTutorial";
 
-const guides: Guide[][] = [
-  [
-    { element: '#dataset-container', popover: { title: '単語の並び', description: '入力単語の並びです' } },
-  ],
-  [
-    { element: '#model-insight-container', popover: { title: '各モデルの計算の仕方', description: '各モデルがどのような計算をしているか見てみよう' } },
-  ],
-];
+const tutorial: Tutorial = {
+  stages: [
+    {
+      guide: [
+        { element: '#dataset-container', popover: { title: '単語の並び', description: '入力単語の並びです' } },
+      ],
+      quiz: {
+        title: "問題", problems: [
+          { question: "バイアスを移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: [1] },
+          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
+        ]
+      },
+    },
+  ]
+}
 
 
 const IMPORT_SCRIPT_NAMES = [
@@ -89,7 +96,7 @@ export default function Home() {
     })
   }, []);
 
-  const { startGuide, startQuiz } = useGuide({ guides });
+  const { startGuide, startQuiz } = useTutorial({ tutorial });
 
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">

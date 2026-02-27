@@ -8,17 +8,24 @@ import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridP
 import { type ImageOption } from "@/components/ImageSelect";
 
 import { useResizer } from '@/lib/hooks/useResizer';
-import { useGuide, type Guide } from "@/lib/hooks/useTutorial";
+import { useTutorial, type Tutorial } from "@/lib/hooks/useTutorial";
 
 
-const guides: Guide[][] = [
-  [
-    { element: '#graph-area-bottom', popover: { title: '画像を選んでね', description: '進化させたい画像の元になる画像を２つ選んでね' } },
-  ],
-  [
-    { element: '#graph-area-top', popover: { title: '各ニューロンの働き', description: '各ニューロンがどのような特徴を捉えているか見てみよう' } },
-  ],
-];
+const tutorial: Tutorial = {
+  stages: [
+    {
+      guide: [
+        { element: '#graph-area-bottom', popover: { title: 'パラメータの設定', description: '進化させたい画像の元になる画像を２つ選んでね' } },
+      ],
+      quiz: {
+        title: "問題", problems: [
+          { question: "バイアスを移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: [1] },
+          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
+        ]
+      },
+    },
+  ]
+}
 
 const MAIN_SCRIPT_NAME = 'main.js';
 const SCRIPT_BASE_PATH = '/chapter/image-generation/';
@@ -78,7 +85,7 @@ export default function Home() {
 
   }, []);
 
-  const { startGuide, startQuiz } = useGuide({ guides });
+  const { startGuide, startQuiz } = useTutorial({ tutorial });
 
 
   return (
