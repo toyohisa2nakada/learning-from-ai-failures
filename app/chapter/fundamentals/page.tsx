@@ -483,8 +483,8 @@ export default function Home() {
               <div className="flex justify-between items-center">
                 <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
                 <div id="programming-mode-toggle" className="text-xs flex">
-                  <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造(手動で学習)</button>
-                  <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>自動(プログラムで学習)</button>
+                  <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造</button>
+                  <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>プログラム</button>
                 </div>
               </div>
               {programmingMode === 'manual' ? <NeuralNetGraph /> :

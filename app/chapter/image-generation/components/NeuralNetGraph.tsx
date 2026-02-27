@@ -211,7 +211,7 @@ function drawNetwork({ input, bias, unit, output }: { input: number, bias: boole
     svg.appendChild(txt(`出力層 (${outW} × ${outH} × 3)`, {
         x: X_OUT_RED + BOX_W / 2 + CH_OFFSET,
         y: LABEL_Y,
-        fill: '#e2e8f0', 'font-size': '15', 'text-anchor': 'middle', 'font-weight': '700'
+        fill: '#94a3b8', 'font-size': '13', 'text-anchor': 'middle'
     }));
 
     // ── 凡例（RGB）────────────────────────────────────────
