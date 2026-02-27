@@ -37,7 +37,6 @@ export const useTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
     const startGuide = () => {
         const driverObj = driver({
             steps: tutorial.stages[stageRef.current].guide,
-            // overlayOpacity: 0.5,
         });
         driverObj.drive();
     };
@@ -52,29 +51,6 @@ export const useTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
                         choices.map((c, ci) => `<label><input type="${choiceType}" name="${i}" value="${ci}" />${c}</label>`).join("") +
                         "</div>";
                 }) + "</div>",
-            // html: `
-            //     <div id="quiz-scroll-container" style="text-align: left; max-height: 400px; overflow-y: auto; padding: 10px;">
-            //     <p>問1: 最初の設定は正解ですか？</p>
-            //     <label><input type="radio" name="q1" value="ok"> はい</label>
-            //     <label><input type="radio" name="q1" value="ng"> いいえ</label>
-            //     <hr>
-            //     <p>問2: Reactのフックはどれ？</p>
-            //     <label><input type="radio" name="q2" value="useState"> useState</label>
-            //     <label><input type="radio" name="q2" value="div"> div</label>
-            //     <hr>
-            //     <p>問3: Next.jsはフレームワークである</p>
-            //     <label><input type="radio" name="q3" value="yes"> はい</label>
-            //     <label><input type="radio" name="q3" value="no"> いいえ</label>
-            //     <hr>
-            //     <p>問4: Gitでファイルを戻すコマンドは？</p>
-            //     <label><input type="radio" name="q4" value="checkout"> checkout</label>
-            //     <label><input type="radio" name="q4" value="push"> push</label>
-            //     <hr>
-            //     <p>問5: 不要なパッケージを消すコマンドは？</p>
-            //     <label><input type="radio" name="q5" value="prune"> prune</label>
-            //     <label><input type="radio" name="q5" value="install"> install</label>
-            //     </div>
-            // `,
             showCancelButton: true,
             confirmButtonText: '回答チェック',
             preConfirm: () => {

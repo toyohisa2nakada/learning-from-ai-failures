@@ -51,12 +51,8 @@ export default function Header() {
                         </div>
                     </>
                 )}
-
-                {/* <span className="text-xs px-3 py-1 rounded-full border border-slate-800 text-slate-300">
-                    NN Basic Lesson
-                </span> */}
                 <div className="text-sm text-slate-400">
-                    Chapter {currentIndex + 1} / <span className="text-slate-100 font-semibold">1-1 手で重みを動かす</span>
+                    Chapter {currentIndex + 1} / <span className="text-slate-100 font-semibold"></span>
                 </div>
             </div>
 

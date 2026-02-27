@@ -381,12 +381,12 @@ export default function Home() {
       overlayOpacity: 0.0
     });
     console.log("startGuideIntro", startGuideIntro)
-  }, [])
+  }, []);
+
+  const { showPopup, startGuide, startQuiz } = useTutorial({ tutorial });
 
   // 重み部分のinput
   const weight_input_css = "no-spin font-bold w-12 text-right p-0 bg-transparent text-sm rounded border border-[#1f2a44] border-solid";
-
-  const { showPopup, startGuide, startQuiz } = useTutorial({ tutorial });
 
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
@@ -415,7 +415,7 @@ export default function Home() {
       <section className="action-section">
         指令：パラメータを変更して、グラフの可算結果が教師データを通るようにする。
         <button id="start-guide" onClick={() => { startGuideIntro.current?.destroy(); startGuide() }}>説明を見る</button>
-        <button onClick={startQuiz}>課題に挑戦</button>
+        <button onClick={() => { startQuiz() }}>課題に挑戦</button>
       </section>
 
       {/* 操作と可視化 */}
