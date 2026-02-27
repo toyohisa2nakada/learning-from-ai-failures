@@ -3,19 +3,32 @@ import { useEffect, useState, useRef } from "react";
 import { Chart, ChartConfiguration } from 'chart.js/auto';
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/fundamentals/components/NeuralNetGraph";
-import { useGuide, type Guide } from "@/lib/hooks/useGuide";
+import { useTutorial, type Tutorial } from "@/lib/hooks/useTutorial";
 
 
-const guides: Guide[][] = [
-  [
-    { element: '#programming-mode-toggle', popover: { title: 'プログラムモードへの変更', description: 'ここを押してプログラムモードへ！' } },
-    { element: '#target-settings', popover: { title: '教師データの選択', description: 'ここで教師データも変えられます' } },
-  ],
-  [
-    { element: '#parameter-control', popover: { title: 'パラメータの設定', description: 'ここのスライダを移動させると、' } },
-    { element: '#graph-area-top', popover: { title: '個別のグラフ', description: 'ここのグラフが変化します' } }
-  ],
-];
+const tutorial: Tutorial = {
+  stages: [
+    {
+      guide: [
+        { element: '#parameter-control', popover: { title: 'パラメータの設定', description: 'ここのスライダを移動させると、' } },
+        { element: '#graph-area-top', popover: { title: '個別のグラフ', description: 'ここのグラフが変化します' } },
+      ],
+      quiz: {
+        title: "問題", problems: [
+          { question: "バイアスを移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: [1] },
+          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
+        ]
+      },
+    },
+    {
+      guide: [
+        { element: '#programming-mode-toggle', popover: { title: 'プログラムモードへの変更', description: 'ここを押してプログラムモードへ！' } },
+        { element: '#target-settings', popover: { title: '教師データの選択', description: 'ここで教師データも変えられます' } },
+      ],
+      quiz: { title: "", problems: [{ question: "hello", choices: ["1", "2"], correctIndex: 0 }] },
+    },
+  ]
+}
 
 // グラフ描画の設定
 const DATA_POINTS = 300;
@@ -373,7 +386,7 @@ export default function Home() {
   // 重み部分のinput
   const weight_input_css = "no-spin font-bold w-12 text-right p-0 bg-transparent text-sm rounded border border-[#1f2a44] border-solid";
 
-  const { showPopup, startGuide, startQuiz } = useGuide({ guides });
+  const { showPopup, startGuide, startQuiz } = useTutorial({ tutorial });
 
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">

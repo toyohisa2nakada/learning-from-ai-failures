@@ -4,7 +4,7 @@ import JsEditor from '@/components/JsEditor';
 import DatasetPanel, { type Dataset, type DatasetPanelHandle, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
 import ModelInsightPanel, { type ModelInsightPanelHandle } from '@/app/chapter/language/components/ModelInsightPanel';
 import { useResizer } from '@/lib/hooks/useResizer';
-import { useGuide, type Guide } from "@/lib/hooks/useGuide";
+import { useGuide, type Guide } from "@/lib/hooks/useTutorial";
 
 const guides: Guide[][] = [
   [
