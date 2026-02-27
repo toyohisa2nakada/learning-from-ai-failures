@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { CHAPTERS } from "@/constants/chapters";
 
@@ -29,7 +29,7 @@ export default function Header() {
                     onClick={() => setIsSectionListOpen(!isSectionListOpen)}
                     className="text-xs px-3 py-1 rounded-full border border-slate-800 text-slate-300 hover:bg-slate-800 transition-colors"
                 >
-                    {CHAPTERS[currentIndex].name}
+                    {CHAPTERS[currentIndex]?.name}
                 </button>
 
                 {isSectionListOpen && (
@@ -70,7 +70,7 @@ export default function Header() {
                 {/* <Link href="/chapter/fundamentals" className="px-3 py-1 text-sm rounded-lg border border-slate-800">前へ</Link>
                 <Link href="/chapter/image-generation" className="px-3 py-1 text-sm rounded-lg border border-accent bg-accent/20">次へ</Link> */}
 
-                <Link href={isFirst ? "#" : `${basePath}/${CHAPTERS[currentIndex - 1].id}`}
+                <Link href={isFirst ? "#" : `${basePath}/${CHAPTERS[currentIndex - 1]?.id}`}
                     onClick={(e) => isFirst && e.preventDefault()} // JSでクリックを完全防止
                     title={isFirst ? "前のセクションはありません" : ""}
                     className={`px-3 py-1 text-sm rounded-lg border border-slate-800 
@@ -79,7 +79,7 @@ export default function Header() {
                             : "hover:bg-slate-800"
                         }`}
                 >後ろへ</Link>
-                <Link href={isLast ? "#" : `${basePath}/${CHAPTERS[currentIndex + 1].id}`}
+                <Link href={isLast ? "#" : `${basePath}/${CHAPTERS[currentIndex + 1]?.id}`}
                     onClick={(e) => isLast && e.preventDefault()} // JSでクリックを完全防止
                     title={isLast ? "次のセクションはありません" : ""}
                     className={`px-3 py-1 text-sm rounded-lg border border-slate-800 

@@ -3,5 +3,5 @@ import { redirect } from "next/navigation";
 import { CHAPTERS } from "@/constants/chapters";
 
 export default function Home() {
-  redirect(`/chapter/${CHAPTERS[0].name}`);
+  redirect(`/chapter/${CHAPTERS[0].id}`);
 }
