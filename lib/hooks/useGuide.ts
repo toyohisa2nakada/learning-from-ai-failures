@@ -14,9 +14,23 @@ export type Guide = {
 export const useGuide = ({ guides }: { guides: Guide[][] }) => {
     const stepRef = useRef(0);
 
+    const showPopup = ({ element, title, description, overlayOpacity = 0.5 }: { element: string, title: string, description: string, overlayOpacity: number }): { destroy } => {
+        const driverObj = driver({
+            overlayOpacity,
+            steps: [{ element, popover: { title, description } },],
+            onDestroyed: () => {
+                console.log("destroyed")
+            }
+        });
+        driverObj.drive();
+        return { destroy: driverObj.destroy };
+    };
+
     const startGuide = () => {
+        console.log("startGuide")
         const driverObj = driver({
             steps: guides[stepRef.current],
+            overlayOpacity: 0.5,
         });
         driverObj.drive();
     };
@@ -84,5 +98,5 @@ export const useGuide = ({ guides }: { guides: Guide[][] }) => {
             }
         });
     };
-    return { startGuide, startQuiz };
+    return { showPopup, startGuide, startQuiz };
 };

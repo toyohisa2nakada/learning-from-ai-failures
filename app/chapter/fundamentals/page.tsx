@@ -356,12 +356,24 @@ export default function Home() {
       .catch(error => {
         console.error('Error loading scripts:', error);
       })
+
   }, []);
+
+  let startGuideIntro = useRef<{ destroy: () => void } | null>(null);
+  useEffect(() => {
+    startGuideIntro.current = showPopup({
+      element: "#start-guide",
+      title: "最初に",
+      description: "ここをクリックして説明を見てください。",
+      overlayOpacity: 0.0
+    });
+    console.log("startGuideIntro", startGuideIntro)
+  }, [])
 
   // 重み部分のinput
   const weight_input_css = "no-spin font-bold w-12 text-right p-0 bg-transparent text-sm rounded border border-[#1f2a44] border-solid";
 
-  const { startGuide, startQuiz } = useGuide({ guides });
+  const { showPopup, startGuide, startQuiz } = useGuide({ guides });
 
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
@@ -389,7 +401,7 @@ export default function Home() {
       {/* 指令エリア */}
       <section className="action-section">
         指令：パラメータを変更して、グラフの可算結果が教師データを通るようにする。
-        <button onClick={startGuide}>説明を見る</button>
+        <button id="start-guide" onClick={() => { startGuideIntro.current?.destroy(); startGuide() }}>説明を見る</button>
         <button onClick={startQuiz}>課題に挑戦</button>
       </section>
 
