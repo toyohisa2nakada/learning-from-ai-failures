@@ -274,6 +274,8 @@ export default function Home() {
 
   const missionDescriptionRef = useRef<HTMLSpanElement>(null);
   const stageInfoRef = useRef<HTMLSpanElement>(null);
+  const currentStageIndex = useRef<number>(0);
+  const { startGuide, startQuiz } = useTutorial({ tutorial });
   function drawStageInfo() {
     if (missionDescriptionRef.current && currentStageIndex.current < tutorial.stages.length) {
       missionDescriptionRef.current.innerText = tutorial.stages[currentStageIndex.current]?.description;
@@ -414,8 +416,6 @@ export default function Home() {
   //   console.log("startGuideIntro", startGuideIntro)
   // }, []);
 
-  const currentStageIndex = useRef<number>(0);
-  const { showPopup, startGuide, startQuiz } = useTutorial({ tutorial });
 
   // 重み部分のinput
   const weight_input_css = "no-spin font-bold w-12 text-right p-0 bg-transparent text-sm rounded border border-[#1f2a44] border-solid";

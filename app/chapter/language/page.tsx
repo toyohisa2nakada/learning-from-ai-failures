@@ -4,11 +4,13 @@ import JsEditor from '@/components/JsEditor';
 import DatasetPanel, { type Dataset, type DatasetPanelHandle, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
 import ModelInsightPanel, { type ModelInsightPanelHandle } from '@/app/chapter/language/components/ModelInsightPanel';
 import { useResizer } from '@/lib/hooks/useResizer';
-import { useTutorial, type Tutorial } from "@/lib/hooks/useTutorial";
+import { useTutorial, type Tutorial, type QuizResponse } from "@/lib/hooks/useTutorial";
+import UnreadBadge from "@/lib/UnreadBadge";
 
 const tutorial: Tutorial = {
   stages: [
     {
+      description: "出力が言葉になって、連なって",
       guide: [
         { element: '#dataset-container', popover: { title: '単語の並び', description: '入力単語の並びです' } },
       ],
@@ -74,6 +76,35 @@ export default function Home() {
     }
   }
 
+  const missionDescriptionRef = useRef<HTMLSpanElement>(null);
+  const stageInfoRef = useRef<HTMLSpanElement>(null);
+  const currentStageIndex = useRef<number>(0);
+  const { startGuide, startQuiz } = useTutorial({ tutorial });
+  function drawStageInfo() {
+    if (missionDescriptionRef.current && currentStageIndex.current < tutorial.stages.length) {
+      missionDescriptionRef.current.innerText = tutorial.stages[currentStageIndex.current]?.description;
+    }
+    if (stageInfoRef.current) {
+      stageInfoRef.current.innerHTML = `[${tutorial.stages.map((_, i) => `<span class=${i < currentStageIndex.current ? "text-gray-500" : (i === currentStageIndex.current ? "text-green-500" : "")}>${i + 1}</span>`).join(' ')}]`;
+    }
+  }
+  function onStartQuiz() {
+    startQuiz((result: QuizResponse) => {
+      if (result.isAllCorrect) {
+        currentStageIndex.current = result.nextStageIndex;
+        drawStageInfo();
+        if (currentStageIndex.current < tutorial.stages.length) {
+          UnreadBadge.attach('#start-guide');
+          UnreadBadge.attach('#start-quiz');
+        } else {
+          UnreadBadge.detach('#start-guide');
+          UnreadBadge.detach('#start-quiz');
+        }
+      }
+    })
+  }
+
+
   useEffect(() => {
     Promise.all(([MAIN_SCRIPT_NAME, ...IMPORT_SCRIPT_NAMES] as const).map(filename =>
       fetch(`${SCRIPT_BASE_PATH}${filename}`)
@@ -94,17 +125,25 @@ export default function Home() {
     }).catch(error => {
       console.error('Error loading scripts:', error);
     })
+
+    drawStageInfo();
+    UnreadBadge.attach('#start-guide');
+    UnreadBadge.attach('#start-quiz');
   }, []);
 
-  const { startGuide, startQuiz } = useTutorial({ tutorial });
 
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
-      {/* Action Section */}
-      <section className="action-section">
-        指令：言語モデルを作る
-        <button onClick={startGuide}>説明を見る</button>
-        <button onClick={startQuiz}>課題に挑戦</button>
+      {/* 指令エリア */}
+      <section className="action-section flex justify-between items-center">
+        <div className="flex gap-1 items-start">
+          指令<span ref={missionDescriptionRef}></span>
+          <button id="start-guide" onClick={startGuide}>説明を見る</button>
+          <button id="start-quiz" onClick={onStartQuiz}>課題に挑戦</button>
+        </div>
+        <div>
+          Stage: <span ref={stageInfoRef}></span>
+        </div>
       </section>
 
       {/* Main Content */}
