@@ -23,7 +23,7 @@ export default function Header() {
     };
 
     return (
-        <header className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 flex justify-between items-center">
+        <header className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-1 flex justify-between items-center">
             <div className="flex items-center gap-3 relative">
                 <button
                     onClick={() => setIsSectionListOpen(!isSectionListOpen)}
@@ -52,19 +52,17 @@ export default function Header() {
                     </>
                 )}
                 <div className="text-sm text-slate-400">
-                    Chapter {currentIndex + 1} / <span className="text-slate-100 font-semibold"></span>
+                    Chapter {currentIndex + 1} / {CHAPTERS.length}
                 </div>
             </div>
 
             <div className="flex items-center gap-3">
-                <span className="text-xs px-2 py-1 rounded-full border border-slate-800 text-slate-400">
+                {/* <span className="text-xs px-2 py-1 rounded-full border border-slate-800 text-slate-400">
                     進捗 3/8
                 </span>
                 <div className="w-40 h-2 bg-slate-800 rounded-full overflow-hidden">
                     <div className="h-full w-1/3 bg-accent"></div>
-                </div>
-                {/* <Link href="/chapter/fundamentals" className="px-3 py-1 text-sm rounded-lg border border-slate-800">前へ</Link>
-                <Link href="/chapter/image-generation" className="px-3 py-1 text-sm rounded-lg border border-accent bg-accent/20">次へ</Link> */}
+                </div> */}
 
                 <Link href={isFirst ? "#" : `${basePath}/${CHAPTERS[currentIndex - 1]?.id}`}
                     onClick={(e) => isFirst && e.preventDefault()} // JSでクリックを完全防止
