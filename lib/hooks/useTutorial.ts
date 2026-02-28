@@ -18,8 +18,13 @@ type Quiz = {
         correctIndex: number | number[],
     }[],
 }
+export type QuizResponse = {
+    isAllCorrect: boolean,
+    nextStageIndex: number,
+}
+export type QuizResponseCallback = (result: QuizResponse) => void;
 export type Tutorial = {
-    stages: { quiz: Quiz, guide: Guide }[];
+    stages: { description: string, quiz: Quiz, guide: Guide }[];
 }
 
 export const useTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
@@ -34,14 +39,34 @@ export const useTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
         return { destroy: driverObj.destroy };
     };
 
+    const showAlreadyFinished = () => {
+        Swal.fire({
+            title: 'チュートリアルは完了しています',
+            text: 'チュートリアルを終了します',
+            icon: 'success',
+            confirmButtonText: 'OK',
+        });
+    }
+
     const startGuide = () => {
+        if (stageRef.current >= tutorial.stages.length) {
+            showAlreadyFinished();
+            return;
+        }
         const driverObj = driver({
             steps: tutorial.stages[stageRef.current].guide,
         });
         driverObj.drive();
     };
 
-    const startQuiz = () => {
+    const startQuiz = (onResult: QuizResponseCallback) => {
+        if (stageRef.current >= tutorial.stages.length) {
+            showAlreadyFinished();
+            return;
+        }
+        const response = {
+            isAllCorrect: false,
+        }
         Swal.fire({
             title: tutorial.stages[stageRef.current].quiz.title,
             html: '<div id="quiz-scroll-container" style="text-align: left; max-height: 400px; overflow-y: auto; padding: 10px;">' +
@@ -70,6 +95,7 @@ export const useTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
                         problemElems[i].style.backgroundColor = "#ff0000";
                     }
                 })
+                response.isAllCorrect = isAllCorrect;
 
                 if ((isAllCorrect as boolean) === false) {
                     // Swal.showValidationMessage('すべての問題に回答してください');
@@ -86,6 +112,12 @@ export const useTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
                 stageRef.current += 1;
                 return false;
             }
+        }).then(() => {
+            onResult({
+                ...response,
+                nextStageIndex: stageRef.current,
+            })
+
         });
     };
     return { showPopup, startGuide, startQuiz };

@@ -57,13 +57,6 @@ export default function Header() {
             </div>
 
             <div className="flex items-center gap-3">
-                {/* <span className="text-xs px-2 py-1 rounded-full border border-slate-800 text-slate-400">
-                    進捗 3/8
-                </span>
-                <div className="w-40 h-2 bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full w-1/3 bg-accent"></div>
-                </div> */}
-
                 <Link href={isFirst ? "#" : `${basePath}/${CHAPTERS[currentIndex - 1]?.id}`}
                     onClick={(e) => isFirst && e.preventDefault()} // JSでクリックを完全防止
                     title={isFirst ? "前のセクションはありません" : ""}

@@ -25,7 +25,7 @@
 
 @layer components {
   .action-section {
-    @apply border border-slate-800 rounded-xl px-4 py-3 flex gap-4 items-start;
+    @apply border border-slate-800 rounded-xl px-4 py-3 flex items-start;
   }
 
   .container-panel {

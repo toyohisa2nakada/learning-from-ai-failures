@@ -3,12 +3,13 @@ import { useEffect, useState, useRef } from "react";
 import { Chart, ChartConfiguration } from 'chart.js/auto';
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/fundamentals/components/NeuralNetGraph";
-import { useTutorial, type Tutorial } from "@/lib/hooks/useTutorial";
-
+import { useTutorial, type Tutorial, type QuizResponse } from "@/lib/hooks/useTutorial";
+import UnreadBadge from "@/lib/UnreadBadge";
 
 const tutorial: Tutorial = {
   stages: [
     {
+      description: "パラメータを変更して、グラフの可算結果が教師データを通るようにする",
       guide: [
         { element: '#parameter-control', popover: { title: 'パラメータの設定', description: 'ここのスライダを移動させると、' } },
         { element: '#graph-area-top', popover: { title: '個別のグラフ', description: 'ここのグラフが変化します' } },
@@ -21,6 +22,7 @@ const tutorial: Tutorial = {
       },
     },
     {
+      description: "パラメータ設定をAIにやってもらう",
       guide: [
         { element: '#programming-mode-toggle', popover: { title: 'プログラムモードへの変更', description: 'ここを押してプログラムモードへ！' } },
         { element: '#target-settings', popover: { title: '教師データの選択', description: 'ここで教師データも変えられます' } },
@@ -270,6 +272,32 @@ export default function Home() {
     onChangeWeightAll(weights as Record<string, number>)
   }
 
+  const missionDescriptionRef = useRef<HTMLSpanElement>(null);
+  const stageInfoRef = useRef<HTMLSpanElement>(null);
+  function drawStageInfo() {
+    if (missionDescriptionRef.current && currentStageIndex.current < tutorial.stages.length) {
+      missionDescriptionRef.current.innerText = tutorial.stages[currentStageIndex.current]?.description;
+    }
+    if (stageInfoRef.current) {
+      stageInfoRef.current.innerHTML = `[${tutorial.stages.map((_, i) => `<span class=${i < currentStageIndex.current ? "text-gray-500" : (i === currentStageIndex.current ? "text-green-500" : "")}>${i + 1}</span>`).join(' ')}]`;
+    }
+  }
+  function onStartQuiz() {
+    startQuiz((result: QuizResponse) => {
+      if (result.isAllCorrect) {
+        currentStageIndex.current = result.nextStageIndex;
+        drawStageInfo();
+        if (currentStageIndex.current < tutorial.stages.length) {
+          UnreadBadge.attach('#start-guide');
+          UnreadBadge.attach('#start-quiz');
+        } else {
+          UnreadBadge.detach('#start-guide');
+          UnreadBadge.detach('#start-quiz');
+        }
+      }
+    })
+  }
+
   const [mainScript, setMainScript] = useState<string>('');
 
   // 初期表示
@@ -370,19 +398,23 @@ export default function Home() {
         console.error('Error loading scripts:', error);
       })
 
+    drawStageInfo();
+    UnreadBadge.attach('#start-guide');
+    UnreadBadge.attach('#start-quiz');
   }, []);
 
-  let startGuideIntro = useRef<{ destroy: () => void } | null>(null);
-  useEffect(() => {
-    startGuideIntro.current = showPopup({
-      element: "#start-guide",
-      title: "最初に",
-      description: "ここをクリックして説明を見てください。",
-      overlayOpacity: 0.0
-    });
-    console.log("startGuideIntro", startGuideIntro)
-  }, []);
+  // let startGuideIntro = useRef<{ destroy: () => void } | null>(null);
+  // useEffect(() => {
+  //   startGuideIntro.current = showPopup({
+  //     element: "#start-guide",
+  //     title: "最初に",
+  //     description: "ここをクリックして説明を見てください。",
+  //     overlayOpacity: 0.0
+  //   });
+  //   console.log("startGuideIntro", startGuideIntro)
+  // }, []);
 
+  const currentStageIndex = useRef<number>(0);
   const { showPopup, startGuide, startQuiz } = useTutorial({ tutorial });
 
   // 重み部分のinput
@@ -412,10 +444,15 @@ export default function Home() {
       `}</style>
 
       {/* 指令エリア */}
-      <section className="action-section">
-        指令：パラメータを変更して、グラフの可算結果が教師データを通るようにする。
-        <button id="start-guide" onClick={() => { startGuideIntro.current?.destroy(); startGuide() }}>説明を見る</button>
-        <button onClick={() => { startQuiz() }}>課題に挑戦</button>
+      <section className="action-section flex justify-between items-center">
+        <div className="flex gap-1 items-start">
+          指令<span ref={missionDescriptionRef}></span>
+          <button id="start-guide" onClick={startGuide}>説明を見る</button>
+          <button id="start-quiz" onClick={onStartQuiz}>課題に挑戦</button>
+        </div>
+        <div>
+          Stage: <span ref={stageInfoRef}></span>
+        </div>
       </section>
 
       {/* 操作と可視化 */}
