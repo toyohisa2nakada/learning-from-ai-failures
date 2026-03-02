@@ -185,7 +185,8 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
                 />
             </div>
             <div className="flex flex-col gap-1">
-                <button className="relative overflow-hidden px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700 w-full"
+                <button id="ai-learning-start"
+                    className="relative overflow-hidden px-3 py-1 text-xs font-semibold text-gray-200 bg-slate-800 border border-slate-600 rounded hover:bg-slate-700 w-full"
                     onClick={e => onStartLearn()}>
                     <span ref={progressRef} className="absolute left-0 top-0 h-full bg-blue-600/40 w-0" />
                     <span ref={buttonLabelRef} className="relative z-10">{BUTTON_LABELS.ended}</span>
