@@ -94,8 +94,12 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         <section className="action-section flex justify-between items-center">
             <div className="flex gap-1 items-start">
                 指令<span ref={missionDescriptionRef}></span>
-                <button id="start-guide" onClick={onStartGuide}>説明を見る</button>
-                <button id="start-quiz" onClick={onStartQuiz}>課題に挑戦</button>
+                <button id="start-guide" onClick={onStartGuide}
+                    className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
+                >説明を見る</button>
+                <button id="start-quiz" onClick={onStartQuiz}
+                    className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
+                >課題に挑戦</button>
             </div>
             <div>
                 Stage: <span ref={stagePanelRef} className="inline-flex items-center p-1 rounded-md border border-slate-800 ml-2"></span>
