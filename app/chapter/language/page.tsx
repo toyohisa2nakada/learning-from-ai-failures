@@ -4,8 +4,8 @@ import JsEditor from '@/components/JsEditor';
 import DatasetPanel, { type Dataset, type DatasetPanelHandle, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
 import ModelInsightPanel, { type ModelInsightPanelHandle } from '@/app/chapter/language/components/ModelInsightPanel';
 import { useResizer } from '@/lib/hooks/useResizer';
-import { type Tutorial } from "@/lib/hooks/useTutorial";
-import StagePanel from "@/components/Stage";
+import { type Tutorial } from "@/lib/Tutorial";
+import StageControllerPanel from "@/components/StageController";
 
 const tutorial: Tutorial = {
   stages: [
@@ -102,7 +102,7 @@ export default function Home() {
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
       {/* 指令エリア */}
-      <StagePanel tutorial={tutorial} />
+      <StageControllerPanel tutorial={tutorial} />
 
       {/* Main Content */}
       <main className="flex bg-inherit overflow-hidden bg-inherit">

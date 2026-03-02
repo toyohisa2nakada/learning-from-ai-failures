@@ -3,8 +3,8 @@ import { useEffect, useState, useRef } from "react";
 import { Chart, ChartConfiguration } from 'chart.js/auto';
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/fundamentals/components/NeuralNetGraph";
-import { type Tutorial } from "@/lib/hooks/useTutorial";
-import StagePanel from "@/components/Stage";
+import { type Tutorial } from "@/lib/Tutorial";
+import StageControllerPanel from "@/components/StageController";
 
 
 const tutorial: Tutorial = {
@@ -413,7 +413,7 @@ export default function Home() {
       `}</style>
 
       {/* 指令エリア */}
-      <StagePanel tutorial={tutorial} />
+      <StageControllerPanel tutorial={tutorial} />
 
       {/* 操作と可視化 */}
       <main className="flex bg-inherit min-h-0 overflow-hidden">

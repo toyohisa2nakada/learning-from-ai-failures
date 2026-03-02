@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import Swal from 'sweetalert2';
@@ -20,15 +19,15 @@ type Quiz = {
 }
 export type QuizResponse = {
     isAllCorrect: boolean,
-    nextStageIndex: number,
+    // nextStageIndex: number,
 }
 export type QuizResponseCallback = (result: QuizResponse) => void;
 export type Tutorial = {
     stages: { description: string, quiz: Quiz, guide: Guide }[];
 }
 
-export const useTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
-    const stageRef = useRef(0);
+export const createTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
+    // const stageRef = useRef(0);
 
     const showPopup = ({ element, title, description, overlayOpacity = 0.5 }: { element: string, title: string, description: string, overlayOpacity: number }): { destroy: () => void } => {
         const driverObj = driver({
@@ -48,29 +47,29 @@ export const useTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
         });
     }
 
-    const startGuide = () => {
-        if (stageRef.current >= tutorial.stages.length) {
-            showAlreadyFinished();
-            return;
-        }
+    const startGuide = (stageIndex: number) => {
+        // if (stageRef.current >= tutorial.stages.length) {
+        //     showAlreadyFinished();
+        //     return;
+        // }
         const driverObj = driver({
-            steps: tutorial.stages[stageRef.current].guide,
+            steps: tutorial.stages[stageIndex].guide,
         });
         driverObj.drive();
     };
 
-    const startQuiz = (onResult: QuizResponseCallback) => {
-        if (stageRef.current >= tutorial.stages.length) {
-            showAlreadyFinished();
-            return;
-        }
+    const startQuiz = (stageIndex: number, onResult: QuizResponseCallback) => {
+        // if (stageRef.current >= tutorial.stages.length) {
+        //     showAlreadyFinished();
+        //     return;
+        // }
         const response = {
             isAllCorrect: false,
         }
         Swal.fire({
-            title: tutorial.stages[stageRef.current].quiz.title,
+            title: tutorial.stages[stageIndex].quiz.title,
             html: '<div id="quiz-scroll-container" style="text-align: left; max-height: 400px; overflow-y: auto; padding: 10px;">' +
-                tutorial.stages[stageRef.current].quiz.problems.map(({ question, choices, correctIndex }, i) => {
+                tutorial.stages[stageIndex].quiz.problems.map(({ question, choices, correctIndex }, i) => {
                     const choiceType = Array.isArray(correctIndex) ? "checkbox" : "radio";
                     return `<div class="question"><p>問題${i + 1}: ${question}</p>` +
                         choices.map((c, ci) => `<label><input type="${choiceType}" name="${i}" value="${ci}" />${c}</label>`).join("") +
@@ -81,7 +80,7 @@ export const useTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
             preConfirm: () => {
                 const problemElems: HTMLDivElement[] = [...(document.querySelectorAll(".question") as NodeListOf<HTMLDivElement>)];
                 problemElems.forEach(e => e.style.backgroundColor = "");
-                const results: number[][] = tutorial.stages[stageRef.current].quiz.problems.map((_, i) =>
+                const results: number[][] = tutorial.stages[stageIndex].quiz.problems.map((_, i) =>
                     [...(problemElems[i].querySelectorAll(`input[name="${i}"]:checked`) as NodeListOf<HTMLInputElement>)].map(e => Number(e.value))
                 );
 
@@ -89,7 +88,7 @@ export const useTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
 
                 let isAllCorrect = true;
                 results.forEach((result, i) => {
-                    const cAnswer = tutorial.stages[stageRef.current].quiz.problems[i].correctIndex;
+                    const cAnswer = tutorial.stages[stageIndex].quiz.problems[i].correctIndex;
                     if (!isEqual(result, Array.isArray(cAnswer) ? cAnswer : [cAnswer])) {
                         isAllCorrect = false;
                         problemElems[i].style.backgroundColor = "#ff0000";
@@ -106,18 +105,18 @@ export const useTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
                 Swal.getCancelButton()!.innerText = '閉じる';
                 const container = Swal.getHtmlContainer();
                 if (container) {
-                    container.innerHTML += '<div style="color:green; font-weight:bold; margin-top:15px;">全問正解です！次の説明と課題が作成されています。</div>';
+                    container.innerHTML += '<div style="color:green; font-weight:bold; margin-top:15px;">全問正解です！</div>';
                     container.scrollTop = container.scrollHeight;
                 }
-                stageRef.current += 1;
+                // stageRef.current += 1;
                 return false;
             }
         }).then(() => {
-            onResult({
-                ...response,
-                nextStageIndex: stageRef.current,
-            })
-
+            // onResult({
+            //     ...response,
+            //     nextStageIndex: stageRef.current,
+            // })
+            onResult(response);
         });
     };
     return { showPopup, startGuide, startQuiz };
