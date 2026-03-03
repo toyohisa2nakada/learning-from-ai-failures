@@ -25,7 +25,7 @@ export type Tutorial = {
     stages: { description: string, quiz: Quiz, guide: Guide }[];
 }
 
-export const createTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
+export const createTutorial = ({ tutorial, storageKeyPrefix = '' }: { tutorial: Tutorial, storageKeyPrefix?: string }) => {
     const showPopup = ({ element, title, description, overlayOpacity = 0.5 }: { element: string, title: string, description: string, overlayOpacity: number }): { destroy: () => void } => {
         const driverObj = driver({
             overlayOpacity,
@@ -43,6 +43,43 @@ export const createTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
             confirmButtonText: 'OK',
         });
     }
+
+    // --- クイズ選択状態の永続化ヘルパー ---
+    function getQuizStorageKey(stageIndex: number) {
+        return `tutorial_quiz_answers_${storageKeyPrefix}_${stageIndex}`;
+    }
+
+    function saveQuizAnswers(stageIndex: number) {
+        const problemElems = document.querySelectorAll(".question");
+        const answers: Record<string, number[]> = {};
+        problemElems.forEach((_, i) => {
+            const checked = [...document.querySelectorAll<HTMLInputElement>(`input[name="${i}"]:checked`)];
+            answers[i.toString()] = checked.map(e => Number(e.value));
+        });
+        localStorage.setItem(getQuizStorageKey(stageIndex), JSON.stringify(answers));
+    }
+
+    function restoreQuizAnswers(stageIndex: number) {
+        const saved = localStorage.getItem(getQuizStorageKey(stageIndex));
+        if (!saved) return;
+        try {
+            const answers = JSON.parse(saved) as Record<string, number[]>;
+            Object.entries(answers).forEach(([name, values]) => {
+                values.forEach(val => {
+                    const input = document.querySelector<HTMLInputElement>(`input[name="${name}"][value="${val}"]`);
+                    if (input) input.checked = true;
+                });
+            });
+        } catch (e) {
+            console.error("Failed to restore quiz answers", e);
+        }
+    }
+
+    const clearQuizAnswers = () => {
+        tutorial.stages.forEach((_, i) => {
+            localStorage.removeItem(getQuizStorageKey(i));
+        });
+    };
 
     const startGuide = (stageIndex: number) => {
         const driverObj = driver({
@@ -66,6 +103,12 @@ export const createTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
                 }) + "</div>",
             showCancelButton: true,
             confirmButtonText: '回答チェック',
+            didOpen: () => {
+                restoreQuizAnswers(stageIndex);
+            },
+            willClose: () => {
+                saveQuizAnswers(stageIndex);
+            },
             preConfirm: () => {
                 const problemElems: HTMLDivElement[] = [...(document.querySelectorAll(".question") as NodeListOf<HTMLDivElement>)];
                 problemElems.forEach(e => e.style.backgroundColor = "");
@@ -94,7 +137,7 @@ export const createTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
                 Swal.getCancelButton()!.innerText = '閉じる';
                 const container = Swal.getHtmlContainer();
                 if (container) {
-                    container.innerHTML += '<div style="color:green; font-weight:bold; margin-top:15px;">全問正解です！</div>';
+                    container.insertAdjacentHTML('beforeend', '<div style="color:green; font-weight:bold; margin-top:15px;">全問正解です！</div>');
                     container.scrollTop = container.scrollHeight;
                 }
                 return false;
@@ -103,5 +146,5 @@ export const createTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
             onResult(response);
         });
     };
-    return { showPopup, startGuide, startQuiz };
+    return { showPopup, startGuide, startQuiz, clearQuizAnswers };
 };

@@ -26,7 +26,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
     const currentStageIndex = useRef<number>(0);
     // const [isClient, setIsClient] = useState(false); // To prevent hydration mismatch that could happen from localStorage init
 
-    const { startGuide, startQuiz } = createTutorial({ tutorial });
+    const { startGuide, startQuiz, clearQuizAnswers } = createTutorial({ tutorial, storageKeyPrefix: pathname });
 
     function getStorageKey(type: 'badge' | 'stage') {
         return `tutorial_${type}_${pathname}`;
@@ -119,6 +119,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
             if (result.isConfirmed) {
                 localStorage.removeItem(getStorageKey('badge'));
                 localStorage.removeItem(getStorageKey('stage'));
+                clearQuizAnswers();
                 window.location.reload();
             }
         });
