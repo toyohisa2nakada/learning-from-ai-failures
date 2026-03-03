@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Chart, ChartConfiguration } from 'chart.js/auto';
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/fundamentals/components/NeuralNetGraph";
+import { useResizer } from '@/lib/hooks/useResizer';
 import { type Tutorial } from "@/lib/Tutorial";
 import StageControllerPanel from "@/components/StageController";
 
@@ -288,6 +289,7 @@ export default function Home() {
     onChangeWeightAll(weights as Record<string, number>)
   }
 
+  const { leftWidth, containerRef, handleMouseDown } = useResizer(50, 20, 80);
   const [mainScript, setMainScript] = useState<string>('');
 
   // 初期表示
@@ -431,14 +433,14 @@ export default function Home() {
       <StageControllerPanel tutorial={tutorial} />
 
       {/* 操作と可視化 */}
-      <main className="flex bg-inherit min-h-0 overflow-hidden">
-        <div id="container" className="container-panel h-full">
+      <main className="flex min-w-0 w-full bg-inherit">
+        <div ref={containerRef} id="container" className="container-panel md:flex-row h-full min-w-0 bg-inherit">
 
-          {/* 上部パネル */}
-          <div id="upper-panel" className="upper-panel min-h-0 overflow-hidden">
+          {/* 左パネル */}
+          <div className="left-panel flex flex-col overflow-hidden" style={{ width: `${leftWidth}%`, flexShrink: 0 }}>
 
             {/* パラメータ設定 */}
-            <div id="parameter-control" className="left-panel">
+            <div id="parameter-control" className="mb-2">
               <h3 className="text-base font-bold mb-3">パラメータ設定</h3>
 
               {[
@@ -501,22 +503,8 @@ export default function Home() {
               ))}
             </div>
 
-            {/* 個別のグラフ */}
-            <div id="graph-area-top" className="right-panel">
-              <div className="flex items-center justify-between w-full mb-3">
-                <h3 className="text-base font-semibold m-0">個別のグラフ (G1, G2)</h3>
-              </div>
-              <div className="chart-container w-full flex-1 min-h-0">
-                <canvas id="individual-graphs-canvas" className="h-0 min-h-full"></canvas>
-              </div>
-            </div>
-          </div>
-
-          {/* 下部パネル */}
-          <div id="lower-panel" className="lower-panel min-h-0 overflow-hidden">
-
             {/* ニューラルネットワークの構造 */}
-            <div id="drawing-area" className="left-panel relative">
+            <div id="drawing-area" className="flex-1 min-h-0 flex flex-col">
               <div className="flex justify-between items-center">
                 <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
                 <div id="programming-mode-toggle" className="text-xs flex">
@@ -531,6 +519,27 @@ export default function Home() {
                   externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
                   defaultValue={mainScript}
                 />}
+            </div>
+          </div>
+
+          {/* リサイザー */}
+          <div
+            onMouseDown={handleMouseDown}
+            className="w-2 flex-shrink-0 cursor-col-resize hover:bg-blue-900 active:bg-blue-500 transition-colors duration-150 rounded"
+          />
+
+          {/* 右パネル */}
+          <div id="right-panel" className="flex flex-col gap-4 min-w-0 flex-1 bg-inherit">
+
+
+            {/* 個別のグラフ */}
+            <div id="graph-area-top" className="right-panel">
+              <div className="flex items-center justify-between w-full mb-3">
+                <h3 className="text-base font-semibold m-0">個別のグラフ (G1, G2)</h3>
+              </div>
+              <div className="chart-container w-full flex-1 min-h-0">
+                <canvas id="individual-graphs-canvas" className="h-0 min-h-full"></canvas>
+              </div>
             </div>
 
             {/* グラフの可算結果 */}
@@ -606,23 +615,12 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
           </div>
 
         </div>
       </main>
 
-      {/* 解説 */}
-      {/* <footer className="border border-slate-800 rounded-xl px-4 py-3">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="font-semibold text-sm">⑤ 解説</h3>
-          <span className="text-xs px-2 py-1 rounded-full border border-slate-800 text-slate-400">
-            操作後に開示
-          </span>
-        </div>
-        <div className="text-sm text-slate-400 leading-relaxed">
-          ここに「なぜそうなるか」の説明を表示します。
-        </div>
-      </footer> */}
     </div>
   );
 }

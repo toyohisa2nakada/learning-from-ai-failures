@@ -32,14 +32,6 @@
     @apply flex flex-col p-1 gap-2 w-full shadow-2xl rounded-xl border border-slate-800/80 bg-inherit;
   }
 
-  .upper-panel {
-    @apply flex flex-col md:flex-row gap-6;
-  }
-
-  .lower-panel {
-    @apply flex flex-col md:flex-row flex-1 gap-6 bg-inherit;
-  }
-
   .left-panel {
     @apply p-3 rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent h-full bg-inherit md:w-[45%] shrink-0 flex flex-col;
   }
