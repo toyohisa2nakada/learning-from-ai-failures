@@ -1,5 +1,7 @@
 "use client";
 import { useRef, forwardRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import Swal from 'sweetalert2';
 import { createTutorial, type Tutorial, type QuizResponse } from "@/lib/Tutorial";
 import UnreadBadge from "@/lib/UnreadBadge";
 
@@ -13,14 +15,28 @@ interface BadgeState {
     quiz: boolean;
 }
 const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerProps>(({ tutorial }, ref) => {
+    const pathname = usePathname();
     const missionDescriptionRef = useRef<HTMLSpanElement>(null);
     const stagePanelRef = useRef<HTMLSpanElement>(null);
     const stageButtonRef = useRef<HTMLButtonElement[]>([]);
-    const badgeStateRef = useRef<Map<number, BadgeState>>(
-        new Map(tutorial.stages.map((_, i) => [i, { guide: false, quiz: false }]))
-    );
+
+    const defaultBadgeState = tutorial.stages.map((_, i) => [i, { guide: false, quiz: false }] as [number, BadgeState]);
+
+    const badgeStateRef = useRef<Map<number, BadgeState>>(new Map(defaultBadgeState));
     const currentStageIndex = useRef<number>(0);
+    // const [isClient, setIsClient] = useState(false); // To prevent hydration mismatch that could happen from localStorage init
+
     const { startGuide, startQuiz } = createTutorial({ tutorial });
+
+    function getStorageKey(type: 'badge' | 'stage') {
+        return `tutorial_${type}_${pathname}`;
+    }
+
+    function saveStateToStorage() {
+        // if (!isClient) return;
+        localStorage.setItem(getStorageKey('badge'), JSON.stringify(Array.from(badgeStateRef.current.entries())));
+        localStorage.setItem(getStorageKey('stage'), currentStageIndex.current.toString());
+    }
 
     function syncBadgeState() {
         const stage = currentStageIndex.current;
@@ -35,6 +51,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         if (!current) return;
         console.log("set", stageIndex, key)
         badgeStateRef.current.set(stageIndex, { ...current, [key]: true })
+        saveStateToStorage();
     }
 
     function drawStageInfo() {
@@ -48,6 +65,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
                     btn.innerText = (i + 1).toString();
                     btn.onclick = () => {
                         currentStageIndex.current = i;
+                        saveStateToStorage();
                         drawStageInfo();
                         syncBadgeState();
                     };
@@ -79,17 +97,64 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         startQuiz(stageIndex, (result: QuizResponse) => {
             if (result.isAllCorrect) {
                 currentStageIndex.current = Math.min(stageIndex + 1, tutorial.stages.length - 1);
-                drawStageInfo();
                 markAsBadgeState(stageIndex, 'quiz');
+                saveStateToStorage();
+                drawStageInfo();
                 console.log(badgeStateRef.current)
                 syncBadgeState();
             }
         })
     }
+    function onReset() {
+        Swal.fire({
+            title: '進捗をリセットしますか？',
+            text: '現在のチュートリアルの進行状況（ガイド閲覧、クイズクリア）が初期化されます。',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#475569', // slate-600
+            confirmButtonText: 'リセットする',
+            cancelButtonText: 'キャンセル'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                localStorage.removeItem(getStorageKey('badge'));
+                localStorage.removeItem(getStorageKey('stage'));
+                window.location.reload();
+            }
+        });
+    }
+
     useEffect(() => {
+        // setIsClient(true);
+        // Load state from localStorage on mount
+        const savedBadge = localStorage.getItem(getStorageKey('badge'));
+        if (savedBadge) {
+            try {
+                const parsed = JSON.parse(savedBadge) as [number, BadgeState][];
+                // Handle cases where tutorial.stages structure might have changed (lengthened)
+                const newMap = new Map(defaultBadgeState);
+                parsed.forEach(([k, v]) => {
+                    if (newMap.has(k)) newMap.set(k, v);
+                });
+                badgeStateRef.current = newMap;
+            } catch (e) {
+                console.error("Failed to parse badge state", e);
+            }
+        }
+
+        const savedStage = localStorage.getItem(getStorageKey('stage'));
+        if (savedStage) {
+            const parsedStage = parseInt(savedStage, 10);
+            if (!isNaN(parsedStage) && parsedStage >= 0 && parsedStage < tutorial.stages.length) {
+                currentStageIndex.current = parsedStage;
+            }
+        }
+
         drawStageInfo();
         syncBadgeState();
-    }, [])
+    }, [pathname]);
+
+    // if (!isClient) return null;
     return (
         <section className="action-section flex justify-between items-center">
             <div className="flex gap-1 items-start">
@@ -101,8 +166,19 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
                     className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
                 >課題に挑戦</button>
             </div>
-            <div>
-                Stage: <span ref={stagePanelRef} className="inline-flex items-center p-1 rounded-md border border-slate-800 ml-2"></span>
+            <div className="flex items-center">
+                <span className="text-sm font-medium">Stage:</span>
+                <span ref={stagePanelRef} className="inline-flex items-center p-1 rounded-md border border-slate-800 ml-2"></span>
+                <button
+                    onClick={onReset}
+                    className="ml-3 p-1 text-slate-500 hover:text-slate-300 transition-colors"
+                    title="進捗をリセット"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                    </svg>
+                </button>
             </div>
         </section>
     );

@@ -19,7 +19,6 @@ type Quiz = {
 }
 export type QuizResponse = {
     isAllCorrect: boolean,
-    // nextStageIndex: number,
 }
 export type QuizResponseCallback = (result: QuizResponse) => void;
 export type Tutorial = {
@@ -27,8 +26,6 @@ export type Tutorial = {
 }
 
 export const createTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
-    // const stageRef = useRef(0);
-
     const showPopup = ({ element, title, description, overlayOpacity = 0.5 }: { element: string, title: string, description: string, overlayOpacity: number }): { destroy: () => void } => {
         const driverObj = driver({
             overlayOpacity,
@@ -48,10 +45,6 @@ export const createTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
     }
 
     const startGuide = (stageIndex: number) => {
-        // if (stageRef.current >= tutorial.stages.length) {
-        //     showAlreadyFinished();
-        //     return;
-        // }
         const driverObj = driver({
             steps: tutorial.stages[stageIndex].guide,
         });
@@ -59,10 +52,6 @@ export const createTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
     };
 
     const startQuiz = (stageIndex: number, onResult: QuizResponseCallback) => {
-        // if (stageRef.current >= tutorial.stages.length) {
-        //     showAlreadyFinished();
-        //     return;
-        // }
         const response = {
             isAllCorrect: false,
         }
@@ -108,14 +97,9 @@ export const createTutorial = ({ tutorial }: { tutorial: Tutorial }) => {
                     container.innerHTML += '<div style="color:green; font-weight:bold; margin-top:15px;">全問正解です！</div>';
                     container.scrollTop = container.scrollHeight;
                 }
-                // stageRef.current += 1;
                 return false;
             }
         }).then(() => {
-            // onResult({
-            //     ...response,
-            //     nextStageIndex: stageRef.current,
-            // })
             onResult(response);
         });
     };
