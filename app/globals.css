@@ -29,7 +29,7 @@
   }
 
   .container-panel {
-    @apply flex flex-col p-1 gap-2 w-full shadow-2xl rounded-xl border border-slate-800/80 bg-inherit;
+    @apply flex flex-row p-1 gap-2 w-full shadow-2xl rounded-xl border border-slate-800/80 bg-inherit;
   }
 
   .left-panel {

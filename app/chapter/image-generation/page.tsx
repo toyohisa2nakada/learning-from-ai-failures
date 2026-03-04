@@ -95,11 +95,11 @@ export default function Home() {
       <StageControllerPanel tutorial={tutorial} />
 
       {/* Main Content */}
-      <main className="flex bg-inherit">
-        <div ref={containerRef} id="container" className="container-panel md:flex-row h-full bg-inherit">
+      <main className="flex min-w-0 w-full bg-inherit">
+        <div ref={containerRef} id="container" className="container-panel h-full min-w-0 bg-inherit overflow-hidden p-2">
 
           {/* Left Panel: Merged Height (Full Height of container) */}
-          <div className="left-panel flex flex-col overflow-hidden" style={{ width: `${leftWidth}%`, flexShrink: 0 }}>
+          <div className="left-panel flex flex-col overflow-hidden min-w-0" style={{ width: `${leftWidth}%`, flexShrink: 0 }}>
             <div className="flex justify-between items-center">
               <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
               <div id="programming-mode-toggle" className="text-xs flex">

@@ -247,7 +247,7 @@ export default function NeuralNetGraph() {
             <div className="text-xs shrink-0 mb-2">
                 入力xに値がセットされ、バイアスには常に1が設定されます。各ニューロンは、その値を使って指定された計算式で値を求め、それらをすべて足し合わせたものが出力yとなります。
             </div>
-            <div className="flex-1 min-h-0" ref={svgRef}>
+            <div className="min-h-0" ref={svgRef}>
             </div>
 
             <div className="shrink-0 mt-2">
@@ -255,6 +255,7 @@ export default function NeuralNetGraph() {
                     AIは、この出力yが教師データと一致するように、自動的に重みwとバイアスの重みbを調整して決定します。なお、このツールの目的は、ユーザーがこれらの重みを直感的に試して手動で求めることです。
                 </div>
             </div>
+            <div className="flex-1" />
         </div>
     );
 }

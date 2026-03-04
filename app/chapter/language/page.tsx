@@ -107,7 +107,7 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex bg-inherit overflow-hidden bg-inherit">
         {/* Container: Flex Row on MD screens to put Left and Right side-by-side */}
-        <div ref={containerRef} className="container-panel md:flex-row h-full bg-inherit">
+        <div ref={containerRef} className="container-panel h-full bg-inherit">
 
           {/* Left Panel: Merged Height (Full Height of container) */}
           <div className="left-panel flex flex-col" style={{ width: `${leftWidth}%`, flexShrink: 0 }} >
@@ -134,7 +134,7 @@ export default function Home() {
             {/* Upper Right Panel */}
             <div id="model-insight-container" className="right-panel h-auto flex-none bg-inherit">
               <div className="font-semibold mb-2">計算プロセス</div>
-              <div className="bg-inherit">
+              <div className="bg-inherit text-sm">
                 <label htmlFor="test-pattern-index">テストパターン</label>
                 <select className="bg-inherit" id="test-pattern-index" ref={testPatternSelectRef}
                   onChange={(e) => {
@@ -147,7 +147,7 @@ export default function Home() {
                   ))}
                 </select>
               </div>
-              <div className="flex flex-row flex-wrap gap-2">
+              <div className="flex flex-row flex-wrap gap-2 text-xs">
                 {["llm", "gap", "fnn"].map(modelName => (
                   <ModelInsightPanel
                     key={modelName}

@@ -433,11 +433,11 @@ export default function Home() {
       <StageControllerPanel tutorial={tutorial} />
 
       {/* 操作と可視化 */}
-      <main className="flex min-w-0 w-full bg-inherit">
-        <div ref={containerRef} id="container" className="container-panel md:flex-row h-full min-w-0 bg-inherit">
+      <main className="flex min-w-0 min-h-0 w-full bg-inherit">
+        <div ref={containerRef} id="container" className="container-panel h-full min-w-0 min-h-0 bg-inherit overflow-hidden p-2">
 
           {/* 左パネル */}
-          <div className="left-panel flex flex-col overflow-hidden" style={{ width: `${leftWidth}%`, flexShrink: 0 }}>
+          <div className="left-panel flex flex-col overflow-hidden min-h-0" style={{ width: `${leftWidth}%`, flexShrink: 0 }}>
 
             {/* パラメータ設定 */}
             <div id="parameter-control" className="mb-2">
@@ -529,7 +529,7 @@ export default function Home() {
           />
 
           {/* 右パネル */}
-          <div id="right-panel" className="flex flex-col gap-4 min-w-0 flex-1 bg-inherit">
+          <div id="right-panel" className="flex flex-col gap-4 min-w-0 min-h-0 flex-1 bg-inherit">
 
 
             {/* 個別のグラフ */}
