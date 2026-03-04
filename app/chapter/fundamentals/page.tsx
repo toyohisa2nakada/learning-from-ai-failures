@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Chart, ChartConfiguration } from 'chart.js/auto';
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/fundamentals/components/NeuralNetGraph";
-import { useResizer } from '@/lib/hooks/useResizer';
+import { useDoubleResizer } from '@/lib/hooks/useDoubleResizer';
 import { type Tutorial } from "@/lib/Tutorial";
 import StageControllerPanel from "@/components/StageController";
 
@@ -289,7 +289,18 @@ export default function Home() {
     onChangeWeightAll(weights as Record<string, number>)
   }
 
-  const { leftWidth, containerRef, handleMouseDown } = useResizer(50, 20, 80);
+  // クイズの表示/非表示
+  const [isQuizVisible, setIsQuizVisible] = useState(false);
+  const toggleQuiz = () => {
+    setIsQuizVisible(!isQuizVisible);
+  };
+
+  function onStartQuiz() {
+    toggleQuiz();
+    return document.getElementById('quiz-container') as HTMLDivElement;
+  }
+
+  const { leftWidth, rightWidth, containerRef, handleLeftMouseDown, handleRightMouseDown } = useDoubleResizer(40, 10, 20, 10, 30);
   const [mainScript, setMainScript] = useState<string>('');
 
   // 初期表示
@@ -391,18 +402,6 @@ export default function Home() {
       })
   }, []);
 
-  // let startGuideIntro = useRef<{ destroy: () => void } | null>(null);
-  // useEffect(() => {
-  //   startGuideIntro.current = showPopup({
-  //     element: "#start-guide",
-  //     title: "最初に",
-  //     description: "ここをクリックして説明を見てください。",
-  //     overlayOpacity: 0.0
-  //   });
-  //   console.log("startGuideIntro", startGuideIntro)
-  // }, []);
-
-
   // 重み部分のinput
   const weight_input_css = "no-spin font-bold w-12 text-right p-0 bg-transparent text-sm rounded border border-[#1f2a44] border-solid";
 
@@ -430,7 +429,7 @@ export default function Home() {
       `}</style>
 
       {/* 指令エリア */}
-      <StageControllerPanel tutorial={tutorial} />
+      <StageControllerPanel tutorial={tutorial} onStartQuiz={onStartQuiz} />
 
       {/* 操作と可視化 */}
       <main className="flex min-w-0 min-h-0 w-full bg-inherit">
@@ -524,16 +523,14 @@ export default function Home() {
 
           {/* リサイザー */}
           <div
-            onMouseDown={handleMouseDown}
-            className="w-2 flex-shrink-0 cursor-col-resize hover:bg-blue-900 active:bg-blue-500 transition-colors duration-150 rounded"
+            onMouseDown={handleLeftMouseDown}
+            className="w-1.5 flex-shrink-0 cursor-col-resize hover:bg-blue-900 active:bg-blue-500 transition-colors duration-150 rounded"
           />
 
-          {/* 右パネル */}
-          <div id="right-panel" className="flex flex-col gap-4 min-w-0 min-h-0 flex-1 bg-inherit">
-
-
+          {/* 中央パネル */}
+          <div className="flex flex-col gap-4 min-w-0 min-h-0 flex-1 bg-inherit" >
             {/* 個別のグラフ */}
-            <div id="graph-area-top" className="right-panel">
+            < div id="graph-area-top" className="right-panel">
               <div className="flex items-center justify-between w-full mb-3">
                 <h3 className="text-base font-semibold m-0">個別のグラフ (G1, G2)</h3>
               </div>
@@ -618,10 +615,20 @@ export default function Home() {
 
           </div>
 
-        </div>
-      </main>
+          {/* リサイザー */}
+          <div
+            onMouseDown={handleRightMouseDown}
+            className={(isQuizVisible ? "block" : "hidden") + " w-1.5 flex-shrink-0 cursor-col-resize hover:bg-blue-900 active:bg-blue-500 transition-colors duration-150 rounded"}
+          />
 
-    </div>
+          {/* 右パネル */}
+          <div id="quiz-container" className={(isQuizVisible ? "block" : "hidden") + " rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent"} style={{ width: `${rightWidth}%`, flexShrink: 0 }}>
+            クイズ
+          </div>
+        </div>
+      </main >
+
+    </div >
   );
 }
 

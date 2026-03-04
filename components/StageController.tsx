@@ -7,6 +7,7 @@ import UnreadBadge from "@/lib/UnreadBadge";
 
 interface StageControllerProps {
     tutorial: Tutorial;
+    onStartQuiz: () => HTMLDivElement;
 }
 export interface StageControllerHandle {
 }
@@ -14,7 +15,7 @@ interface BadgeState {
     guide: boolean;
     quiz: boolean;
 }
-const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerProps>(({ tutorial }, ref) => {
+const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerProps>(({ tutorial, onStartQuiz }, ref) => {
     const pathname = usePathname();
     const missionDescriptionRef = useRef<HTMLSpanElement>(null);
     const stagePanelRef = useRef<HTMLSpanElement>(null);
@@ -86,13 +87,17 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
             })
         }
     }
-    function onStartGuide() {
+    function handleStartGuide() {
         const stageIndex = currentStageIndex.current;
         markAsBadgeState(stageIndex, 'guide');
         syncBadgeState();
         startGuide(stageIndex);
     }
-    function onStartQuiz() {
+    function handleStartQuiz() {
+        // test
+        const quizElement = onStartQuiz();
+        return;
+
         const stageIndex = currentStageIndex.current;
         startQuiz(stageIndex, (result: QuizResponse) => {
             if (result.isAllCorrect) {
@@ -160,10 +165,10 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         <section className="action-section flex justify-between items-center">
             <div className="flex gap-1 items-start">
                 指令<span ref={missionDescriptionRef}></span>
-                <button id="start-guide" onClick={onStartGuide}
+                <button id="start-guide" onClick={handleStartGuide}
                     className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
                 >説明を見る</button>
-                <button id="start-quiz" onClick={onStartQuiz}
+                <button id="start-quiz" onClick={handleStartQuiz}
                     className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
                 >課題に挑戦</button>
             </div>
