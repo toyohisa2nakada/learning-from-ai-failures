@@ -4,8 +4,7 @@ import JsEditor from '@/components/JsEditor';
 import DatasetPanel, { type Dataset, type DatasetPanelHandle, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
 import ModelInsightPanel, { type ModelInsightPanelHandle } from '@/app/chapter/language/components/ModelInsightPanel';
 import { useResizer } from '@/lib/hooks/useResizer';
-import { type Tutorial } from "@/lib/Tutorial";
-import StageControllerPanel from "@/components/StageController";
+import StageControllerPanel, { type Tutorial } from "@/components/StageController";
 
 const tutorial: Tutorial = {
   stages: [

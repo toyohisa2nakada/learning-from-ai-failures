@@ -8,8 +8,7 @@ import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridP
 import { type ImageOption } from "@/components/ImageSelect";
 
 import { useResizer } from '@/lib/hooks/useResizer';
-import { type Tutorial } from "@/lib/Tutorial";
-import StageControllerPanel from "@/components/StageController";
+import StageControllerPanel, { type Tutorial } from "@/components/StageController";
 
 
 const tutorial: Tutorial = {

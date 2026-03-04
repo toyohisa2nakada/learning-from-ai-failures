@@ -4,7 +4,7 @@ import { Chart, ChartConfiguration } from 'chart.js/auto';
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/fundamentals/components/NeuralNetGraph";
 import { useDoubleResizer } from '@/lib/hooks/useDoubleResizer';
-import { type Tutorial } from "@/lib/Tutorial";
+import { type Tutorial } from "@/components/StageController";
 import StageControllerPanel from "@/components/StageController";
 
 
