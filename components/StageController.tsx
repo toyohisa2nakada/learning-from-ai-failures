@@ -7,7 +7,8 @@ import UnreadBadge from "@/lib/UnreadBadge";
 
 interface StageControllerProps {
     tutorial: Tutorial;
-    onStartQuiz: () => HTMLDivElement;
+    quizPanelRef: React.RefObject<HTMLDivElement | null>;
+    onStartQuiz: () => void;
 }
 export interface StageControllerHandle {
 }
@@ -15,7 +16,7 @@ interface BadgeState {
     guide: boolean;
     quiz: boolean;
 }
-const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerProps>(({ tutorial, onStartQuiz }, ref) => {
+const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerProps>(({ tutorial, quizPanelRef, onStartQuiz }, ref) => {
     const pathname = usePathname();
     const missionDescriptionRef = useRef<HTMLSpanElement>(null);
     const stagePanelRef = useRef<HTMLSpanElement>(null);
@@ -94,8 +95,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         startGuide(stageIndex);
     }
     function handleStartQuiz() {
-        // test
-        const quizElement = onStartQuiz();
+        onStartQuiz();
         return;
 
         const stageIndex = currentStageIndex.current;
@@ -154,6 +154,22 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
             if (!isNaN(parsedStage) && parsedStage >= 0 && parsedStage < tutorial.stages.length) {
                 currentStageIndex.current = parsedStage;
             }
+        }
+
+        if (quizPanelRef.current) {
+            // test
+            const div = document.createElement("div");
+            div.innerText = "test";
+            const input = document.createElement("input");
+            input.type = "text";
+            div.appendChild(input);
+            const button = document.createElement("button");
+            button.innerText = "押すな！!!!!!!!!!!!!!!!!!!!!";
+            button.onclick = () => {
+                alert(input.value);
+            };
+            div.appendChild(button);
+            quizPanelRef.current.appendChild(div);
         }
 
         drawStageInfo();

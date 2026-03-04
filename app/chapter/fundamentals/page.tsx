@@ -294,10 +294,12 @@ export default function Home() {
   const toggleQuiz = () => {
     setIsQuizVisible(!isQuizVisible);
   };
+  // クイズパネルのdiv (StageControllerに渡す)
+  const quizPanelRef = useRef<HTMLDivElement | null>(null);
 
   function onStartQuiz() {
     toggleQuiz();
-    return document.getElementById('quiz-container') as HTMLDivElement;
+    return;
   }
 
   const { leftWidth, rightWidth, containerRef, handleLeftMouseDown, handleRightMouseDown } = useDoubleResizer(40, 10, 20, 10, 30);
@@ -429,7 +431,7 @@ export default function Home() {
       `}</style>
 
       {/* 指令エリア */}
-      <StageControllerPanel tutorial={tutorial} onStartQuiz={onStartQuiz} />
+      <StageControllerPanel tutorial={tutorial} quizPanelRef={quizPanelRef} onStartQuiz={onStartQuiz} />
 
       {/* 操作と可視化 */}
       <main className="flex min-w-0 min-h-0 w-full bg-inherit">
@@ -622,7 +624,7 @@ export default function Home() {
           />
 
           {/* 右パネル */}
-          <div id="quiz-container" className={(isQuizVisible ? "block" : "hidden") + " rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent"} style={{ width: `${rightWidth}%`, flexShrink: 0 }}>
+          <div id="quiz-container" ref={quizPanelRef} className={(isQuizVisible ? "block" : "hidden") + " rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent"} style={{ width: `${rightWidth}%`, flexShrink: 0 }}>
             クイズ
           </div>
         </div>
