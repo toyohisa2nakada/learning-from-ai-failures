@@ -11,6 +11,16 @@ import StageControllerPanel from "@/components/StageController";
 const tutorial: Tutorial = {
   stages: [
     {
+      description: "クイズパネルをデバッグせよ",
+      guide: [],
+      quiz: {
+        title: "く、くいず？", problems: [
+          { question: "正解は1 22", choices: ["1", "22", "333"], correctIndex: [0, 1] },
+          { question: "正解は333", choices: ["1", "22", "333"], correctIndex: 2 },
+        ]
+      }
+    },
+    {
       description: "パラメータを変更して、グラフの可算結果が教師データを通るようにする",
       guide: [
         { element: '#parameter-control', popover: { title: 'パラメータの設定', description: 'ここのスライダを移動させると、' } },
@@ -203,9 +213,6 @@ export default function Home() {
   console.log("HOME")
 
   // 教師データ
-  // const currentScatterPoints = useRef<{ x: number; y: number }[]>(
-  //   TARGET_POINT_DATASETS['原点通る直線'].map(p => ({ x: p[0], y: p[1] }))
-  // );
   const trainingDataTypeRef = useRef<HTMLSelectElement>(null);
   const currentScatterPoints = useRef<{ x: number; y: number }[]>(null);
   function onChangeScatterPoints(datatype: string) {
@@ -296,11 +303,6 @@ export default function Home() {
   };
   // クイズパネルのdiv (StageControllerに渡す)
   const quizPanelRef = useRef<HTMLDivElement | null>(null);
-
-  function onStartQuiz() {
-    toggleQuiz();
-    return;
-  }
 
   const { leftWidth, rightWidth, containerRef, handleLeftMouseDown, handleRightMouseDown } =
     useDoubleResizer({ initialLeft: 40, initialRight: 25, minLeft: 20, minRight: 10, minCenter: 30 });
@@ -432,7 +434,7 @@ export default function Home() {
       `}</style>
 
       {/* 指令エリア */}
-      <StageControllerPanel tutorial={tutorial} quizPanelRef={quizPanelRef} onStartQuiz={onStartQuiz} />
+      <StageControllerPanel tutorial={tutorial} quizPanelRef={quizPanelRef} onStartQuiz={toggleQuiz} />
 
       {/* 操作と可視化 */}
       <main className="flex min-w-0 min-h-0 w-full bg-inherit">

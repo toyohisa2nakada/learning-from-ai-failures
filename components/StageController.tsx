@@ -71,6 +71,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
     const missionDescriptionRef = useRef<HTMLSpanElement>(null);
     const stagePanelRef = useRef<HTMLSpanElement>(null);
     const stageButtonRef = useRef<HTMLButtonElement[]>([]);
+    const quizProblemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     const defaultBadgeState = tutorial.stages.map((_, i) => [i, { guide: false, quiz: false }] as [number, BadgeState]);
 
@@ -93,10 +94,10 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         if (typeof window === 'undefined') return;
         localStorage.setItem(getStorageKey('quiz_answers', stageIndex), JSON.stringify(answers));
     }
-    function getQuizAnswers(stageIndex: number): number[][] | null {
-        if (typeof window === 'undefined') return null;
+    function getQuizAnswers(stageIndex: number): number[][] {
+        if (typeof window === 'undefined') return [];
         const item = localStorage.getItem(getStorageKey('quiz_answers', stageIndex));
-        return item ? JSON.parse(item) : null;
+        return item ? JSON.parse(item) : [];
     }
     function clearQuizAnswers() {
         if (typeof window === 'undefined') return;
@@ -162,103 +163,6 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         driverObj.drive();
     }
 
-    function handleStartQuiz() {
-        if (onStartQuiz) onStartQuiz();
-        if (!quizPanelRef || !quizPanelRef.current) return;
-
-        // test
-        if (1 === 1) return;
-
-        const container = quizPanelRef.current;
-        container.innerHTML = '';
-
-        const stageIndex = currentStageIndex;
-        const quiz = tutorial.stages[stageIndex].quiz;
-
-        // チェックボタンを一番上に配置
-        const checkBtn = document.createElement("button");
-        checkBtn.innerText = "回答チェック";
-        checkBtn.onclick = () => {
-            const problemElems = [...container.querySelectorAll(".question")] as HTMLDivElement[];
-            problemElems.forEach(e => e.style.backgroundColor = "");
-
-            const results: number[][] = quiz.problems.map((_, i) =>
-                [...(problemElems[i].querySelectorAll(`input[name="q${i}"]:checked`) as NodeListOf<HTMLInputElement>)].map(e => Number(e.value))
-            );
-
-            const isEqual = (a0: any[], a1: any[]) => a0.length === a1.length && a0.every((e, idx) => e === a1[idx]);
-            let isAllCorrect = true;
-
-            results.forEach((result, i) => {
-                const cAnswer = quiz.problems[i].correctIndex;
-                if (!isEqual(result, Array.isArray(cAnswer) ? cAnswer : [cAnswer])) {
-                    isAllCorrect = false;
-                    problemElems[i].style.backgroundColor = "#ff0000";
-                }
-            });
-
-            if (isAllCorrect) {
-                checkBtn.style.display = 'none';
-                const nextStageIndex = Math.min(stageIndex + 1, tutorial.stages.length - 1);
-                setCurrentStageIndex(nextStageIndex);
-                markAsBadgeState(stageIndex, 'quiz');
-
-                const msg = document.createElement("div");
-                msg.style.color = "green";
-                msg.style.fontWeight = "bold";
-                msg.style.marginTop = "15px";
-                msg.innerText = "全問正解です！";
-                container.appendChild(msg);
-            }
-        };
-        container.appendChild(checkBtn);
-
-        const scrollContainer = document.createElement("div");
-        scrollContainer.id = "quiz-scroll-container";
-
-        const savedAnswers = getQuizAnswers(stageIndex);
-
-        const handleChange = () => {
-            const problemElems = [...scrollContainer.querySelectorAll(".question")] as HTMLDivElement[];
-            const currentAnswers: number[][] = quiz.problems.map((_, i) =>
-                [...(problemElems[i].querySelectorAll(`input[name="q${i}"]:checked`) as NodeListOf<HTMLInputElement>)].map(e => Number(e.value))
-            );
-            saveQuizAnswers(stageIndex, currentAnswers);
-        };
-
-        quiz.problems.forEach(({ question, choices, correctIndex }, i) => {
-            const questionDiv = document.createElement("div");
-            questionDiv.className = "question";
-
-            const qText = document.createElement("p");
-            qText.innerText = `問題${i + 1}: ${question}`;
-            questionDiv.appendChild(qText);
-
-            const choiceType = Array.isArray(correctIndex) ? "checkbox" : "radio";
-            const savedAns = savedAnswers ? savedAnswers[i] : [];
-
-            choices.forEach((c, ci) => {
-                const label = document.createElement("label");
-                const input = document.createElement("input");
-                input.type = choiceType;
-                input.name = `q${i}`;
-                input.value = ci.toString();
-                if (savedAns && savedAns.includes(ci)) {
-                    input.checked = true;
-                }
-                input.addEventListener('change', handleChange);
-
-                label.appendChild(input);
-                label.appendChild(document.createTextNode(c));
-                questionDiv.appendChild(label);
-            });
-
-            scrollContainer.appendChild(questionDiv);
-        });
-
-        container.appendChild(scrollContainer);
-    }
-
     function handleReset() {
         Swal.fire({
             title: '進捗をリセットしますか？',
@@ -279,8 +183,29 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         });
     }
 
-    function handleCheckQuiz() {
+    function handleQuizAnswerChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const problemIndex = parseInt(e.target.name, 10);
+        const checkedNodes = document.querySelectorAll<HTMLInputElement>(`input[name="${problemIndex}"]:checked`);
+        const selectedValues = Array.from(checkedNodes).map(node => Number(node.value));
+        savedAnswers[problemIndex] = selectedValues;
+        saveQuizAnswers(currentStageIndex, savedAnswers);
+    }
 
+    function handleCheckQuiz() {
+        const eq = (a: number[], b: number[]): boolean => a.length === b.length && a.every((e, i) => e === b[i]);
+        const correctedAnswers = tutorial.stages[currentStageIndex].quiz.problems.map(({ correctIndex }) => Array.isArray(correctIndex) ? correctIndex : [correctIndex]);
+        const allCorrected = correctedAnswers.map((correctedAnswer, i) => {
+            const ret = eq(savedAnswers[i] ?? [], correctedAnswer);
+            if (!ret) {
+                quizProblemRefs.current[i]?.classList.add('bg-red-900');
+            } else {
+                quizProblemRefs.current[i]?.classList.remove('bg-red-900');
+            }
+            return ret;
+        });
+        if (allCorrected.every(e => e)) {
+            markAsBadgeState(currentStageIndex, 'quiz');
+        }
     }
 
     useEffect(() => {
@@ -326,7 +251,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
                 <button id="start-guide" onClick={handleStartGuide}
                     className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
                 >説明を見る</button>
-                <button id="start-quiz" onClick={handleStartQuiz}
+                <button id="start-quiz" onClick={() => onStartQuiz?.()}
                     className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
                 >課題に挑戦</button>
             </div>
@@ -347,22 +272,33 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         </section>
     );
     const portalContent = quizPanelRef?.current ? createPortal(
-        <div className="">
-            <button onClick={handleCheckQuiz} className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700">回答チェック</button>
-            {tutorial.stages[currentStageIndex].quiz.problems.map((_, i) => {
-                const savedAns = savedAnswers ? savedAnswers[i] : [];
-                return (
-                    <div key={i}>
-                        <p className="my-2 text-sky-300">{tutorial.stages[currentStageIndex].quiz.problems[i].question}</p>
-                        {tutorial.stages[currentStageIndex].quiz.problems[i].choices.map((c, ci) => (
-                            <label key={ci}>
-                                <input type="radio" name={`q${i}`} value={ci} checked={savedAns.includes(ci)} onChange={handleCheckQuiz} />
-                                {c}
-                            </label>
-                        ))}
-                    </div>
-                );
-            })}
+        <div className="flex flex-col relative">
+            <div className="sticky top-0 z-10 px-1">
+                <button onClick={handleCheckQuiz} className="w-full px-3 py-2 text-sm font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700 transition">
+                    回答チェック
+                </button>
+            </div>
+            <div className="flex flex-col gap-2 p-1 mt-1">
+                {tutorial.stages[currentStageIndex].quiz.problems.map((problem, i) => {
+                    const savedAns = savedAnswers[i] ?? [];
+                    console.log(savedAns);
+                    const correctIndex = problem.correctIndex;
+                    const choiceType = Array.isArray(correctIndex) ? "checkbox" : "radio";
+                    return (
+                        <div key={`${currentStageIndex}_${i}`} className="flex flex-col bg-slate-800 p-2 rounded border border-slate-700">
+                            <p className="my-2 font-medium text-sky-300 text-sm leading-relaxed">{tutorial.stages[currentStageIndex].quiz.problems[i].question}</p>
+                            <div ref={(e) => { quizProblemRefs.current[i] = e }} className="flex flex-col gap-1.5 mt-1 mb-1">
+                                {tutorial.stages[currentStageIndex].quiz.problems[i].choices.map((c, ci) => (
+                                    <label key={ci} className="flex items-start gap-2 cursor-pointer">
+                                        <input type={choiceType} className="mt-1" name={i.toString()} value={ci.toString()} defaultChecked={savedAns.includes(ci)} onChange={handleQuizAnswerChange} />
+                                        <span className="text-sm text-slate-200">{c}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
         </div>,
         quizPanelRef?.current!) : null;
 
