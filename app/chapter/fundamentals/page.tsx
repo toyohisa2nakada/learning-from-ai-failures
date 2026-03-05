@@ -302,7 +302,8 @@ export default function Home() {
     return;
   }
 
-  const { leftWidth, rightWidth, containerRef, handleLeftMouseDown, handleRightMouseDown } = useDoubleResizer(40, 10, 20, 10, 30);
+  const { leftWidth, rightWidth, containerRef, handleLeftMouseDown, handleRightMouseDown } =
+    useDoubleResizer({ initialLeft: 40, initialRight: 25, minLeft: 20, minRight: 10, minCenter: 30 });
   const [mainScript, setMainScript] = useState<string>('');
 
   // 初期表示
@@ -624,8 +625,7 @@ export default function Home() {
           />
 
           {/* 右パネル */}
-          <div id="quiz-container" ref={quizPanelRef} className={(isQuizVisible ? "block" : "hidden") + " rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent"} style={{ width: `${rightWidth}%`, flexShrink: 0 }}>
-            クイズ
+          <div id="quiz-container" ref={quizPanelRef} className={(isQuizVisible ? "block" : "hidden") + " h-auto flex flex-col min-h-0 overflow-y-auto rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent"} style={{ width: `${rightWidth}%`, flexShrink: 0 }}>
           </div>
         </div>
       </main >

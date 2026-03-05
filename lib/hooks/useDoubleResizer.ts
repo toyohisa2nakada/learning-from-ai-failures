@@ -1,12 +1,18 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-export function useDoubleResizer(
+export function useDoubleResizer({
     initialLeft = 33,
     initialRight = 33,
     minLeft = 10,
     minRight = 10,
     minCenter = 10
-) {
+}: {
+    initialLeft?: number;
+    initialRight?: number;
+    minLeft?: number;
+    minRight?: number;
+    minCenter?: number;
+}) {
     const [leftWidth, setLeftWidth] = useState<number>(initialLeft);
     const [rightWidth, setRightWidth] = useState<number>(initialRight);
     const isResizingLeft = useRef(false);
