@@ -35,13 +35,29 @@ export function useDoubleResizer({
         if (!containerRef.current) return;
         const rect = containerRef.current.getBoundingClientRect();
 
+        let activeLeftWidth = leftWidth;
+        let activeRightWidth = rightWidth;
+
+        // containerRef内の子要素（パネル）が非表示の場合は、制約計算時の幅を0として扱う
+        if (containerRef.current.children.length >= 5) {
+            const leftPanel = containerRef.current.children[0] as HTMLElement;
+            const rightPanel = containerRef.current.children[4] as HTMLElement;
+
+            if (leftPanel && leftPanel.offsetWidth === 0) {
+                activeLeftWidth = 0;
+            }
+            if (rightPanel && rightPanel.offsetWidth === 0) {
+                activeRightWidth = 0;
+            }
+        }
+
         if (isResizingLeft.current) {
             const newLeft = ((e.clientX - rect.left) / rect.width) * 100;
-            const maxLeft = 100 - rightWidth - minCenter;
+            const maxLeft = 100 - activeRightWidth - minCenter;
             setLeftWidth(Math.min(maxLeft, Math.max(minLeft, newLeft)));
         } else if (isResizingRight.current) {
             const newRight = ((rect.right - e.clientX) / rect.width) * 100;
-            const maxRight = 100 - leftWidth - minCenter;
+            const maxRight = 100 - activeLeftWidth - minCenter;
             setRightWidth(Math.min(maxRight, Math.max(minRight, newRight)));
         }
     }, [leftWidth, rightWidth, minLeft, minRight, minCenter]);
