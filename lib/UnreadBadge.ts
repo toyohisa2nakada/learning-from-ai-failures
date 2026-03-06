@@ -90,7 +90,7 @@ const UnreadBadge = {
             ? document.querySelectorAll(`${selector} .unread-dot`)
             : document.querySelectorAll('.unread-dot');
 
-        console.log("detach", dots)
+        // console.log("detach", dots)
         dots.forEach((dot) => dot.remove());
     },
 };

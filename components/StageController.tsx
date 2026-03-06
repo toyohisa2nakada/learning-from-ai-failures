@@ -80,11 +80,24 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
     const stagePanelRef = useRef<HTMLSpanElement>(null);
     const stageButtonRef = useRef<HTMLButtonElement[]>([]);
     const quizProblemRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const quizProblemFieldRef = useRef<HTMLFieldSetElement>(null);
+    const quizCheckButtonRef = useRef<HTMLButtonElement>(null);
 
-    const defaultBadgeState = tutorial.stages.map((_, i) => [i, { guide: false, quiz: false }] as [number, BadgeState]);
+    function getCurrentStageIndex(): number {
+        if (typeof window === 'undefined') return -1;
+        return Number(localStorage.getItem(getStorageKey('stage')) ?? 0);
+    }
+    function getBadgeStatuses(): BadgeState[] {
+        if (typeof window === 'undefined') return [];
+        const value = localStorage.getItem(getStorageKey('badge'));
+        if (value === null) {
+            return tutorial.stages.map(() => ({ guide: false, quiz: false }))
+        }
+        return JSON.parse(value);
+    }
 
-    const [badgeState, setBadgeState] = useState<Map<number, BadgeState>>(new Map(defaultBadgeState));
-    const [currentStageIndex, setCurrentStageIndex] = useState<number>(0);
+    const [currentStageIndex, setCurrentStageIndex] = useState<number>(getCurrentStageIndex());
+    const [badgeState, setBadgeState] = useState<BadgeState[]>(getBadgeStatuses());
     const savedQuizStatuses = useMemo(() => {
         return getQuizStatuses(currentStageIndex);
     }, [currentStageIndex]);
@@ -93,9 +106,9 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         return `tutorial_${type}_${pathname}${stageIndex !== undefined ? `_${stageIndex}` : ''}`;
     }
 
-    function saveStateToStorage(newBadgeState: Map<number, BadgeState>, newStageIndex: number) {
+    function saveStateToStorage(newBadgeState: BadgeState[], newStageIndex: number) {
         if (typeof window === 'undefined') return;
-        localStorage.setItem(getStorageKey('badge'), JSON.stringify(Array.from(newBadgeState.entries())));
+        localStorage.setItem(getStorageKey('badge'), JSON.stringify(newBadgeState));
         localStorage.setItem(getStorageKey('stage'), newStageIndex.toString());
     }
     function saveQuizStatuses(stageIndex: number, statuses: QuizStatus[]) {
@@ -119,8 +132,8 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         });
     }
 
-    function syncBadgeState(stageIndex: number, currentBadgeState: Map<number, BadgeState>) {
-        const state = currentBadgeState.get(stageIndex) ?? { guide: false, quiz: false };
+    function syncBadgeState(stageIndex: number, currentBadgeState: BadgeState[]) {
+        const state = currentBadgeState[stageIndex];
         if (state.guide) UnreadBadge.detach('#start-guide');
         else UnreadBadge.attach('#start-guide', { autoRemove: false });
         if (state.quiz) UnreadBadge.detach('#start-quiz');
@@ -129,13 +142,12 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
 
     function markAsBadgeState(stageIndex: number, key: keyof BadgeState) {
         setBadgeState(prev => {
-            const current = prev.get(stageIndex) || { guide: false, quiz: false };
-            const newMap = new Map(prev);
-            newMap.set(stageIndex, { ...current, [key]: true });
-            saveStateToStorage(newMap, currentStageIndex);
-            syncBadgeState(stageIndex, newMap);
-            return newMap;
-        });
+            console.log(JSON.stringify(prev), stageIndex, key)
+            prev[stageIndex][key] = true;
+            saveStateToStorage(prev, currentStageIndex);
+            syncBadgeState(stageIndex, prev);
+            return prev;
+        })
     }
 
     function drawStagePanel(stageIndex: number) {
@@ -206,51 +218,41 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
     }
 
     function handleCheckQuiz() {
+        if (quizCheckButtonRef.current!.textContent === '次の課題へ') {
+            if (currentStageIndex === tutorial.stages.length - 1) {
+                Swal.fire({
+                    title: 'チュートリアル完了',
+                    text: 'すべての課題をクリアしました。',
+                    icon: 'success',
+                    confirmButtonColor: '#3b82f6',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            setCurrentStageIndex(currentStageIndex + 1);
+            return;
+        }
         const eq = (a: number[], b: number[]): boolean => a.length === b.length && a.every((e, i) => e === b[i]);
         const correctedAnswers = tutorial.stages[currentStageIndex].quiz.problems.map(({ correctIndex }) => Array.isArray(correctIndex) ? correctIndex : [correctIndex]);
         const allCorrected = correctedAnswers.map((correctedAnswer, i) => {
             const ret = eq(savedQuizStatuses[i].selectedAnswer ?? [], correctedAnswer);
-            if (!ret) {
-                quizProblemRefs.current[i]?.classList.add('bg-red-900');
-            } else {
+            if (ret) {
+                savedQuizStatuses[i].status = 'correct';
                 quizProblemRefs.current[i]?.classList.remove('bg-red-900');
+            } else {
+                savedQuizStatuses[i].status = 'incorrect';
+                savedQuizStatuses[i].incorrectCount += 1;
+                quizProblemRefs.current[i]?.classList.add('bg-red-900');
             }
             return ret;
         });
+        saveQuizStatuses(currentStageIndex, savedQuizStatuses);
         if (allCorrected.every(e => e)) {
             markAsBadgeState(currentStageIndex, 'quiz');
+            quizProblemFieldRef.current!.setAttribute('disabled', 'true');
+            quizCheckButtonRef.current!.textContent = '次の課題へ';
         }
     }
-
-    useEffect(() => {
-        let savedBadgeMap = new Map(defaultBadgeState);
-        const savedBadge = localStorage.getItem(getStorageKey('badge'));
-        if (savedBadge) {
-            try {
-                const parsed = JSON.parse(savedBadge) as [number, BadgeState][];
-                parsed.forEach(([k, v]) => {
-                    if (savedBadgeMap.has(k)) savedBadgeMap.set(k, v);
-                });
-                setBadgeState(savedBadgeMap);
-            } catch (e) {
-                console.error("Failed to parse badge state", e);
-            }
-        }
-
-        let initialStage = 0;
-        const savedStage = localStorage.getItem(getStorageKey('stage'));
-        if (savedStage) {
-            const parsedStage = parseInt(savedStage, 10);
-            if (!isNaN(parsedStage) && parsedStage >= 0 && parsedStage < tutorial.stages.length) {
-                initialStage = parsedStage;
-                setCurrentStageIndex(initialStage);
-            }
-        }
-
-        drawStagePanel(initialStage);
-        syncBadgeState(initialStage, savedBadgeMap);
-
-    }, [pathname]);
 
     useEffect(() => {
         saveStateToStorage(badgeState, currentStageIndex);
@@ -288,24 +290,27 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
     const portalContent = quizPanelRef?.current ? createPortal(
         <div className="flex flex-col relative">
             <div className="sticky top-0 z-10 px-1">
-                <button onClick={handleCheckQuiz} className="w-full px-3 py-2 text-sm font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700 transition">
-                    回答チェック
+                <button
+                    ref={quizCheckButtonRef}
+                    onClick={handleCheckQuiz}
+                    className="w-full px-3 py-2 text-sm font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700 transition">
+                    {savedQuizStatuses.every((s) => s.status === 'correct') ? '次の課題へ' : '回答チェック'}
                 </button>
             </div>
-            <div className="flex flex-col gap-2 p-1 mt-1">
+            <fieldset ref={quizProblemFieldRef} disabled={savedQuizStatuses.every((s) => s.status === 'correct')} className="flex flex-col gap-2 p-1 mt-1">
                 {tutorial.stages[currentStageIndex].quiz.problems.map((problem, i) => {
                     const savedAns = savedQuizStatuses[i].selectedAnswer;
-                    console.log(savedAns);
                     const correctIndex = problem.correctIndex;
                     const choiceType = Array.isArray(correctIndex) ? "checkbox" : "radio";
                     return (
                         <div key={`${currentStageIndex}_${i}`} className="flex flex-col bg-slate-800 p-2 rounded border border-slate-700">
                             <p className="my-2 font-medium text-sky-300 text-sm leading-relaxed">{tutorial.stages[currentStageIndex].quiz.problems[i].question}</p>
-                            <div ref={(e) => { quizProblemRefs.current[i] = e }} className="flex flex-col gap-1.5 mt-1 mb-1">
+                            <div ref={(e) => { quizProblemRefs.current[i] = e }}
+                                className={`${savedQuizStatuses[i].status === 'incorrect' ? 'bg-red-900' : ''} flex flex-col gap-1.5 mt-1 mb-1`}>
                                 {tutorial.stages[currentStageIndex].quiz.problems[i].choices.map((c, ci) => (
                                     <label key={ci} className="flex items-start gap-2 cursor-pointer">
                                         <input name={i.toString()} value={ci.toString()}
-                                            className="mt-1 "
+                                            className={"mt-1"}
                                             type={choiceType}
                                             defaultChecked={savedAns.includes(ci)}
                                             onChange={handleQuizAnswerChange} />
@@ -316,7 +321,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
                         </div>
                     );
                 })}
-            </div>
+            </fieldset>
         </div>,
         quizPanelRef?.current!) : null;
 

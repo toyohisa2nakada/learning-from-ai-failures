@@ -2,12 +2,10 @@
 import { useEffect, useState, useRef } from "react";
 import JsEditor from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/image-generation/components/NeuralNetGraph";
-
 import DatasetPanel, { type DatasetPanelHandle } from "@/app/chapter/image-generation/components/DatasetPanel";
 import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
 import { type ImageOption } from "@/components/ImageSelect";
-
-import { useResizer } from '@/lib/hooks/useResizer';
+import { useDoubleResizer } from '@/lib/hooks/useDoubleResizer';
 import StageControllerPanel, { type Tutorial } from "@/components/StageController";
 
 
@@ -43,8 +41,6 @@ export default function Home() {
   const datasetPanelRef = useRef<DatasetPanelHandle>(null);
   const imageGridPanelRef = useRef<any>(null);
 
-  const { leftWidth, containerRef, handleMouseDown } = useResizer(50, 20, 80);
-
   const handleImageSelectChange = (index: 0 | 1, newValue: ImageOption) => {
     if (index === 0) setImageSelected0(newValue);
     else setImageSelected1(newValue);
@@ -73,6 +69,14 @@ export default function Home() {
     imageGridPanelRef.current?.updateImages(images as Record<string, number[][]>);
   }
 
+  // クイズパネル
+  const [isQuizVisible, setIsQuizVisible] = useState(false);
+  const toggleQuiz = () => {
+    setIsQuizVisible(!isQuizVisible);
+  };
+  const quizPanelRef = useRef<HTMLDivElement | null>(null);
+  const { leftWidth, rightWidth, containerRef, handleLeftMouseDown, handleRightMouseDown } =
+    useDoubleResizer({ initialLeft: 40, initialRight: 25, minLeft: 20, minRight: 10, minCenter: 30 });
 
   const [mainScript, setMainScript] = useState<string>('');
   useEffect(() => {
@@ -91,7 +95,7 @@ export default function Home() {
   return (
     <div className="h-full min-h-0 grid grid-rows-[auto_1fr_auto] gap-1 bg-inherit">
       {/* 指令エリア */}
-      <StageControllerPanel tutorial={tutorial} />
+      <StageControllerPanel tutorial={tutorial} quizPanelRef={quizPanelRef} onStartQuiz={toggleQuiz} />
 
       {/* Main Content */}
       <main className="flex min-w-0 w-full bg-inherit">
@@ -121,7 +125,7 @@ export default function Home() {
 
           {/* リサイザー */}
           <div
-            onMouseDown={handleMouseDown}
+            onMouseDown={handleLeftMouseDown}
             className="w-2 flex-shrink-0 cursor-col-resize hover:bg-blue-900 active:bg-blue-500 transition-colors duration-150 rounded"
           />
 
@@ -141,6 +145,16 @@ export default function Home() {
               />
             </div>
 
+          </div>
+
+          {/* リサイザー */}
+          <div
+            onMouseDown={handleRightMouseDown}
+            className={(isQuizVisible ? "block" : "hidden") + " w-1.5 flex-shrink-0 cursor-col-resize hover:bg-blue-900 active:bg-blue-500 transition-colors duration-150 rounded"}
+          />
+
+          {/* 右パネル */}
+          <div id="quiz-container" ref={quizPanelRef} className={(isQuizVisible ? "block" : "hidden") + " h-auto flex flex-col min-h-0 overflow-y-auto rounded-lg shadow-xl ring-4 ring-offset-2 ring-indigo-400/10 ring-offset-transparent"} style={{ width: `${rightWidth}%`, flexShrink: 0 }}>
           </div>
 
         </div>
