@@ -64,6 +64,14 @@ interface BadgeState {
     quiz: boolean;
 }
 
+// クイズ1つの回答状態
+interface QuizStatus {
+    selectedAnswer: number[];
+    status: 'unanswered' | 'submitted' | 'incorrect' | 'correct';
+    incorrectCount: number;
+    inputType: 'radio' | 'checkbox';
+}
+
 // StageControllerPanelカスタムタグ
 const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerProps>(({ tutorial, quizPanelRef, onStartQuiz }, ref) => {
     console.log("StageControllerPanel");
@@ -77,11 +85,11 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
 
     const [badgeState, setBadgeState] = useState<Map<number, BadgeState>>(new Map(defaultBadgeState));
     const [currentStageIndex, setCurrentStageIndex] = useState<number>(0);
-    const savedAnswers = useMemo(() => {
-        return getQuizAnswers(currentStageIndex);
+    const savedQuizStatuses = useMemo(() => {
+        return getQuizStatuses(currentStageIndex);
     }, [currentStageIndex]);
 
-    function getStorageKey(type: 'badge' | 'stage' | 'quiz_answers', stageIndex?: number) {
+    function getStorageKey(type: 'badge' | 'stage' | 'quiz_statuses', stageIndex?: number) {
         return `tutorial_${type}_${pathname}${stageIndex !== undefined ? `_${stageIndex}` : ''}`;
     }
 
@@ -90,19 +98,24 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         localStorage.setItem(getStorageKey('badge'), JSON.stringify(Array.from(newBadgeState.entries())));
         localStorage.setItem(getStorageKey('stage'), newStageIndex.toString());
     }
-    function saveQuizAnswers(stageIndex: number, answers: number[][]) {
+    function saveQuizStatuses(stageIndex: number, statuses: QuizStatus[]) {
         if (typeof window === 'undefined') return;
-        localStorage.setItem(getStorageKey('quiz_answers', stageIndex), JSON.stringify(answers));
+        localStorage.setItem(getStorageKey('quiz_statuses', stageIndex), JSON.stringify(statuses));
     }
-    function getQuizAnswers(stageIndex: number): number[][] {
+    function getQuizStatuses(stageIndex: number): QuizStatus[] {
         if (typeof window === 'undefined') return [];
-        const item = localStorage.getItem(getStorageKey('quiz_answers', stageIndex));
-        return item ? JSON.parse(item) : [];
+        const item = localStorage.getItem(getStorageKey('quiz_statuses', stageIndex));
+        return item ? JSON.parse(item) : tutorial.stages[stageIndex].quiz.problems.map((problem) => ({
+            selectedAnswer: [],
+            status: 'unanswered',
+            incorrectCount: 0,
+            inputType: Array.isArray(problem.correctIndex) ? 'checkbox' : 'radio'
+        }));
     }
-    function clearQuizAnswers() {
+    function clearQuizStatuses() {
         if (typeof window === 'undefined') return;
         tutorial.stages.forEach((_, i) => {
-            localStorage.removeItem(getStorageKey('quiz_answers', i));
+            localStorage.removeItem(getStorageKey('quiz_statuses', i));
         });
     }
 
@@ -177,7 +190,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
             if (result.isConfirmed) {
                 localStorage.removeItem(getStorageKey('badge'));
                 localStorage.removeItem(getStorageKey('stage'));
-                clearQuizAnswers();
+                clearQuizStatuses();
                 window.location.reload();
             }
         });
@@ -186,16 +199,17 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
     function handleQuizAnswerChange(e: React.ChangeEvent<HTMLInputElement>) {
         const problemIndex = parseInt(e.target.name, 10);
         const checkedNodes = document.querySelectorAll<HTMLInputElement>(`input[name="${problemIndex}"]:checked`);
-        const selectedValues = Array.from(checkedNodes).map(node => Number(node.value));
-        savedAnswers[problemIndex] = selectedValues;
-        saveQuizAnswers(currentStageIndex, savedAnswers);
+        const selectedValues = Array.from(checkedNodes).map((node) => Number(node.value));
+        savedQuizStatuses[problemIndex].selectedAnswer = selectedValues;
+        savedQuizStatuses[problemIndex].status = 'submitted';
+        saveQuizStatuses(currentStageIndex, savedQuizStatuses);
     }
 
     function handleCheckQuiz() {
         const eq = (a: number[], b: number[]): boolean => a.length === b.length && a.every((e, i) => e === b[i]);
         const correctedAnswers = tutorial.stages[currentStageIndex].quiz.problems.map(({ correctIndex }) => Array.isArray(correctIndex) ? correctIndex : [correctIndex]);
         const allCorrected = correctedAnswers.map((correctedAnswer, i) => {
-            const ret = eq(savedAnswers[i] ?? [], correctedAnswer);
+            const ret = eq(savedQuizStatuses[i].selectedAnswer ?? [], correctedAnswer);
             if (!ret) {
                 quizProblemRefs.current[i]?.classList.add('bg-red-900');
             } else {
@@ -280,7 +294,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
             </div>
             <div className="flex flex-col gap-2 p-1 mt-1">
                 {tutorial.stages[currentStageIndex].quiz.problems.map((problem, i) => {
-                    const savedAns = savedAnswers[i] ?? [];
+                    const savedAns = savedQuizStatuses[i].selectedAnswer;
                     console.log(savedAns);
                     const correctIndex = problem.correctIndex;
                     const choiceType = Array.isArray(correctIndex) ? "checkbox" : "radio";
@@ -290,7 +304,11 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
                             <div ref={(e) => { quizProblemRefs.current[i] = e }} className="flex flex-col gap-1.5 mt-1 mb-1">
                                 {tutorial.stages[currentStageIndex].quiz.problems[i].choices.map((c, ci) => (
                                     <label key={ci} className="flex items-start gap-2 cursor-pointer">
-                                        <input type={choiceType} className="mt-1" name={i.toString()} value={ci.toString()} defaultChecked={savedAns.includes(ci)} onChange={handleQuizAnswerChange} />
+                                        <input name={i.toString()} value={ci.toString()}
+                                            className="mt-1 "
+                                            type={choiceType}
+                                            defaultChecked={savedAns.includes(ci)}
+                                            onChange={handleQuizAnswerChange} />
                                         <span className="text-sm text-slate-200">{c}</span>
                                     </label>
                                 ))}
