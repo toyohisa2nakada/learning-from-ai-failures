@@ -142,7 +142,6 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
 
     function markAsBadgeState(stageIndex: number, key: keyof BadgeState) {
         setBadgeState(prev => {
-            console.log(JSON.stringify(prev), stageIndex, key)
             prev[stageIndex][key] = true;
             saveStateToStorage(prev, currentStageIndex);
             syncBadgeState(stageIndex, prev);
