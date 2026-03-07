@@ -1,6 +1,6 @@
 "use client";
-import { useRef, useEffect } from "react";
-import Editor, { loader, OnMount } from "@monaco-editor/react";
+import { useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import Editor, { loader } from "@monaco-editor/react";
 import { editor } from "monaco-editor";
 import { inlineHTML } from "@/lib/monaco-utils/inlineHTML";
 import { removeLineComments } from "@/lib/monaco-utils/removeLineComments";
@@ -58,7 +58,24 @@ interface JsEditorProps {
     path?: string;
 }
 
-export default function JsEditor({ defaultValue = "", updateHandler, externalScripts = {}, path }: JsEditorProps) {
+export interface JsEditorHandle {
+    postMessage: (message: any) => void;
+}
+
+export type EditorMessageData =
+    | { type: 'iframe-error'; message: string; source: string; lineno: number; colno: number }
+    | { type: 'updateProgress'; values: number }
+    | { type: 'learning-status'; values: keyof typeof BUTTON_LABELS }
+    | { type: string & {}; values?: any }; // その他の動的なメッセージ（updateHandlerなど）用
+
+const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "", updateHandler, externalScripts = {}, path }: JsEditorProps, ref) => {
+    console.log("JsEditor");
+    useImperativeHandle(ref, () => ({
+        postMessage: (message) => {
+            const editor_output_elem = document.querySelector(".editor_output") as HTMLIFrameElement;
+            editor_output_elem!.contentWindow!.postMessage(message, '*');
+        },
+    }));
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
     const workerRef = useRef<Worker | null>(null);
     const workerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -128,29 +145,30 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
 
     // iframeからのメッセージの取得
     useEffect(() => {
-        const handleMessage = (e: { data: Record<string, string | number | Record<string, number>> }) => {
+        const handleMessage = (e: { data: EditorMessageData }) => {
             if (!e.data) {
                 return;
             }
             if (e.data.type === 'iframe-error') {
-                const info = e.data;
+                const info = e.data as Extract<EditorMessageData, { type: 'iframe-error' }>;
                 if (statusRef.current) {
                     statusRef.current.textContent = `error L${info.lineno}:C${info.colno}`;
                 }
                 return;
-            } else if (e.data.type === 'updateProgress') {
-                const percent = e.data.values as number;
+            }
+            if (e.data.type === 'updateProgress') {
+                const percent = (e.data as Extract<EditorMessageData, { type: 'updateProgress' }>).values;
                 if (progressRef.current) {
                     progressRef.current.style.width = `${percent}%`;
                 }
             } else if (e.data.type === 'learning-status') {
-                const status = e.data.values as string;
-                if (buttonLabelRef.current) buttonLabelRef.current.textContent = BUTTON_LABELS[status as keyof typeof BUTTON_LABELS];
+                const status = (e.data as Extract<EditorMessageData, { type: 'learning-status' }>).values;
+                if (buttonLabelRef.current) buttonLabelRef.current.textContent = BUTTON_LABELS[status];
                 if (statusRef.current) statusRef.current.textContent = "";
             }
             updateHandler?.forEach(handler => {
                 if (e.data.type === handler.messageType) {
-                    const data = e.data.values as Record<string, number | number[]>;
+                    const data = (e.data as { values: Record<string, number | number[]> }).values;
                     handler.onUpdate(data);
                 }
             })
@@ -196,4 +214,7 @@ export default function JsEditor({ defaultValue = "", updateHandler, externalScr
             </div>
         </div>
     );
-}
+})
+
+JsEditor.displayName = 'JsEditor';
+export default JsEditor;

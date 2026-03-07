@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useImperativeHandle } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 
 interface DatasetPanelProps {
     onDatasetChange: (dataset: Readonly<Dataset>) => void;
@@ -228,7 +228,7 @@ function getModelIcon(name: string): string {
     return "";
 }
 
-const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onDatasetChange }, ref) => {
+const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onDatasetChange }, ref) => {
     const datasetRef = useRef<Dataset | null>(null);
     const evaluationCellRef = useRef<HTMLTableCellElement[]>([]);
     const evaluationResultsRef = useRef<{ [modelName: string]: HTMLDivElement }[]>([]);

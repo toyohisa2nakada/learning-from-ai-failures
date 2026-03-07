@@ -1,3 +1,12 @@
+// test
+window.addEventListener('message', e => {
+    console.log("in main frame window message handler", e.data);
+    if (e.data.function === "predict") {
+        const results = predict(e.data.input);
+        e.source.postMessage({ type: "function-result", function: "predict", values: results });
+    }
+});
+
 const config = {
     learningRate: 0.005,
     epochs: 50
@@ -14,6 +23,7 @@ import { updateProgress } from "updateProgress.js";
 import { postLearningStatus } from "postLearningStatus.js";
 import dataset from "dataset.js";
 dataset.setTf(tf);
+let models = null;
 
 // vocabSize: 全単語数, inputDim: 入力単語数, numHeads keyDim: MultiHeadAttention paramter, learningRate:学習率
 function createSimpleFNN({ vocabSize, inputDim, keyDim, learningRate, type, encodingType }) {
@@ -175,14 +185,39 @@ function postEvaluation({ model, options, dataset }) {
     });
 }
 
-//function postLearningStatus(status) { window.parent.postMessage({ type: 'learning-status', values: status });}
+function predict(input) {
+    console.log("in main.js predict", dataset);
+    return tf.tidy(() => {
+        const { tokens, errorMessage } = dataset.tokenize(input);
+        if (tokens === null) {
+            // updateModelEvaluationPanel({ modelEvaluationElem, errorMessage });
+            console.log(errorMessage);
+            return;
+        } else if (tokens.length > dataset.maxLen - 1) {
+            // updateModelEvaluationPanel({ modelEvaluationElem, errorMessage: `語数が多いです。最大 ${dataset.maxLen - 1}` });
+            console.log(`語数が多いです。最大 ${dataset.maxLen - 1}`);
+            return;
+        }
+        const x = dataset.toTensor([tokens], tf);
+        const results = {};
+        models.map(e => e.model).forEach(model => {
+            const probs = model.predict(x)
+            const predIds = probs.argMax(-1).dataSync();
+            const predWords = Array.from(predIds).map((e, i) => dataset.decode(e));
+            console.log(model.name + "\n" + predWords.map((e, i) => `${input} ${e}`).join("\n"));
+
+            results[model.name] = predWords.join(" ");
+        })
+        return results;
+    })
+}
 
 async function learn(dataset, { learningRate, epochs, verbose = true } = {}) {
     if (dataset === undefined) {
         alert("学習データを生成してください。");
         return;
     }
-    const models = setModels({ learningRate });
+    models = setModels({ learningRate });
     postLearningStatus("started");
 
     for (let i = 0; i < models.length; i += 1) {
@@ -202,28 +237,6 @@ async function learn(dataset, { learningRate, epochs, verbose = true } = {}) {
         });
     }
     postLearningStatus("ended");
-    function predict({ models, dataset, input }) {
-        return tf.tidy(() => {
-            const { tokens, errorMessage } = dataset.tokenize(input);
-            if (tokens === null) {
-                updateModelEvaluationPanel({ modelEvaluationElem, errorMessage });
-                return;
-            } else if (tokens.length > dataset.maxLen - 1) {
-                updateModelEvaluationPanel({ modelEvaluationElem, errorMessage: `語数が多いです。最大 ${dataset.maxLen - 1}` });
-                return;
-            }
-            const x = dataset.toTensor([tokens], tf);
-            const results = {};
-            models.map(e => e.model).forEach(model => {
-                const probs = model.predict(x)
-                const predIds = probs.argMax(-1).dataSync();
-                const predWords = Array.from(predIds).map((e, i) => datasets.decode(e));
-                console.log(model.name + "\n" + predWords.map((e, i) => `${input} ${e}`).join("\n"));
-
-                results[model.name] = predWords.join(" ");
-            })
-        })
-    }
 }
 
 await learn(dataset, config);
