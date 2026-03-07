@@ -50,28 +50,27 @@ const HTML_TEMPLATE = `
 
 interface JsEditorProps {
     defaultValue?: string;
-    updateHandler?: {
-        onUpdate: (data: any) => void;
-        messageType: string;
-    }[];
+    updateHandler?: { onUpdate: (data: any) => void; messageType: string; }[];
     externalScripts?: Record<string, string | object | null> | (() => Record<string, string | object | null>);
     path?: string;
+    externallyCallableFunctions?: string[],
 }
 
 export interface JsEditorHandle {
     postMessage: (message: any) => void;
 }
 
-export type EditorMessageData =
+export type FromIframeMessageData =
     | { type: 'iframe-error'; message: string; source: string; lineno: number; colno: number }
     | { type: 'updateProgress'; values: number }
     | { type: 'learning-status'; values: keyof typeof BUTTON_LABELS }
     | { type: string & {}; values?: any }; // その他の動的なメッセージ（updateHandlerなど）用
 
-const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "", updateHandler, externalScripts = {}, path }: JsEditorProps, ref) => {
+const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "", updateHandler, externalScripts = {}, path, externallyCallableFunctions = [] }: JsEditorProps, ref) => {
     console.log("JsEditor");
     useImperativeHandle(ref, () => ({
         postMessage: (message) => {
+            console.log("in JsEditor useImperativeHandle postMessage", message);
             const editor_output_elem = document.querySelector(".editor_output") as HTMLIFrameElement;
             editor_output_elem!.contentWindow!.postMessage(message, '*');
         },
@@ -120,6 +119,15 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "",
                     window.parent.postMessage({type:'updateProgress',values:percent});}`,
                 'postLearningStatus.js': `export function postLearningStatus(status) {
                     window.parent.postMessage({ type: 'learning-status', values: status });}`,
+                'externalCaller.js': `
+                    const externallyCallableFunctions = {};
+                    export function registerExternallyCallableFunction(functionName,fn){
+                        externallyCallableFunctions[functionName] = fn;
+                    }
+                    window.addEventListener('message', e=>{
+                        const { functionName, args } = e.data;
+                        window.parent.postMessage({ type: 'functionResult', values: externallyCallableFunctions[functionName]?.(...args) });
+                    });`
             }
 
             // 外部のjsファイルをimportmapで取り込む。この例の場合、import {testtemp01234} from 'test.js'; で使用する。
@@ -145,24 +153,24 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "",
 
     // iframeからのメッセージの取得
     useEffect(() => {
-        const handleMessage = (e: { data: EditorMessageData }) => {
+        const handleMessage = (e: { data: FromIframeMessageData }) => {
             if (!e.data) {
                 return;
             }
             if (e.data.type === 'iframe-error') {
-                const info = e.data as Extract<EditorMessageData, { type: 'iframe-error' }>;
+                const info = e.data as Extract<FromIframeMessageData, { type: 'iframe-error' }>;
                 if (statusRef.current) {
                     statusRef.current.textContent = `error L${info.lineno}:C${info.colno}`;
                 }
                 return;
             }
             if (e.data.type === 'updateProgress') {
-                const percent = (e.data as Extract<EditorMessageData, { type: 'updateProgress' }>).values;
+                const percent = (e.data as Extract<FromIframeMessageData, { type: 'updateProgress' }>).values;
                 if (progressRef.current) {
                     progressRef.current.style.width = `${percent}%`;
                 }
             } else if (e.data.type === 'learning-status') {
-                const status = (e.data as Extract<EditorMessageData, { type: 'learning-status' }>).values;
+                const status = (e.data as Extract<FromIframeMessageData, { type: 'learning-status' }>).values;
                 if (buttonLabelRef.current) buttonLabelRef.current.textContent = BUTTON_LABELS[status];
                 if (statusRef.current) statusRef.current.textContent = "";
             }

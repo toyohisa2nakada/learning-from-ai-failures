@@ -1,12 +1,3 @@
-// test
-window.addEventListener('message', e => {
-    console.log("in main frame window message handler", e.data);
-    if (e.data.function === "predict") {
-        const results = predict(e.data.input);
-        e.source.postMessage({ type: "function-result", function: "predict", values: results });
-    }
-});
-
 const config = {
     learningRate: 0.005,
     epochs: 50
@@ -21,6 +12,7 @@ import { SumLayer } from "SumLayer.js";
 
 import { updateProgress } from "updateProgress.js";
 import { postLearningStatus } from "postLearningStatus.js";
+import { registerExternallyCallableFunction } from "externalCaller.js";
 import dataset from "dataset.js";
 dataset.setTf(tf);
 let models = null;
@@ -240,3 +232,4 @@ async function learn(dataset, { learningRate, epochs, verbose = true } = {}) {
 }
 
 await learn(dataset, config);
+registerExternallyCallableFunction("predict", predict);

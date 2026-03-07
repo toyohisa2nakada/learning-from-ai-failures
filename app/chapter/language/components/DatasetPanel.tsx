@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 
+type ModelName = string;
+type PredictionResult = Record<ModelName, string>;
 interface DatasetPanelProps {
     onDatasetChange: (dataset: Readonly<Dataset>) => void;
+    onPredict: (input: string) => Promise<PredictionResult | null>;
 }
 
 declare namespace tf {
@@ -228,10 +231,11 @@ function getModelIcon(name: string): string {
     return "";
 }
 
-const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onDatasetChange }, ref) => {
+const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onDatasetChange, onPredict }, ref) => {
     const datasetRef = useRef<Dataset | null>(null);
     const evaluationCellRef = useRef<HTMLTableCellElement[]>([]);
     const evaluationResultsRef = useRef<{ [modelName: string]: HTMLDivElement }[]>([]);
+    const predictionInputRef = useRef<HTMLInputElement | null>(null);
     const [selected, setSelected] = useState("Homonym");
 
     function clearPredictions() {
@@ -241,6 +245,14 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                 evaluationResultsRef.current[i] = {};
             });
             evaluationCellRef.current.length = datasetRef.current.test_patterns.length;
+        }
+    }
+    async function handlePredict() {
+        if (predictionInputRef.current && predictionInputRef.current.value.trim().length > 0) {
+            const result = await onPredict(predictionInputRef.current.value.trim());
+
+            // ここで画面に描画
+            console.log("in DatasetPanel ここで結果を画面に表示")
         }
     }
 
@@ -278,6 +290,20 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                     <option value="Homonym">同音異義語データ</option>
                     <option value="Favorite">好き嫌いデータ</option>
                 </select>
+            </div>
+
+            <div className="flex flex-row">
+                <label>入力</label><input type="text" ref={predictionInputRef} />
+                <button
+                    onClick={handlePredict}
+                    className="ml-3 p-1 text-slate-500 hover:text-slate-300 transition-colors"
+                    title="次の文字を予測する"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 10 4 15 9 20" />
+                        <path d="M20 4v7a4 4 0 0 1-4 4H4" />
+                    </svg>
+                </button>
             </div>
 
             <style jsx>{`

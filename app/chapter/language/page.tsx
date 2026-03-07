@@ -54,6 +54,11 @@ export default function Home() {
   const testPatternSelectRef = useRef<HTMLSelectElement>(null);
   const jsEditorRef = useRef<JsEditorHandle>(null);
 
+  async function onPredict(input: string) {
+    console.log("in llm page.tsx ここでjseditorにpostmessage結果をawait", input);
+    jsEditorRef.current?.postMessage({ functionName: "predict", args: [input] });
+    return null;
+  }
   function onDatasetChange(dataset: Readonly<Dataset>) {
     setDataset(dataset);
     if (testPatternSelectRef.current) {
@@ -83,13 +88,6 @@ export default function Home() {
   const quizPanelRef = useRef<HTMLDivElement | null>(null);
   const { leftWidth, rightWidth, containerRef, handleLeftMouseDown, handleRightMouseDown } =
     useDoubleResizer({ initialLeft: 40, initialRight: 25, minLeft: 20, minRight: 10, minCenter: 30 });
-
-  // test
-  //window.addEventListener('message', e=>{console.log("iframe",e.data)})
-  function onTest() {
-    console.log("page.tsx onTest (ニューラルネットワークの構造を押したときのハンドラ");
-    jsEditorRef.current?.postMessage({ function: "predict", input: "私は" });
-  }
 
   useEffect(() => {
     Promise.all(([MAIN_SCRIPT_NAME, ...IMPORT_SCRIPT_NAMES] as const).map(filename =>
@@ -126,15 +124,16 @@ export default function Home() {
 
           {/* Left Panel: Merged Height (Full Height of container) */}
           <div className="left-panel flex flex-col" style={{ width: `${leftWidth}%`, flexShrink: 0 }} >
-            <h3 className="text-base font-bold mb-3" onClick={onTest}>ニューラルネットワークの構造</h3>
+            <h3 className="text-base font-bold mb-3">ニューラルネットワークの構造</h3>
             <JsEditor
               path="chapter/language/main.js"
               updateHandler={[
                 { onUpdate: onEvaluationUpdate, messageType: "evaluation" },
                 { onUpdate: onLearningStatusUpdate, messageType: "learning-status" },
-                { onUpdate: (result) => { console.log("page.tsx result", result) }, messageType: "function-result" },
+                { onUpdate: (result) => { console.log("page.tsx result", result) }, messageType: "functionResult" },
               ]}
               externalScripts={({ ...importScripts, 'dataset.js': dataset })}
+              externallyCallableFunctions={["predict"]}
               defaultValue={mainScript}
               ref={jsEditorRef}
             />
@@ -177,7 +176,7 @@ export default function Home() {
             <div id="dataset-container" className="right-panel h-auto flex-1 flex flex-col min-h-0 overflow-y-auto bg-inherit">
               <DatasetPanel
                 ref={datasetPanelRef}
-                onDatasetChange={onDatasetChange} />
+                onDatasetChange={onDatasetChange} onPredict={onPredict} />
             </div>
           </div>
 
