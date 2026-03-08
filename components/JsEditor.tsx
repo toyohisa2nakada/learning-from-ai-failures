@@ -57,22 +57,30 @@ interface JsEditorProps {
 }
 
 export interface JsEditorHandle {
-    postMessage: (message: any) => void;
+    callExternallyCallableFunction: (params: { functionName: string, args: any[] }) => Promise<any>;
 }
 
 export type FromIframeMessageData =
     | { type: 'iframe-error'; message: string; source: string; lineno: number; colno: number }
     | { type: 'updateProgress'; values: number }
     | { type: 'learning-status'; values: keyof typeof BUTTON_LABELS }
+    | { type: 'registeredExternallyCallableFunction'; values: string }
+    | { type: 'externallyCallableFunctionResult'; values: { functionName: string, result: any } }
     | { type: string & {}; values?: any }; // その他の動的なメッセージ（updateHandlerなど）用
 
 const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "", updateHandler, externalScripts = {}, path, externallyCallableFunctions = [] }: JsEditorProps, ref) => {
     console.log("JsEditor");
     useImperativeHandle(ref, () => ({
-        postMessage: (message) => {
-            console.log("in JsEditor useImperativeHandle postMessage", message);
-            const editor_output_elem = document.querySelector(".editor_output") as HTMLIFrameElement;
-            editor_output_elem!.contentWindow!.postMessage(message, '*');
+        callExternallyCallableFunction: (params) => {
+            return new Promise((resolve, reject) => {
+                if (externalFunctionResults.current?.hasOwnProperty(params.functionName)) {
+                    const editor_output_elem = document.querySelector(".editor_output") as HTMLIFrameElement;
+                    externalFunctionResults.current[params.functionName].push(resolve);
+                    editor_output_elem!.contentWindow!.postMessage(params, '*');
+                } else {
+                    resolve("function not found");
+                }
+            })
         },
     }));
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -81,6 +89,7 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "",
     const statusRef = useRef<HTMLDivElement>(null);
     const progressRef = useRef<HTMLSpanElement>(null);
     const buttonLabelRef = useRef<HTMLButtonElement>(null);
+    const externalFunctionResults = useRef<{ [functionName: string]: ((value: any) => void)[] }>({});
 
     function injectImportmap(htmlString: string, files: Record<string, string | object>, targetObject?: any): string {
         // '//'のコメントをとる
@@ -123,10 +132,12 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "",
                     const externallyCallableFunctions = {};
                     export function registerExternallyCallableFunction(functionName,fn){
                         externallyCallableFunctions[functionName] = fn;
+                        window.parent.postMessage({ type: 'registeredExternallyCallableFunction', values: functionName });
                     }
                     window.addEventListener('message', e=>{
                         const { functionName, args } = e.data;
-                        window.parent.postMessage({ type: 'functionResult', values: externallyCallableFunctions[functionName]?.(...args) });
+                        window.parent.postMessage({ type: 'externallyCallableFunctionResult', 
+                            values: {functionName, result:externallyCallableFunctions[functionName]?.(...args) } });
                     });`
             }
 
@@ -173,6 +184,13 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "",
                 const status = (e.data as Extract<FromIframeMessageData, { type: 'learning-status' }>).values;
                 if (buttonLabelRef.current) buttonLabelRef.current.textContent = BUTTON_LABELS[status];
                 if (statusRef.current) statusRef.current.textContent = "";
+            } else if (e.data.type === 'registeredExternallyCallableFunction') {
+                const functionName = (e.data as Extract<FromIframeMessageData, { type: 'registeredExternallyCallableFunction' }>).values;
+                if (externalFunctionResults.current) externalFunctionResults.current[functionName] ??= [];
+            } else if (e.data.type === 'externallyCallableFunctionResult') {
+                const { functionName, result } = (e.data as Extract<FromIframeMessageData, { type: 'externallyCallableFunctionResult' }>).values;
+                externalFunctionResults.current[functionName]?.[0](result);
+                externalFunctionResults.current[functionName]?.shift();
             }
             updateHandler?.forEach(handler => {
                 if (e.data.type === handler.messageType) {

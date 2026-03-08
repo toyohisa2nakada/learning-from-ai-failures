@@ -55,9 +55,7 @@ export default function Home() {
   const jsEditorRef = useRef<JsEditorHandle>(null);
 
   async function onPredict(input: string) {
-    console.log("in llm page.tsx ここでjseditorにpostmessage結果をawait", input);
-    jsEditorRef.current?.postMessage({ functionName: "predict", args: [input] });
-    return null;
+    return await jsEditorRef.current?.callExternallyCallableFunction({ functionName: "predict", args: [input] });
   }
   function onDatasetChange(dataset: Readonly<Dataset>) {
     setDataset(dataset);
@@ -69,12 +67,10 @@ export default function Home() {
     }
   }
   function onEvaluationUpdate(resultSet: { modelName: string, results: EvaluationResult[] }) {
-    // console.log("onEvaluationUpdate", resultSet);
     datasetPanelRef.current?.updatePredictions(resultSet);
     modelInsightPanelRef.current[resultSet.modelName].updateModelInsight(resultSet);
   }
   function onLearningStatusUpdate(status: string) {
-    // console.log("onLearningStatusUpdate", status);
     if (status === "started") {
       datasetPanelRef.current?.clearPredictions();
     }
@@ -130,7 +126,7 @@ export default function Home() {
               updateHandler={[
                 { onUpdate: onEvaluationUpdate, messageType: "evaluation" },
                 { onUpdate: onLearningStatusUpdate, messageType: "learning-status" },
-                { onUpdate: (result) => { console.log("page.tsx result", result) }, messageType: "functionResult" },
+                // { onUpdate: (result) => { console.log("page.tsx result", result) }, messageType: "functionResult" },
               ]}
               externalScripts={({ ...importScripts, 'dataset.js': dataset })}
               externallyCallableFunctions={["predict"]}

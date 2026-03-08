@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 
-type ModelName = string;
-type PredictionResult = Record<ModelName, string>;
+type PredictionResult = { modelName: string, result: string } | string;
 interface DatasetPanelProps {
     onDatasetChange: (dataset: Readonly<Dataset>) => void;
-    onPredict: (input: string) => Promise<PredictionResult | null>;
+    onPredict: (input: string) => Promise<PredictionResult>;
 }
 
 declare namespace tf {
@@ -248,11 +247,17 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
         }
     }
     async function handlePredict() {
-        if (predictionInputRef.current && predictionInputRef.current.value.trim().length > 0) {
+        if (predictionInputRef.current) {
+            if (predictionInputRef.current.value.trim().length === 0) {
+                predictionInputRef.current.focus();
+                return;
+            }
             const result = await onPredict(predictionInputRef.current.value.trim());
-
-            // ここで画面に描画
-            console.log("in DatasetPanel ここで結果を画面に表示")
+            if (typeof result === "string") {
+                console.log("error", result)
+            } else {
+                console.log("success", result)
+            }
         }
     }
 

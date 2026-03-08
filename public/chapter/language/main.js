@@ -32,7 +32,6 @@ function createSimpleFNN({ vocabSize, inputDim, keyDim, learningRate, type, enco
     const weighted = (new WeightedLayer({ units: vocabSize, name: "weighted", embeddingDim: charEmbed.shape[2] }));
     const weightedApplied = weighted.apply(flat);
     const logits = (new SumLayer({ name: "sum" })).apply(weightedApplied);
-    // console.log("input", input.shape, "charembeded", charEmbed.shape, "flat", flat.shape, "weighted", weightedApplied.shape, "logits", logits.shape);
     const output = tf.layers.activation({ activation: "softmax" }).apply(logits);
     const model = tf.model({ inputs: input, outputs: output, name: `fnn(${type ?? ""})` });
 
@@ -178,17 +177,12 @@ function postEvaluation({ model, options, dataset }) {
 }
 
 function predict(input) {
-    console.log("in main.js predict", dataset);
     return tf.tidy(() => {
         const { tokens, errorMessage } = dataset.tokenize(input);
-        if (tokens === null) {
-            // updateModelEvaluationPanel({ modelEvaluationElem, errorMessage });
-            console.log(errorMessage);
-            return;
+        if (tokens === null || tokens.length === 0) {
+            return errorMessage;
         } else if (tokens.length > dataset.maxLen - 1) {
-            // updateModelEvaluationPanel({ modelEvaluationElem, errorMessage: `語数が多いです。最大 ${dataset.maxLen - 1}` });
-            console.log(`語数が多いです。最大 ${dataset.maxLen - 1}`);
-            return;
+            return `語数が多いです。最大 ${dataset.maxLen - 1}`;
         }
         const x = dataset.toTensor([tokens], tf);
         const results = {};
