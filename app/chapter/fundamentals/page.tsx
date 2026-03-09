@@ -550,7 +550,7 @@ export default function Home() {
             {/* 個別のグラフ */}
             < div id="graph-area-top" className="right-panel">
               <div className="flex items-center justify-between w-full mb-3">
-                <h3 className="text-base font-semibold m-0">個別のグラフ (G1, G2)</h3>
+                <h3 className="text-base font-semibold m-0">個別のグラフ<span className="text-xs">(G1, G2)</span></h3>
               </div>
               <div className="chart-container w-full flex-1 min-h-0">
                 <canvas id="individual-graphs-canvas" className="h-0 min-h-full"></canvas>
@@ -559,30 +559,30 @@ export default function Home() {
 
             {/* グラフの可算結果 */}
             <div id="graph-area-bottom" className="right-panel">
-              <div className="flex items-center justify-between w-full mb-1">
-                <div className="text-base font-semibold m-0">グラフの可算結果 (G1+G2)</div>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="font-semibold">誤差(MSE):</span> <span
-                    id="mse-value">0.0000</span>
+              <div className="flex items-center justify-between w-full mb-1 bg-inherit">
+                <div className="text-base font-semibold m-0">グラフの可算結果<span className="text-xs">(G1+G2)</span></div>
+
+                <div className="target-settings mb-1 p-2 border-none rounded-lg shadow-sm text-xs bg-inherit">
+                  <div id="target-settings" className="flex items-center bg-inherit">
+                    <label htmlFor="target-select"
+                      className="mr-2 font-medium whitespace-nowrap">目標点データ:</label>
+                    <select id="target-select" defaultValue="0"
+                      className="p-1 border-8 border-amber-200 rounded text-xs bg-inherit text-inherit appearance-none"
+                      ref={trainingDataTypeRef}
+                      onChange={e => onChangeScatterPoints(e.target.selectedOptions[0].text)}>
+                      <option value="0">原点通る直線</option>
+                      <option value="1">原点通る折れ線</option>
+                      <option value="2">原点通らない直線</option>
+                      <option value="3">原点通らない折れ線</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-0.5 text-xs">
+                  <span className="font-semibold">誤差(MSE):</span><span id="mse-value">0.0000</span>
                 </div>
               </div>
 
-              <div
-                className="target-settings mb-1 p-2 border-none rounded-lg shadow-sm text-xs bg-inherit w-full">
-                <div id="target-settings" className="flex items-center bg-inherit">
-                  <label htmlFor="target-select"
-                    className="mr-2 font-medium whitespace-nowrap">目標点データ:</label>
-                  <select id="target-select" defaultValue="0"
-                    className="p-1 border-8 border-amber-200 rounded text-xs bg-inherit text-inherit appearance-none"
-                    ref={trainingDataTypeRef}
-                    onChange={e => onChangeScatterPoints(e.target.selectedOptions[0].text)}>
-                    <option value="0">原点通る直線</option>
-                    <option value="1">原点通る折れ線</option>
-                    <option value="2">原点通らない直線</option>
-                    <option value="3">原点通らない折れ線</option>
-                  </select>
-                </div>
-              </div>
 
               <div className="chart-container w-full flex-1 min-h-0">
                 <canvas id="sum-graph-canvas" className="h-0 min-h-full"></canvas>

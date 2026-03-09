@@ -236,6 +236,7 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
     const evaluationResultsRef = useRef<{ [modelName: string]: HTMLDivElement }[]>([]);
     const predictionInputRef = useRef<HTMLInputElement | null>(null);
     const [selected, setSelected] = useState("Homonym");
+    const [predictResults, setPredictResults] = useState<PredictionResult>("");
 
     function clearPredictions() {
         if (datasetRef.current && evaluationCellRef.current && evaluationResultsRef.current) {
@@ -258,6 +259,7 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
             } else {
                 console.log("success", result)
             }
+            setPredictResults(result);
         }
     }
 
@@ -283,22 +285,25 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
         clearPredictions();
         datasetRef.current = selected === "Homonym" ? generateHomonymDatasets() : generateFavoriteDatasets();
         onDatasetChange(datasetRef.current);
+        setPredictResults("");
     }, [selected]);
 
     return (
         <div className="bg-inherit">
-            <div className="font-semibold">データセットと予測結果</div>
+            <div className="flex flex-row items-center gap-2 bg-inherit">
+                <div className="font-semibold">データセットと予測結果</div>
 
-            <div className="bg-inherit">
-                <label htmlFor="dataSelect">データ選択：</label>
-                <select className="bg-inherit" id="dataSelect" value={selected} onChange={(e) => setSelected(e.target.value)}>
-                    <option value="Homonym">同音異義語データ</option>
-                    <option value="Favorite">好き嫌いデータ</option>
-                </select>
+                <div className="bg-inherit">
+                    <label htmlFor="dataSelect">データ選択:</label>
+                    <select className="bg-inherit" id="dataSelect" value={selected} onChange={(e) => setSelected(e.target.value)}>
+                        <option value="Homonym">同音異義語データ</option>
+                        <option value="Favorite">好き嫌いデータ</option>
+                    </select>
+                </div>
             </div>
 
             <div className="flex flex-row">
-                <label>入力</label><input type="text" ref={predictionInputRef} />
+                <label>入力</label><input className="w-28 border rounded" type="text" ref={predictionInputRef} onKeyDown={e => { if (e.key === 'Enter') handlePredict() }} />
                 <button
                     onClick={handlePredict}
                     className="ml-3 p-1 text-slate-500 hover:text-slate-300 transition-colors"
@@ -309,6 +314,8 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                         <path d="M20 4v7a4 4 0 0 1-4 4H4" />
                     </svg>
                 </button>
+                <span>{typeof predictResults === "string" ? predictResults :
+                    Object.entries(predictResults).map(([modelName, result]) => `${getModelIcon(modelName)}${result}`).join(" ")}</span>
             </div>
 
             <style jsx>{`

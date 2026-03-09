@@ -145,20 +145,23 @@ export default function Home() {
           <div className="flex flex-col gap-4 min-w-0 flex-1 bg-inherit">
             {/* Upper Right Panel */}
             <div id="model-insight-container" className="right-panel h-auto flex-none bg-inherit">
-              <div className="font-semibold mb-2">計算プロセス</div>
-              <div className="bg-inherit text-sm">
-                <label htmlFor="test-pattern-index">テストパターン</label>
-                <select className="bg-inherit" id="test-pattern-index" ref={testPatternSelectRef}
-                  onChange={(e) => {
-                    if (modelInsightPanelRef.current && dataset) {
-                      Object.values(modelInsightPanelRef.current).forEach(panel => panel.updateDataset(dataset, Number(e.target.value)));
-                    }
-                  }}>
-                  {dataset?.test_patterns.map((_, index) => (
-                    <option key={index} value={index}>{index}</option>
-                  ))}
-                </select>
+              <div className="flex flex-row items-center mb-2 gap-2 bg-inherit">
+                <div className="font-semibold">計算プロセス</div>
+                <div className="bg-inherit text-sm">
+                  <label htmlFor="test-pattern-index">テストパターン</label>
+                  <select className="bg-inherit" id="test-pattern-index" ref={testPatternSelectRef}
+                    onChange={(e) => {
+                      if (modelInsightPanelRef.current && dataset) {
+                        Object.values(modelInsightPanelRef.current).forEach(panel => panel.updateDataset(dataset, Number(e.target.value)));
+                      }
+                    }}>
+                    {dataset?.test_patterns.map((_, index) => (
+                      <option key={index} value={index}>{index}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
+
               <div className="flex flex-row flex-wrap gap-2 text-xs">
                 {["llm", "gap", "fnn"].map(modelName => (
                   <ModelInsightPanel
@@ -168,6 +171,7 @@ export default function Home() {
                 ))}
               </div>
             </div>
+
             {/* Lower Right Panel */}
             <div id="dataset-container" className="right-panel h-auto flex-1 flex flex-col min-h-0 overflow-y-auto bg-inherit">
               <DatasetPanel
