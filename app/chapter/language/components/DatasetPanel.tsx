@@ -77,7 +77,7 @@ function generateDatasets({ name, train_patterns, test_patterns, mode = "next" }
                     }
                 }
                 if (!matchedWord) {
-                    return { tokens: [], errorMessage: `未知の語が含まれています: "${rest}"（chunk="${chunk}"）` };
+                    return { tokens: [], errorMessage: `未知の語(${rest[0]})が含まれています` };
                 }
                 ids.push(vocab[matchedWord]);
                 rest = rest.slice(matchedWord.length);
@@ -253,13 +253,13 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                 predictionInputRef.current.focus();
                 return;
             }
+            setPredictResults("");
             const result = await onPredict(predictionInputRef.current.value.trim());
-            if (typeof result === "string") {
-                console.log("error", result)
+            if (typeof result === "string" && result.includes("not found")) {
+                setPredictResults("AIの学習を完了させると予測できます");
             } else {
-                console.log("success", result)
+                setPredictResults(result);
             }
-            setPredictResults(result);
         }
     }
 

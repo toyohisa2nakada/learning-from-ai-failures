@@ -78,7 +78,7 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "",
                     externalFunctionResults.current[params.functionName].push(resolve);
                     editor_output_elem!.contentWindow!.postMessage(params, '*');
                 } else {
-                    resolve("function not found");
+                    resolve(`function '${params.functionName}' not found`);
                 }
             })
         },
