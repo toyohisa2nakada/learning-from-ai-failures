@@ -11,78 +11,58 @@ import StageControllerPanel from "@/components/StageController";
 const tutorial: Tutorial = {
   stages: [
     {
-      description: "クイズパネルをデバッグせよ",
+      description: "パラメータを変更して、グラフの可算結果が教師データを通るようにする",
       guide: [
-        { element: '#parameter-control', popover: { title: 'パラメータの設定', description: 'ここのスライダを移動させると、' } },
+        { element: '#parameter-control', popover: { title: '操作パネル（左上）', description: 'このスライダーを動かして、数値を調整してみましょう。右上と右下のグラフに反映されます。' } },
+        { element: '#graph-area-top', popover: { title: '個別のグラフ（右上）', description: '左側のパネルで設定した内容が、このグラフにリアルタイムで表示されます。' } },
+        { element: '#graph-area-bottom', popover: { title: '合成グラフ（右下）', description: '上の個別グラフをすべて足し合わせた結果が、ここに表示されます。' } },
+        { element: '#graph-area-bottom', popover: { title: '合成グラフ（右下）', description: 'まず、スライダを適切に動かしてこの緑色の線がすべての黄色を通ることを目指してみてください。' } },
+        { element: '#target-select', popover: { title: '教師データ', description: '黄色のデータは教師データと呼びます。そしてここから教師データを変更することができます。' } },
+        { element: '#start-quiz', popover: { title: '課題', description: '準備ができたら、ここを押して課題に挑戦してみましょう！' } },
       ],
       quiz: {
-        title: "く、くいず？", problems: [
-          { question: "正解は1 22", choices: ["1", "22", "333"], correctIndex: [0, 1] },
-          { question: "正解は333", choices: ["1", "22", "333"], correctIndex: 2 },
+        title: "問題", problems: [
+          { question: "重みw1の値を変更すると、個別のグラフはどのように変化しますか？（グラフ1でもグラフ2でも同じ動きをします）", choices: ["左右にスライドする", "S字カーブの曲がり方が変わる（マイナスで逆になる）", "グラフが上下に伸び縮みする（マイナスで逆になる）"], correctIndex: 1 },
+          { question: "バイアス b の値を変更すると、個別のグラフはどのように変化しますか？", choices: ["左右にスライドする", "S字カーブの曲がり方が変わる（マイナスで逆になる）", "グラフが上下に伸び縮みする（マイナスで逆になる）"], correctIndex: 0 },
+          { question: "重み w2 の値を変更すると、個別のグラフはどのように変化しますか？", choices: ["左右にスライドする", "S字カーブの曲がり方が変わる（マイナスで逆になる）", "グラフが上下に伸び縮みする（マイナスで逆になる）"], correctIndex: 2 },
+          { question: "右下のグラフの加算結果 (G1 + G2)は何を表しているのでしょうか？", choices: ["個別グラフの2つ(G1,G2)を 足し合わせた グラフ", "個別グラフの2つ(G1,G2)を 掛け合わせた グラフ", "個別グラフの2つ(G1,G2)の 重なる部分を抽出した グラフ"], correctIndex: 0 },
+          { question: "教師データが「原点を通る直線」のとき、個別グラフを調整してすべての教師データに重ねることはできますか？", choices: ["可能である（パラメータを適切に選べば直線として近似できる）", "不可能である（S字グラフの組み合わせでは厳密な直線は作れない）"], correctIndex: 0 },
+          { question: "教師データが「折れ線」のとき、個別グラフ1つだけではすべての点を通ることができません。その理由として正しいものは？", choices: ["折れ線には上がる部分と下がる部分があるが、個別グラフは単調な動き（上がるだけ、または下がるだけ）しかできないから", "バイアスを調整しても、個別グラフは必ず原点(x=0, y=0)を通らなければならないという制約があるから"], correctIndex: 0 },
+          { question: "教師データが原点を通らない場合、バイアスを0に固定すると、すべての点を通ることができません。その理由として正しいものは？", choices: ["バイアスが0の場合、加算結果は必ず原点(x=0,y=0)を通るため、原点を通らないグラフを表現できない", "バイアスが0だと、グラフに上がる部分と下がる部分を同時に作ることができないため"], correctIndex: 0 },
+          { question: "ニューラルネットワークの構造で、ニューロン（ノード）を1つ増やして計3個にすると、画面上のグラフはどう変わりますか？", choices: ["グラフ1のパラメータが1つ増える", "グラフ2のパラメータが1つ増える", "個別のグラフが1つ増えて計3個になる", "グラフの加算結果の数が1つ増える"], correctIndex: 2 },
         ]
-      }
+      },
     },
     {
-      description: "クイズパネルをデバッグせよ",
+      description: "パラメータ設定をAIにやってもらう",
       guide: [
-        { element: '#graph-area-top', popover: { title: '個別のグラフ', description: 'ここのグラフが変化します' } },
+        { element: '#programming-mode-toggle', popover: { title: 'プログラムモードへの変更', description: 'ここを押してプログラムを表示してください。' } },
+        { element: '#ai-learning-start', popover: { title: 'AIが学習を開始する', description: 'ここを押してAIの学習を開始してください' } },
+        { element: '#mse-value', popover: { title: '学習の評価', description: 'この誤差が0に近づくと学習は成功したといえます。このアプリでは成功したとき、ここの数字が緑色に変わります。' } },
       ],
       quiz: {
-        title: "く、くいず？", problems: [
-          { question: "正解は333", choices: ["1", "22", "333"], correctIndex: 2 },
-          { question: "正解は1", choices: ["1", "22", "333"], correctIndex: [0] },
+        title: "問題", problems: [
+          { question: "configという変数によってニューラルネットワークの構造を決定しています。最初に表示されているプログラムでニューロン数はいくつでしょうか？", choices: ["0", "1", "2", "3"], correctIndex: 2 },
+          { question: "バイアスは使用しますか？", choices: ["使う", "使わない"], correctIndex: 0 },
+          { question: "最初の状態（ニューロン数2、バイアスあり）で、教師データを 原点を通る直線 としてください。AIが学習する を押すとAIが6個のパラメータを自動で調整します。学習に成功しましたか？", choices: ["成功した", "失敗した"], correctIndex: 0 },
+          { question: "バイアスをなし(false)にして教師データを原点を通らない直線（または折れ線）にすると、学習は成功しましたか？", choices: ["成功した", "失敗した"], correctIndex: 1 },
+          { question: "ニューロン数2、バイアスありで 原点を通る折れ線 は理論的には学習可能です。しかし実際に実行してみると、十分な学習回数があるにもかかわらずまれに失敗することがあります。その利用として妥当なものを選んでください。", choices: ["重みの初期値によって2つの個別グラフが同じ動きをすることがあるから", "学習率が非常に小さいため、計算結果が途中で四捨五入されてしまうから", "入力データの順番が、常に小さい順に並んでいないから"], correctIndex: 1 },
         ]
-      }
+      },
     },
-    // {
-    //   description: "パラメータを変更して、グラフの可算結果が教師データを通るようにする",
-    //   guide: [
-    //     { element: '#parameter-control', popover: { title: 'パラメータの設定', description: 'ここのスライダを移動させると、' } },
-    //     { element: '#graph-area-top', popover: { title: '個別のグラフ', description: 'ここのグラフが変化します' } },
-    //   ],
-    //   quiz: {
-    //     title: "問題", problems: [
-    //       { question: "重み w1 の値を変更すると、個別のグラフはどのように変化しますか？（重みw1は、グラフ1でもグラフ2でも同じ動きをします）", choices: ["左右にスライドする", "S字カーブの曲がり方が変わる（マイナスで逆S字になる）", "グラフが上下に伸び縮みする（マイナスで上下がひっくり返る）"], correctIndex: 1 },
-    //       { question: "バイアス b の値を変更すると、個別のグラフはどのように変化しますか？", choices: ["左右にスライドする", "S字カーブの曲がり方が変わる（マイナスで逆S字になる）", "グラフが上下に伸び縮みする（マイナスで上下がひっくり返る）"], correctIndex: 0 },
-    //       { question: "重み w2 の値を変更すると、個別のグラフはどのように変化しますか？", choices: ["左右にスライドする", "S字カーブの曲がり方が変わる（マイナスで逆S字になる）", "グラフが上下に伸び縮みする（マイナスで上下がひっくり返る）"], correctIndex: 2 },
-    //       { question: "右下のグラフの可算結果 (G1 + G2)は何を表しているのでしょうか？", choices: ["個別グラフの2つ(G1,G2)を 足し合わせた グラフ", "個別グラフの2つ(G1,G2)を 掛け合わせた グラフ", "個別グラフの2つ(G1,G2)の 重なる部分を抽出した グラフ"], correctIndex: 1 },
-    //       { question: "目標点データ（教師データ）が 原点通る直線 であるとき、2つの個別グラフの重みとバイアスの 計6個のパラメータ を変更して、グラフの加算結果が教師データのすべてを通るようにすることは、理論的に可能ですか？", choices: ["理論的に可能である（6個のパラメータを適切に選べば答えがある）", "不可能である（6個のパラメータをどう変更しても答えが無い）"], correctIndex: 1 },
-    //       { question: "目標点データ（教師データ）が折れ線である場合、個別のグラフが1つだけではグラフの可算結果は教師データのすべての点を通ることはできません。言い換えると、グラフ1つでは折れ線の教師データを表現できません。その理由として正しいものを選択してください。  ", choices: ["折れ線は上がる部分と下がる部分の両方があるため、上がるだけ、または下がるだけの個別グラフ1つでは表現できないから", "必ず原点(x=0, y=0)を通るため、折れ線を表現できないから"], correctIndex: 0 },
-    //       { question: "目標点データ（教師データ）が原点を通らない場合、バイアスを0に固定すると、グラフの可算結果は教師データのすべての点を通ることができません。言い換えると、バイアスがないと原点を通らないグラフを表現できません。その理由として正しいものを選択してください。", choices: ["バイパスが0の場合、グラフの可算結果は必ず原点(x=0,y=0)を通るため、原点を通らないグラフを表現できない", "グラフに上がる部分と下がる部分があるとき、バイパスが0だとそれを表現できない"], correctIndex: 0 },
-    //       { question: "個別のグラフ1、2を加算するという計算を図示したものが、ニューラルネットワークの構造です。このような構造をニューラルネットワークと呼びます。この構造で、ニューロンと書かれている丸（ノードと呼びます）を1つ増やして計3個にすると、どのように変わるか、適切なものを選択してください。", choices: ["グラフ1のパラメータが1つ増える", "グラフ2のパラメータが1つ増える", "個別のグラフが1つ増える", "グラフの可算結果が1つ増える"], correctIndex: 2 },
-    //     ]
-    //   },
-    // },
-    // {
-    //   description: "パラメータ設定をAIにやってもらう",
-    //   guide: [
-    //     { element: '#programming-mode-toggle', popover: { title: 'プログラムモードへの変更', description: 'ここを押してプログラムを表示してください。' } },
-    //     { element: '#ai-learning-start', popover: { title: 'AIが学習を開始する', description: 'ここを押してAIの学習を開始してください' } },
-    //     { element: '#mse-value', popover: { title: '学習の評価', description: 'この誤差が0に近づくと学習は成功したといえます。このアプリでは成功したとき、ここの数字が緑色に変わります。' } },
-    //   ],
-    //   quiz: {
-    //     title: "問題", problems: [
-    //       { question: "configという変数によってニューラルネットワークの構造を決定しています。最初に表示されているプログラムでニューロン数はいくつでしょうか？", choices: ["0", "1", "2", "3"], correctIndex: 2 },
-    //       { question: "バイアスは使用しますか？", choices: ["使う", "使わない"], correctIndex: 0 },
-    //       { question: "最初の状態（ニューロン数2、バイアスあり）で、目標点データ（教師データ）を 原点を通る直線 としてください。AIが学習する を押すとAIが6個のパラメータを自動で調整します。学習に成功しましたか？", choices: ["成功した", "失敗した"], correctIndex: 0 },
-    //       { question: "バイアスをなし(false)にして目標点データ（教師データ）を原点を通らない直線（または折れ線）にすると、学習は成功しましたか？", choices: ["成功した", "失敗した"], correctIndex: 1 },
-    //       { question: "ニューロン数2、バイアスありで 原点を通る折れ線 は理論的には学習可能です。しかし実際に実行してみると、十分な学習回数があるにもかかわらずまれに失敗することがあります。その利用として妥当なものを選んでください。", choices: ["重みの初期値によって2つの個別グラフが同じ動きをすることがあるから", "学習率が非常に小さいため、計算結果が途中で四捨五入されてしまうから", "入力データの順番が、常に小さい順に並んでいないから"], correctIndex: 1 },
-    //     ]
-    //   },
-    // },
   ]
 }
 
 // グラフ描画の設定
 const DATA_POINTS = 300;
-// プロットする散布図データ（目標点データセット）
+// プロットする散布図データ（教師データセット）
 const TARGET_POINT_DATASETS: Record<string, [number, number][]> = {
   原点通る直線: [[-1, -1], [0, 0], [1, 1], [2, 2]],
   原点通る折れ線: [[-1, -2], [0, 0], [1, 2], [2, 1]],
   原点通らない直線: [[-1, -2], [0, -1], [1, 0], [2, 1]],
   原点通らない折れ線: [[-1, -3], [0, -1], [1, 1], [2, 0]],
 };
-// 目標点選択ドロップダウンのID
+// 教師データ選択ドロップダウンのID
 const TARGET_SELECT_ID = 'target-select';
 
 // グラフデータ生成のためのX座標データ
@@ -155,7 +135,7 @@ function getCommonChartOptions(range: Record<string, number>): ChartConfiguratio
 }
 
 
-// 合成グラフと目標点の平均二乗誤差（MSE）を計算
+// 合成グラフと教師データの平均二乗誤差（MSE）を計算
 function calculateMSE(currentScatterPoints: Record<string, number>[], weights: Record<string, number>) {
 
   if (!currentScatterPoints.length) return 0;
@@ -211,7 +191,7 @@ function updateCharts(individualChart: Chart, sumChart: Chart, weights: Record<s
 
   // Sum Chart (Line + Scatter): x-yペアで更新
   sumChart.data.datasets[0].data = ySumData;
-  // Scatterデータ (目標点) は currentScatterPoints を参照しているため、別途更新する必要はない
+  // Scatterデータ (教師データ) は currentScatterPoints を参照しているため、別途更新する必要はない
 
   // グラフを更新
   individualChart.update();
@@ -565,7 +545,7 @@ export default function Home() {
                 <div className="target-settings mb-1 p-2 border-none rounded-lg shadow-sm text-xs bg-inherit">
                   <div id="target-settings" className="flex items-center bg-inherit">
                     <label htmlFor="target-select"
-                      className="mr-2 font-medium whitespace-nowrap">目標点データ:</label>
+                      className="mr-2 font-medium whitespace-nowrap">教師データ:</label>
                     <select id="target-select" defaultValue="0"
                       className="p-1 border-8 border-amber-200 rounded text-xs bg-inherit text-inherit appearance-none"
                       ref={trainingDataTypeRef}
