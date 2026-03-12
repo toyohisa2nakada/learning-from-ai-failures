@@ -217,20 +217,20 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
     }
 
     function handleCheckQuiz() {
-        if (quizCheckButtonRef.current!.textContent === '次の課題へ') {
-            if (currentStageIndex === tutorial.stages.length - 1) {
-                Swal.fire({
-                    title: 'チュートリアル完了',
-                    text: 'すべての課題をクリアしました。',
-                    icon: 'success',
-                    confirmButtonColor: '#3b82f6',
-                    confirmButtonText: 'OK'
-                });
-                return;
-            }
-            setCurrentStageIndex(currentStageIndex + 1);
-            return;
-        }
+        // if (quizCheckButtonRef.current!.textContent === '次の課題へ') {
+        //     if (currentStageIndex === tutorial.stages.length - 1) {
+        //         Swal.fire({
+        //             title: 'チュートリアル完了',
+        //             text: 'すべての課題をクリアしました。',
+        //             icon: 'success',
+        //             confirmButtonColor: '#3b82f6',
+        //             confirmButtonText: 'OK'
+        //         });
+        //         return;
+        //     }
+        //     setCurrentStageIndex(currentStageIndex + 1);
+        //     return;
+        // }
         const eq = (a: number[], b: number[]): boolean => a.length === b.length && a.every((e, i) => e === b[i]);
         const correctedAnswers = tutorial.stages[currentStageIndex].quiz.problems.map(({ correctIndex }) => Array.isArray(correctIndex) ? correctIndex : [correctIndex]);
         const allCorrected = correctedAnswers.map((correctedAnswer, i) => {
@@ -250,6 +250,14 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
             markAsBadgeState(currentStageIndex, 'quiz');
             quizProblemFieldRef.current!.setAttribute('disabled', 'true');
             quizCheckButtonRef.current!.textContent = '次の課題へ';
+
+            const driverObj = driver({
+                steps: [
+                    { "element": quizCheckButtonRef.current!, "popover": { "title": "次のクイズ", "description": "ここを押すと次のクイズが表示されます" } },
+                    { "element": "#start-guide", "popover": { "title": "説明の更新", "description": "また説明も更新されています。" } },
+                ],
+            });
+            driverObj.drive();
         }
     }
 
@@ -268,7 +276,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
                 >説明を見る</button>
                 <button id="start-quiz" onClick={() => onStartQuiz?.()}
                     className="px-3 py-1 text-xs font-semibold bg-slate-800 border border-slate-600 rounded hover:bg-slate-700"
-                >課題に挑戦</button>
+                >クイズに挑戦</button>
             </div>
             <div className="flex items-center">
                 <span className="text-sm font-medium">Stage:</span>
