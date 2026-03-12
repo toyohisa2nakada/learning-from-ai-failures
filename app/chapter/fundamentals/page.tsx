@@ -13,12 +13,42 @@ const tutorial: Tutorial = {
     {
       description: "パラメータを変更して、グラフの可算結果が教師データを通るようにする",
       guide: [
-        { "element": "#parameter-control", "popover": { "title": "操作パネル（左上）", "description": "スライダーを動かすとグラフが動きます。" } },
-        { "element": "#graph-area-top", "popover": { "title": "個別のグラフ（右上）", "description": "設定した内容がリアルタイムに表示されます。" } },
-        { "element": "#graph-area-bottom", "popover": { "title": "合成グラフ（右下）", "description": "上の2つのグラフを足し合わせた結果です。" } },
-        { "element": "#graph-area-bottom", "popover": { "title": "課題", "description": "まず、緑の線がすべての黄色を通るよう調整しましょう。" } },
-        { "element": "#target-select", "popover": { "title": "教師データ", "description": "黄色の点（教師データ）は4種類あります。" } },
-        { "element": "#start-quiz", "popover": { "title": "課題", "description": "色々と試してから、クイズに挑戦してみてください！" } },
+        {
+          element: "#parameter-control", popover: {
+            title: "操作パネル（左上）",
+            description: "スライダーを動かすとグラフが動きます。"
+          }
+        },
+        {
+          element: "#graph-area-top", popover: {
+            title: "個別のグラフ（右上）",
+            description: "動くグラフの1つは、この個別グラフです。"
+          }
+        },
+        {
+          element: "#graph-area-bottom", popover: {
+            title: "合成グラフ（右下）",
+            description: "さらに個別グラフの足し合わせによる合成グラフも動きます。"
+          }
+        },
+        {
+          element: "#graph-area-bottom", popover: {
+            title: "課題",
+            description: "まず、緑の線がすべての黄色を通るよう調整してみましょう。"
+          }
+        },
+        {
+          element: "#target-select", popover: {
+            title: "教師データ",
+            description: "また、黄色の点（教師データ）は4種類あり、変更することができます。"
+          }
+        },
+        {
+          element: "#start-quiz", popover: {
+            title: "課題",
+            description: "色々と試してから、クイズに挑戦してみてください！"
+          }
+        },
       ],
       quiz: {
         title: "問題", problems: [
@@ -36,9 +66,35 @@ const tutorial: Tutorial = {
     {
       description: "パラメータ設定をAIにやってもらう",
       guide: [
-        { element: '#programming-mode-toggle', popover: { title: 'プログラムモードへの変更', description: 'ここを押してプログラムを表示してください。' } },
-        { element: '#ai-learning-start', popover: { title: 'AIが学習を開始する', description: 'ここを押してAIの学習を開始してください' } },
-        { element: '#mse-value', popover: { title: '学習の評価', description: 'この誤差が0に近づくと学習は成功したといえます。このアプリでは成功したとき、ここの数字が緑色に変わります。' } },
+        {
+          element: '#programming-mode-toggle', popover: {
+            title: 'プログラムモードへの変更',
+            description: 'ここを押してプログラムを表示してください。',
+            onNextClick: (element, step, options) => {
+              if (!document.getElementById("ai-learning-start")) {
+                if (options.state.popover) {
+                  const curText = options.state.popover.description.textContent;
+                  options.state.popover.description.textContent = curText.includes("進めません") ?
+                    "プログラムのボタンを押してみてください。" : "プログラムのボタンを押さないと進めません。";
+                }
+              } else {
+                options.driver.moveNext()
+              }
+            }
+          }
+        },
+        {
+          element: '#ai-learning-start', popover: {
+            title: 'AIが学習を開始する',
+            description: 'ここを押してAIの学習を開始してください'
+          }
+        },
+        {
+          element: '#mse-value', popover: {
+            title: '学習の評価',
+            description: 'この誤差が0に近づくと学習は成功したといえます。このアプリでは成功したとき、ここの数字が緑色に変わります。'
+          }
+        },
       ],
       quiz: {
         title: "問題", problems: [

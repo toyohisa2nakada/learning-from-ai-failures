@@ -11,7 +11,7 @@ import { useRef, forwardRef, useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import Swal from 'sweetalert2';
-import { driver } from "driver.js";
+import { driver, type Config, type Popover } from "driver.js";
 import "driver.js/dist/driver.css";
 import Confetti from '@/components/Confetti';
 import UnreadBadge from "@/lib/UnreadBadge";
@@ -19,10 +19,7 @@ import UnreadBadge from "@/lib/UnreadBadge";
 // 画面説明のための情報
 export type Guide = {
     element: string;
-    popover: {
-        title: string;
-        description: string;
-    };
+    popover: Popover;
 }[];
 
 // クイズのための情報
@@ -262,8 +259,8 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
 
             const driverObj = driver({
                 steps: [
-                    { "element": quizCheckButtonRef.current!, "popover": { "title": "次のクイズ", "description": "ここを押すと次のクイズが表示されます" } },
-                    { "element": "#start-guide", "popover": { "title": "説明の更新", "description": "また説明も更新されます。" } },
+                    { element: quizCheckButtonRef.current!, popover: { title: "次のクイズ", description: "ここを押すと次のクイズが表示されます" } },
+                    { element: "#start-guide", popover: { title: "説明の更新", description: "また説明も更新されます。" } },
                 ],
             });
             driverObj.drive();
