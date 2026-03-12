@@ -13,7 +13,7 @@ import { usePathname } from 'next/navigation';
 import Swal from 'sweetalert2';
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
-
+import Confetti from '@/components/Confetti';
 import UnreadBadge from "@/lib/UnreadBadge";
 
 // 画面説明のための情報
@@ -82,6 +82,13 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
     const quizProblemRefs = useRef<(HTMLDivElement | null)[]>([]);
     const quizProblemFieldRef = useRef<HTMLFieldSetElement>(null);
     const quizCheckButtonRef = useRef<HTMLButtonElement>(null);
+    const [showConfetti, setShowConfetti] = useState(false);
+    const [confettiKey, setConfettiKey] = useState(0);
+
+    function startConfetti() {
+        setShowConfetti(true);
+        setConfettiKey(prev => prev + 1);
+    }
 
     function getCurrentStageIndex(): number {
         if (typeof window === 'undefined') return -1;
@@ -217,20 +224,20 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
     }
 
     function handleCheckQuiz() {
-        // if (quizCheckButtonRef.current!.textContent === '次の課題へ') {
-        //     if (currentStageIndex === tutorial.stages.length - 1) {
-        //         Swal.fire({
-        //             title: 'チュートリアル完了',
-        //             text: 'すべての課題をクリアしました。',
-        //             icon: 'success',
-        //             confirmButtonColor: '#3b82f6',
-        //             confirmButtonText: 'OK'
-        //         });
-        //         return;
-        //     }
-        //     setCurrentStageIndex(currentStageIndex + 1);
-        //     return;
-        // }
+        if (quizCheckButtonRef.current!.textContent === '次の課題へ') {
+            if (currentStageIndex === tutorial.stages.length - 1) {
+                Swal.fire({
+                    title: 'チュートリアル完了',
+                    text: 'すべての課題をクリアしました。',
+                    icon: 'success',
+                    confirmButtonColor: '#3b82f6',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            setCurrentStageIndex(currentStageIndex + 1);
+            return;
+        }
         const eq = (a: number[], b: number[]): boolean => a.length === b.length && a.every((e, i) => e === b[i]);
         const correctedAnswers = tutorial.stages[currentStageIndex].quiz.problems.map(({ correctIndex }) => Array.isArray(correctIndex) ? correctIndex : [correctIndex]);
         const allCorrected = correctedAnswers.map((correctedAnswer, i) => {
@@ -251,10 +258,12 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
             quizProblemFieldRef.current!.setAttribute('disabled', 'true');
             quizCheckButtonRef.current!.textContent = '次の課題へ';
 
+            startConfetti();
+
             const driverObj = driver({
                 steps: [
                     { "element": quizCheckButtonRef.current!, "popover": { "title": "次のクイズ", "description": "ここを押すと次のクイズが表示されます" } },
-                    { "element": "#start-guide", "popover": { "title": "説明の更新", "description": "また説明も更新されています。" } },
+                    { "element": "#start-guide", "popover": { "title": "説明の更新", "description": "また説明も更新されます。" } },
                 ],
             });
             driverObj.drive();
@@ -267,8 +276,24 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         syncBadgeState(currentStageIndex, badgeState);
     }, [currentStageIndex]);
 
+    useEffect(() => {
+        if (showConfetti) {
+            const handleWindowClick = () => {
+                setShowConfetti(false);
+            };
+            const timer = setTimeout(() => {
+                window.addEventListener('click', handleWindowClick);
+            }, 100);
+            return () => {
+                window.removeEventListener('click', handleWindowClick);
+                clearTimeout(timer);
+            };
+        }
+    }, [showConfetti]);
+
     const mainContent = (
         <section className="action-section flex justify-between items-center">
+            {showConfetti && <Confetti key={confettiKey} />}
             <div className="flex gap-1 items-start">
                 指令<span ref={missionDescriptionRef}></span>
                 <button id="start-guide" onClick={handleStartGuide}
