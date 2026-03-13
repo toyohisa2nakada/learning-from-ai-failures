@@ -1,12 +1,13 @@
 "use client"
 import { useEffect, useState, useRef } from "react";
-import JsEditor from "@/components/JsEditor";
+import JsEditor, { type JsEditorHandle } from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/image-generation/components/NeuralNetGraph";
 import DatasetPanel, { type DatasetPanelHandle } from "@/app/chapter/image-generation/components/DatasetPanel";
 import ImageGridPanel from "@/app/chapter/image-generation/components/ImageGridPanel";
 import { type ImageOption } from "@/components/ImageSelect";
 import { useDoubleResizer } from '@/lib/hooks/useDoubleResizer';
 import StageControllerPanel, { type Tutorial } from "@/components/StageController";
+import EditorToggleButtons from "@/components/EditorToggleButtons";
 
 
 const tutorial: Tutorial = {
@@ -32,9 +33,7 @@ const SCRIPT_BASE_PATH = '/chapter/image-generation/';
 export default function Home() {
   console.log("Editor HOME")
   // 手動学習、自動（プログラム）学習の切り替え (manual / programming)
-  const [programmingMode, setProgrammingMode] = useState('manual');
-  const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
-  const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
+  const [programmingMode, setProgrammingMode] = useState<'manual' | 'programming'>('manual');
 
   const [imageSelected0, setImageSelected0] = useState<ImageOption | undefined>();
   const [imageSelected1, setImageSelected1] = useState<ImageOption | undefined>();
@@ -78,7 +77,15 @@ export default function Home() {
   const { leftWidth, rightWidth, containerRef, handleLeftMouseDown, handleRightMouseDown } =
     useDoubleResizer({ initialLeft: 40, initialRight: 25, minLeft: 20, minRight: 10, minCenter: 30 });
 
-  const [mainScript, setMainScript] = useState<string>('');
+  const [mainScript, setMainScript] = useState<string | null>(null);
+  const jsEditorRef = useRef<JsEditorHandle>(null);
+  function onChangeProgrammingMode(mode: 'manual' | 'programming') {
+    setProgrammingMode(mode);
+  }
+  function onProgramReset() {
+    jsEditorRef.current?.resetCode();
+  }
+
   useEffect(() => {
     fetch(`${SCRIPT_BASE_PATH}${MAIN_SCRIPT_NAME}`)
       .then(res => res.text())
@@ -105,10 +112,11 @@ export default function Home() {
           <div className="left-panel flex flex-col overflow-hidden min-w-0" style={{ width: `${leftWidth}%`, flexShrink: 0 }}>
             <div className="flex justify-between items-center">
               <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
-              <div id="programming-mode-toggle" className="text-xs flex">
-                <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造</button>
-                <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>プログラム</button>
-              </div>
+              <EditorToggleButtons
+                programmingMode={programmingMode}
+                onChangeMode={onChangeProgrammingMode}
+                onReset={onProgramReset}
+              />
             </div>
             {programmingMode === 'manual' ? <NeuralNetGraph /> :
               <JsEditor
@@ -119,6 +127,7 @@ export default function Home() {
                 ]}
                 externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
                 defaultValue={mainScript}
+                ref={jsEditorRef}
               />
             }
           </div>

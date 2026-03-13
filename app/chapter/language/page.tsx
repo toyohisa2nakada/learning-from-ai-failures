@@ -5,6 +5,7 @@ import DatasetPanel, { type Dataset, type DatasetPanelHandle, type EvaluationRes
 import ModelInsightPanel, { type ModelInsightPanelHandle } from '@/app/chapter/language/components/ModelInsightPanel';
 import { useDoubleResizer } from '@/lib/hooks/useDoubleResizer';
 import StageControllerPanel, { type Tutorial } from "@/components/StageController";
+import EditorToggleButtons from '@/components/EditorToggleButtons';
 
 const tutorial: Tutorial = {
   stages: [
@@ -47,7 +48,7 @@ const initialImportScripts: ImportScripts = IMPORT_SCRIPT_NAMES.reduce((acc, nam
 export default function Home() {
   console.log("LANGUAGE HOME")
   const [importScripts, setImportScripts] = useState<ImportScripts>(initialImportScripts);
-  const [mainScript, setMainScript] = useState<string>('');
+  const [mainScript, setMainScript] = useState<string | null>(null);
   const [dataset, setDataset] = useState<Readonly<Dataset> | null>(null);
   const datasetPanelRef = useRef<DatasetPanelHandle>(null);
   const modelInsightPanelRef = useRef<{ [modelName: string]: ModelInsightPanelHandle }>({});
@@ -120,7 +121,14 @@ export default function Home() {
 
           {/* Left Panel: Merged Height (Full Height of container) */}
           <div className="left-panel flex flex-col" style={{ width: `${leftWidth}%`, flexShrink: 0 }} >
-            <h3 className="text-base font-bold mb-3">ニューラルネットワークの構造</h3>
+            <div className="flex justify-between items-center">
+              <div className="text-base font-bold mb-3">ニューラルネットワークの構造</div>
+              <EditorToggleButtons
+                programmingMode="programming"
+                onChangeMode={() => { }}
+                onReset={() => { jsEditorRef.current?.resetCode() }}
+              />
+            </div>
             <JsEditor
               path="chapter/language/main.js"
               updateHandler={[

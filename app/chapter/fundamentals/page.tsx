@@ -1,11 +1,12 @@
 "use client"
 import { useEffect, useState, useRef } from "react";
 import { Chart, ChartConfiguration } from 'chart.js/auto';
-import JsEditor from "@/components/JsEditor";
+import JsEditor, { type JsEditorHandle } from "@/components/JsEditor";
 import NeuralNetGraph from "@/app/chapter/fundamentals/components/NeuralNetGraph";
 import { useDoubleResizer } from '@/lib/hooks/useDoubleResizer';
 import { type Tutorial } from "@/components/StageController";
 import StageControllerPanel from "@/components/StageController";
+import EditorToggleButtons from "@/components/EditorToggleButtons";
 
 
 const tutorial: Tutorial = {
@@ -338,9 +339,7 @@ export default function Home() {
   }
 
   // 手動学習、自動（プログラム）学習の切り替え (manual / programming)
-  const [programmingMode, setProgrammingMode] = useState('manual');
-  const btnStates = ["bg-gray-700 text-gray-100 cursor-pointer p-1", "bg-transparent text-gray-500 cursor-pointer p-1",];
-  const [btnStatusManual, btnStatusProgramming] = programmingMode === 'manual' ? [btnStates[0], btnStates[1]] : [btnStates[1], btnStates[0]];
+  const [programmingMode, setProgrammingMode] = useState<'manual' | 'programming'>('manual');
   // iframe->カスタムタグのEditor->経由で受け取るプログラムでアップデートした重み
   function onUpdateWeight(weights: Record<string, any>) {
     onChangeWeightAll(weights as Record<string, number>)
@@ -355,11 +354,18 @@ export default function Home() {
   const { leftWidth, rightWidth, containerRef, handleLeftMouseDown, handleRightMouseDown } =
     useDoubleResizer({ initialLeft: 40, initialRight: 25, minLeft: 20, minRight: 10, minCenter: 30 });
 
-  const [mainScript, setMainScript] = useState<string>('');
+  // JsEditorに与えるコードの初期値
+  const [mainScript, setMainScript] = useState<string | null>(null);
+  const jsEditorRef = useRef<JsEditorHandle>(null);
+  function onChangeProgrammingMode(mode: 'manual' | 'programming') {
+    setProgrammingMode(mode);
+  }
+  function onProgramReset() {
+    jsEditorRef.current?.resetCode();
+  }
 
   // 初期表示
   useEffect(() => {
-
     const range: Record<string, number> = getRangeParams();
     const xData = generateXData(range.X_MIN, range.X_MAX);
     const { y0Data, y1Data, ySumData } = generateYData(weights.current, xData);
@@ -455,6 +461,7 @@ export default function Home() {
         console.error('Error loading scripts:', error);
       })
   }, []);
+
 
   // 重み部分のinput
   const weight_input_css = "no-spin font-bold w-12 text-right p-0 bg-transparent text-sm rounded border border-[#1f2a44] border-solid";
@@ -560,10 +567,11 @@ export default function Home() {
             <div id="drawing-area" className="flex-1 min-h-0 flex flex-col">
               <div className="flex justify-between items-center">
                 <div className="text-base font-semibold m-0">ニューラルネットワークの構造</div>
-                <div id="programming-mode-toggle" className="text-xs flex">
-                  <button className={btnStatusManual} onClick={() => setProgrammingMode('manual')}>構造</button>
-                  <button className={btnStatusProgramming} onClick={() => setProgrammingMode('programming')}>プログラム</button>
-                </div>
+                <EditorToggleButtons
+                  programmingMode={programmingMode}
+                  onChangeMode={onChangeProgrammingMode}
+                  onReset={onProgramReset}
+                />
               </div>
               {programmingMode === 'manual' ? <NeuralNetGraph /> :
                 <JsEditor
@@ -571,6 +579,7 @@ export default function Home() {
                   updateHandler={[{ onUpdate: onUpdateWeight, messageType: 'weights' }]}
                   externalScripts={() => ({ 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingData())};` })}
                   defaultValue={mainScript}
+                  ref={jsEditorRef}
                 />}
             </div>
           </div>

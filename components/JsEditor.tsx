@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import Editor, { loader } from "@monaco-editor/react";
 import { editor } from "monaco-editor";
 import { inlineHTML } from "@/lib/monaco-utils/inlineHTML";
@@ -49,7 +49,7 @@ const HTML_TEMPLATE = `
 </html>`.replace(/[\r\n\t]+/g, "");
 
 interface JsEditorProps {
-    defaultValue?: string;
+    defaultValue?: string | null;
     updateHandler?: { onUpdate: (data: any) => void; messageType: string; }[];
     externalScripts?: Record<string, string | object | null> | (() => Record<string, string | object | null>);
     path?: string;
@@ -58,6 +58,7 @@ interface JsEditorProps {
 
 export interface JsEditorHandle {
     callExternallyCallableFunction: (params: { functionName: string, args: any[] }) => Promise<any>;
+    resetCode: () => void;
 }
 
 export type FromIframeMessageData =
@@ -68,8 +69,8 @@ export type FromIframeMessageData =
     | { type: 'externallyCallableFunctionResult'; values: { functionName: string, result: any } }
     | { type: string & {}; values?: any }; // その他の動的なメッセージ（updateHandlerなど）用
 
-const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "", updateHandler, externalScripts = {}, path, externallyCallableFunctions = [] }: JsEditorProps, ref) => {
-    console.log("JsEditor");
+const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = null, updateHandler, externalScripts = {}, path, externallyCallableFunctions = [] }: JsEditorProps, ref) => {
+    console.log("JsEditor", defaultValue?.substring(0, 20));
     useImperativeHandle(ref, () => ({
         callExternallyCallableFunction: (params) => {
             return new Promise((resolve, reject) => {
@@ -82,6 +83,12 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "",
                 }
             })
         },
+        resetCode: () => {
+            if (!editorRef.current || !defaultValue) return;
+            const storageKey = `jseditor-${path}`;
+            localStorage.removeItem(storageKey);
+            editorRef.current.setValue(defaultValue);
+        }
     }));
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
     const workerRef = useRef<Worker | null>(null);
@@ -90,6 +97,23 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "",
     const progressRef = useRef<HTMLSpanElement>(null);
     const buttonLabelRef = useRef<HTMLButtonElement>(null);
     const externalFunctionResults = useRef<{ [functionName: string]: ((value: any) => void)[] }>({});
+    const [initialValue, setInitialValue] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (defaultValue === null) return;
+
+        const storageKey = `jseditor-${path}`;
+        const savedData = path ? localStorage.getItem(storageKey) : null;
+
+        if (savedData) {
+            setInitialValue(savedData);
+        } else {
+            setInitialValue(defaultValue);
+            // if (path) {
+            //     localStorage.setItem(storageKey, defaultValue);
+            // }
+        }
+    }, [defaultValue, path]);
 
     function injectImportmap(htmlString: string, files: Record<string, string | object>, targetObject?: any): string {
         // '//'のコメントをとる
@@ -155,13 +179,6 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "",
         workerRef.current.postMessage({ code: editorRef.current!.getValue() })
     }
 
-    // defaultValueが変更された場合にエディタの内容を更新する
-    useEffect(() => {
-        if (editorRef.current && defaultValue && editorRef.current.getValue() === "") {
-            editorRef.current.setValue(defaultValue);
-        }
-    }, [defaultValue]);
-
     // iframeからのメッセージの取得
     useEffect(() => {
         const handleMessage = (e: { data: FromIframeMessageData }) => {
@@ -209,7 +226,7 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "",
         <div className="flex flex-col h-full gap-2 overflow-hidden">
             <iframe className="editor_output" style={{ display: "none" }}></iframe>
             <div className="flex-1 min-h-0 relative">
-                <Editor
+                {initialValue === null ? <div></div> : <Editor
                     height="100%"
                     defaultLanguage="javascript"
                     theme="vs-dark"
@@ -225,8 +242,18 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = "",
                         fixedOverflowWidgets: true,
                     }}
                     path={path}
-                    defaultValue={defaultValue}
-                />
+                    defaultValue={initialValue}
+                    onChange={(value) => {
+                        if (!value || !path) return;
+                        const storageKey = `jseditor-${path}`;
+
+                        if (value === defaultValue) {
+                            localStorage.removeItem(storageKey);
+                        } else {
+                            localStorage.setItem(storageKey, value);
+                        }
+                    }}
+                />}
             </div>
             <div className="flex flex-col gap-1">
                 <button id="ai-learning-start"
