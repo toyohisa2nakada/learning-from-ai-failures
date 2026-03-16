@@ -13,9 +13,49 @@ import EditorToggleButtons from "@/components/EditorToggleButtons";
 const tutorial: Tutorial = {
   stages: [
     {
-      description: "出力が複数になって画像になって",
+      description: "画像を出力する",
       guide: [
-        { element: '#graph-area-bottom', popover: { title: 'パラメータの設定', description: '進化させたい画像の元になる画像を２つ選んでね' } },
+        {
+          element: '.left-panel', popover: {
+            title: 'ネットワークの構造',
+            description: 'このニューラルネットワークは、48×48×3の出力を生成します。1つの出力を画素の赤、緑、青のいずれかの値に対応させます。'
+          }
+        },
+        {
+          element: '.left-panel', popover: {
+            title: 'ネットワークの構造',
+            description: '入力は1つです。このネットワークによって入力が0の時に出力したい画像、1の時に出力した画像を学習させます。'
+          }
+        },
+        {
+          element: '.image-select-container', popover: {
+            title: '画像の選択',
+            description: 'ここで入力が0の時と1の時に出力したい画像を選択します。'
+          }
+        },
+        {
+          element: '#programming-mode-toggle', popover: {
+            title: 'プログラムモードへの変更',
+            description: 'ここを押してプログラムを表示してください。',
+            onNextClick: (element, step, options) => {
+              if (!document.getElementById("ai-learning-start")) {
+                if (options.state.popover) {
+                  const curText = options.state.popover.description.textContent;
+                  options.state.popover.description.textContent = curText.includes("進めません") ?
+                    "プログラムのボタンを押してみてください。" : "プログラムのボタンを押さないと進めません。";
+                }
+              } else {
+                options.driver.moveNext()
+              }
+            }
+          }
+        },
+        {
+          element: '#ai-learning-start', popover: {
+            title: 'AIが学習を開始する',
+            description: 'ここを押してAIの学習を開始してください。'
+          }
+        },
       ],
       quiz: {
         title: "問題", problems: [

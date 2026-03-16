@@ -185,7 +185,7 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
             {/* Visualization Canvas */}
             <div className="flex-1 flex flex-col items-center justify-center p-4 relative">
                 {/* Top Row: Target Images - Updated to yellow as requested */}
-                <div className="flex justify-between w-full mb-4 px-1">
+                <div className="image-select-container flex justify-between w-full mb-4 px-1">
                     <ImageSelect
                         options={optionsWithFile}
                         value={imageSelected0}
