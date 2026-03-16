@@ -224,8 +224,8 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
         if (quizCheckButtonRef.current!.textContent === '次の課題へ') {
             if (currentStageIndex === tutorial.stages.length - 1) {
                 Swal.fire({
-                    title: 'チュートリアル完了',
-                    text: 'すべての課題をクリアしました。',
+                    title: 'すべての課題をクリアしました。',
+                    text: '右上の「次へ」を押して、次の画面に進んでください。',
                     icon: 'success',
                     confirmButtonColor: '#3b82f6',
                     confirmButtonText: 'OK'
@@ -263,7 +263,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
                     { element: "#start-guide", popover: { title: "説明の更新", description: "また説明も更新されます。" } },
                 ],
             });
-            driverObj.drive();
+            setTimeout(() => { driverObj.drive(); }, 1000);
         }
     }
 
