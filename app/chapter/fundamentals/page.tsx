@@ -85,9 +85,15 @@ const tutorial: Tutorial = {
           }
         },
         {
+          element: '.editor_panel', popover: {
+            title: 'プログラムの編集',
+            description: 'プログラムは編集することができます。'
+          }
+        },
+        {
           element: '#ai-learning-start', popover: {
             title: 'AIが学習を開始する',
-            description: 'ここを押してAIの学習を開始してください'
+            description: 'ここを押してAIの学習を開始してください。'
           }
         },
         {

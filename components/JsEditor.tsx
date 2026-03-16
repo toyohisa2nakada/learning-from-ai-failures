@@ -225,7 +225,7 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = nul
     return (
         <div className="flex flex-col h-full gap-2 overflow-hidden">
             <iframe className="editor_output" style={{ display: "none" }}></iframe>
-            <div className="flex-1 min-h-0 relative">
+            <div className="editor_panel flex-1 min-h-0 relative">
                 {initialValue === null ? <div></div> : <Editor
                     height="100%"
                     defaultLanguage="javascript"
