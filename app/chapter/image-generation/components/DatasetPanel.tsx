@@ -184,7 +184,7 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
 
             {/* Visualization Canvas */}
             <div className="flex-1 flex flex-col items-center justify-center p-4 relative">
-                {/* Top Row: Target Images - Updated to yellow as requested */}
+                {/* Target Images */}
                 <div className="image-select-container flex justify-between w-full mb-4 px-1">
                     <ImageSelect
                         options={optionsWithFile}
@@ -198,8 +198,8 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
                     />
                 </div>
 
-                {/* Middle Row: Interpolation Steps */}
-                <div className="flex justify-between w-full mb-6 px-1 items-end h-16">
+                {/* Interpolation Steps */}
+                <div className="interpolation-steps-container flex justify-between w-full mb-6 px-1 items-end h-16">
                     {/* 6 Intermediate Boxes */}
                     {['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'].map((val, i) => (
                         <div key={i} className="bg-sky-900/40 border border-sky-500/30 rounded shadow-inner overflow-hidden">
@@ -213,7 +213,7 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
                     ))}
                 </div>
 
-                {/* Bottom Row: Axis */}
+                {/* Axis */}
                 <div className="w-full px-1 relative">
                     {/* Axis Line */}
                     <div className="h-0.5 w-full bg-slate-500 relative flex items-center">

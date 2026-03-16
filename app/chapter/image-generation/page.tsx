@@ -56,11 +56,27 @@ const tutorial: Tutorial = {
             description: 'ここを押してAIの学習を開始してください。'
           }
         },
+        {
+          element: '.interpolation-steps-container', popover: {
+            title: 'ニューラルネットワークが出力する画像',
+            description: 'AIは0の例と1の例だけを学習し、その関係から0と1の間の値にも対応できるようになり、中間の特徴を持つ出力を生成できるようになります。'
+          }
+        },
+        {
+          element: '.grid-canvas-container', popover: {
+            title: '4つのニューロンの出力',
+            description: 'さらに1枚の画像は、この4つのニューロンの出力の足し合わせによって計算されます。ここで + は足される画像、- は引かれる画像を表します。'
+          }
+        },
       ],
       quiz: {
         title: "問題", problems: [
-          { question: "バイアスを移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: [1] },
-          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
+          { question: "このニューラルネットワークの入力値はいくつありますか？", choices: ["0", "1", "4", "48*48*3"], correctIndex: 1 },
+          { question: "このニューラルネットワークの出力値はいくつありますか？", choices: ["0", "1", "4", "48*48*3"], correctIndex: 3 },
+          { question: "データセットと予測結果にある横軸(0.0〜1.0)は、何を表していますか？", choices: ["入力値", "出力値", "ニューロンの数", "画像のピクセル数"], correctIndex: 0 },
+          { question: "データセットと予測結果にある例えば0.2の画像はどういう意味の画像ですか？", choices: ["入力0の画像が20%、入力1の画像が80%の画像", "入力0の画像が80%、入力1の画像が20%の画像", "ニューロン数を0.2にした画像"], correctIndex: 1 },
+          { question: "プログラムのunitsの値を4から1に変更すると、画像を正しく出力できません。その理由として正しいものは？", choices: ["画像のように複雑なデータは、ニューロンが1つだけのAIでは学習できないため。これはプログラムのバグではなく、このAIの構造上の限界である。", "画像が2枚なので、ニューロン数は2にしなければいけないため", "プログラムのバグで学習処理ができないため"], correctIndex: 0 },
+          { question: "ニューロン数を大きくする場合、どのような影響があると思われますか？適切なものをすべて選んでください。", choices: ["学習時間が長くなる", "より複雑な画像を出力できるようになる", "出力する画像のサイズが大きくなる"], correctIndex: [0, 1] },
         ]
       },
     },
@@ -145,7 +161,7 @@ export default function Home() {
       <StageControllerPanel tutorial={tutorial} quizPanelRef={quizPanelRef} onStartQuiz={toggleQuiz} />
 
       {/* Main Content */}
-      <main className="flex min-w-0 w-full bg-inherit">
+      <main className="flex min-w-0 min-h-0 w-full bg-inherit">
         <div ref={containerRef} id="container" className="container-panel h-full min-w-0 bg-inherit overflow-hidden p-2">
 
           {/* Left Panel: Merged Height (Full Height of container) */}
@@ -178,8 +194,8 @@ export default function Home() {
             className="w-2 flex-shrink-0 cursor-col-resize hover:bg-blue-900 active:bg-blue-500 transition-colors duration-150 rounded"
           />
 
-          {/* Right Column Wrapper: Stacks Upper and Lower panels */}
-          <div className="flex flex-col gap-4 min-w-0 flex-1 bg-inherit">
+          {/* 中央パネル */}
+          <div className="flex flex-col gap-4 min-h-0 min-w-0 flex-1 bg-inherit">
             {/* 個別のグラフ */}
             <div id="graph-area-top" className="right-panel">
               <ImageGridPanel ref={imageGridPanelRef} />

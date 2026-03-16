@@ -18,6 +18,10 @@ const tutorial: Tutorial = {
         title: "問題", problems: [
           { question: "バイアスを移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: [1] },
           { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
+          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
+          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
+          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
+          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
         ]
       },
     },
@@ -115,7 +119,7 @@ export default function Home() {
       <StageControllerPanel tutorial={tutorial} quizPanelRef={quizPanelRef} onStartQuiz={toggleQuiz} />
 
       {/* Main Content */}
-      <main className="flex bg-inherit overflow-hidden bg-inherit">
+      <main className="flex min-w-0 min-h-0 overflow-hidden bg-inherit">
         {/* Container: Flex Row on MD screens to put Left and Right side-by-side */}
         <div ref={containerRef} className="container-panel h-full bg-inherit">
 

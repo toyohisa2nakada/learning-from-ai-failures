@@ -53,7 +53,7 @@ const ImageGridPanel = forwardRef<ImageGridPanelHandle>((_, ref) => {
             <div className="text-base font-semibold m-0">計算プロセス</div>
 
             {/* Grid Canvas */}
-            <div className="flex-1 flex flex-col items-center justify-center p-2 relative">
+            <div className="grid-canvas-container flex-1 flex flex-col items-center justify-center p-2 relative">
                 <div className="flex flex-col w-full h-full justify-between items-center">
                     <div className="grid grid-cols-6 gap-x-1 w-full px-2">
                         {stepValues.map((_, groupIndex) => (
