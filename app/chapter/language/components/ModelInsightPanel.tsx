@@ -112,9 +112,6 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 probElementsRef.current.slice(0, -1).filter(e => e !== null).forEach((e, i) => {
                     e.textContent = "";
                 });
-                // wordElementsRef.current.slice(0, -1).filter(e => e !== null).forEach((e, i) => {
-                //     e.textContent = "";
-                // });
                 lastResultSetRef.current = null;
             }
             setDatasetState({ dataset, test_pattern_index });
@@ -251,7 +248,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
 
 
     return (
-        <div ref={containerRef} className="text-s">
+        <div ref={containerRef} className="text-s bg-slate-800/30">
             {/* 幅計測用の非表示スパン（実際のフォントサイズで測定するためDOMに配置） */}
             <span ref={measureSpanRef} style={{ visibility: 'hidden', position: 'absolute', whiteSpace: 'nowrap', fontSize: 'inherit' }} />
             <style jsx>{`
@@ -264,60 +261,67 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 }
             `}</style>
 
-            {/* 上部の表 */}
-            <table className="top-table">
-                <tbody>
-                    <tr>{datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index) => (
-                        <td key={index}
-                            ref={(el) => {
-                                if (modelName === "fnn" || modelName === "llm") {
-                                    edgeElementsRef.current.sources[index] = el;
-                                }
-                            }}
-                            style={{ backgroundColor: INPUT_COLORS[index] }}>
-                            {word}
-                        </td>
-                    ))}</tr>
-                    {modelName === 'gap' && (<tr>
-                        <td id="average-cell"
-                            ref={(el) => { edgeElementsRef.current.sources[0] = el; }}
-                            colSpan={(datasetState?.dataset.test_patterns[datasetState.test_pattern_index].length || 1) - 1}
-                            style={{ textAlign: 'center' }}>
-                            平均
-                        </td>
-                    </tr>)}
-                </tbody>
-            </table>
+            {/* モデル名と入力 */}
+            <div className="flex">
+                <div className="mx-8">{modelName}</div>
+                {/* 入力 */}
+                <table className="top-table">
+                    <tbody>
+                        <tr>{datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index) => (
+                            <td key={index}
+                                ref={(el) => {
+                                    if (modelName === "fnn" || modelName === "llm") {
+                                        edgeElementsRef.current.sources[index] = el;
+                                    }
+                                }}
+                                style={{ backgroundColor: INPUT_COLORS[index] }}>
+                                {word}
+                            </td>
+                        ))}</tr>
+                        {modelName === 'gap' && (<tr>
+                            <td id="average-cell"
+                                ref={(el) => { edgeElementsRef.current.sources[0] = el; }}
+                                colSpan={(datasetState?.dataset.test_patterns[datasetState.test_pattern_index].length || 1) - 1}
+                                style={{ textAlign: 'center' }}>
+                                平均
+                            </td>
+                        </tr>)}
+                    </tbody>
+                </table>
+            </div>
 
-            {/* 矢印（SVG） */}
+            {/* 出力への矢印 */}
             <svg ref={svgRef} id="arrow-svg" viewBox={`0 0 ${containerWidth} 30`} style={{ height: '30px', width: '100%', display: 'block' }}>
             </svg>
 
             {/* llm用の中間の表とsvg */}
             {modelName === "llm" && (
-                <table className="middle-top-table">
-                    <tbody>
-                        <tr>
-                            {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index, arr) => (
-                                <td key={index}
-                                    ref={(el) => {
-                                        if (index === arr.length - 1) {
-                                            llmEdgeElementsRef.current.sources[0] = el;
-                                        }
-                                        if (index === arr.length - 1) {
-                                            edgeElementsRef.current.targets[0] = el;
-                                        }
-                                    }}
-                                    style={{
-                                        textAlign: 'center',
-                                        opacity: index === arr.length - 1 ? 1.0 : 0.2
-                                    }}>
-                                    {word}
-                                </td>
-                            ))}
-                        </tr>
-                    </tbody>
-                </table>
+                <div className="flex">
+                    <div className="mx-8 invisible">{modelName}</div>
+                    <table className="middle-top-table">
+                        <tbody>
+                            <tr>
+                                {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(0, -1).map((word, index, arr) => (
+                                    <td key={index}
+                                        ref={(el) => {
+                                            if (index === arr.length - 1) {
+                                                llmEdgeElementsRef.current.sources[0] = el;
+                                            }
+                                            if (index === arr.length - 1) {
+                                                edgeElementsRef.current.targets[0] = el;
+                                            }
+                                        }}
+                                        style={{
+                                            textAlign: 'center',
+                                            opacity: index === arr.length - 1 ? 1.0 : 0.2
+                                        }}>
+                                        {word}
+                                    </td>
+                                ))}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             )}
             {modelName === "llm" && (
                 <svg ref={llmSvgRef} id="llm-arrow-svg" viewBox={`0 0 ${containerWidth} 20`} style={{ height: '20px', width: '100%', display: 'block' }}>

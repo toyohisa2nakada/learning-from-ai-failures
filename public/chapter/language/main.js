@@ -1,7 +1,37 @@
 const config = {
+    modelNames: [
+        "fnn",
+        // "gap",
+        // "llm",
+    ],
     learningRate: 0.005,
-    epochs: 50
+    epochs: 50,
 };
+function setModels({ learningRate = 0.001, verbose = true } = {}) {
+    const keyDim = 4;
+    // encodingType: embedding / onehot
+    const encodingType = "onehot";
+
+    const modelMap = {
+        fnn: { fn: createSimpleFNN, params: { type: "ful" } },
+        gap: { fn: createSimpleGAP, params: { type: "ful" } },
+        llm: { fn: createSimpleLLM, params: { type: "nor", numHeads: 8 } },
+    };
+
+    const models = config.modelNames.map(name => {
+        const { fn, params } = modelMap[name];
+        return fn({
+            vocabSize: Object.keys(dataset.vocab).length,
+            inputDim: dataset.train_x().shape[1],
+            keyDim,
+            learningRate,
+            encodingType,
+            ...params,
+        });
+    });
+    return models;
+}
+
 
 import { OneHotLayer } from "OneHotLayer.js";
 import { MultiHeadAttention } from "MultiHeadAttention.js";
@@ -131,41 +161,6 @@ function evaluateModel({ model, options, dataset }) {
             weights: weightsSet?.[i],
         }));
     })
-}
-
-function setModels({ learningRate = 0.001, verbose = true } = {}) {
-    const keyDim = 4;
-    const numHeads = 8;
-    // encodingType: embedding / onehot
-    const encodingType = "onehot";
-    const models = [
-        createSimpleLLM({
-            vocabSize: Object.keys(dataset.vocab).length,
-            inputDim: dataset.train_x().shape[1],
-            keyDim,
-            numHeads,
-            learningRate,
-            type: "nor",
-            encodingType,
-        }),
-        createSimpleGAP({
-            vocabSize: Object.keys(dataset.vocab).length,
-            inputDim: dataset.train_x().shape[1],
-            keyDim,
-            learningRate,
-            type: "ful",
-            encodingType,
-        }),
-        createSimpleFNN({
-            vocabSize: Object.keys(dataset.vocab).length,
-            inputDim: dataset.train_x().shape[1],
-            keyDim,
-            learningRate,
-            type: "ful",
-            encodingType,
-        }),
-    ].filter(e => e !== undefined);
-    return models;
 }
 
 function postEvaluation({ model, options, dataset }) {

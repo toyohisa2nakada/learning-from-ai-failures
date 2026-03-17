@@ -70,7 +70,7 @@ export type FromIframeMessageData =
     | { type: string & {}; values?: any }; // その他の動的なメッセージ（updateHandlerなど）用
 
 const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = null, updateHandler, externalScripts = {}, path, externallyCallableFunctions = [] }: JsEditorProps, ref) => {
-    console.log("JsEditor", defaultValue?.substring(0, 20));
+    console.log("JsEditor");
     useImperativeHandle(ref, () => ({
         callExternallyCallableFunction: (params) => {
             return new Promise((resolve, reject) => {

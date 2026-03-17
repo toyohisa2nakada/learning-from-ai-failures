@@ -7,6 +7,7 @@ interface DatasetPanelProps {
     onDatasetChange: (dataset: Readonly<Dataset>) => void;
     onPredict: (input: string) => Promise<PredictionResult>;
 }
+type DatasetType = "Homonym" | "Favorite";
 
 declare namespace tf {
     type Tensor2D = any;
@@ -235,7 +236,7 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
     const evaluationCellRef = useRef<HTMLTableCellElement[]>([]);
     const evaluationResultsRef = useRef<{ [modelName: string]: HTMLDivElement }[]>([]);
     const predictionInputRef = useRef<HTMLInputElement | null>(null);
-    const [selected, setSelected] = useState("Homonym");
+    const [selected, setSelected] = useState<DatasetType>("Favorite");
     const [predictResults, setPredictResults] = useState<PredictionResult>("");
 
     function clearPredictions() {
@@ -295,18 +296,18 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
 
                 <div className="bg-inherit">
                     <label htmlFor="dataSelect">データ選択:</label>
-                    <select className="bg-inherit" id="dataSelect" value={selected} onChange={(e) => setSelected(e.target.value)}>
-                        <option value="Homonym">同音異義語データ</option>
+                    <select className="border border-slate-500 bg-inherit" id="dataSelect" value={selected} onChange={(e) => setSelected(e.target.value as DatasetType)}>
                         <option value="Favorite">好き嫌いデータ</option>
+                        <option value="Homonym">同音異義語データ</option>
                     </select>
                 </div>
             </div>
 
             <div className="flex flex-row">
-                <label>入力</label><input className="w-28 border rounded" type="text" ref={predictionInputRef} onKeyDown={e => { if (e.key === 'Enter') handlePredict() }} />
+                <label>入力</label><input className="w-28 px-0.5 border border-slate-500" type="text" ref={predictionInputRef} onKeyDown={e => { if (e.key === 'Enter') handlePredict() }} />
                 <button
                     onClick={handlePredict}
-                    className="ml-3 p-1 text-slate-500 hover:text-slate-300 transition-colors"
+                    className="mx-1 p-1 text-slate-500 hover:text-slate-300 transition-colors"
                     title="次の文字を予測する"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
