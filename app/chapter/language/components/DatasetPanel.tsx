@@ -275,18 +275,19 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
             </div>
 
             <div className="flex flex-row">
-                <label>入力</label><input className="w-28 px-0.5 border border-slate-500" type="text" ref={predictionInputRef} onKeyDown={e => { if (e.key === 'Enter') handlePredict() }} />
-                <button
-                    onClick={handlePredict}
-                    className="mx-1 p-1 text-slate-500 hover:text-slate-300 transition-colors"
-                    title="次の文字を予測する"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="9 10 4 15 9 20" />
-                        <path d="M20 4v7a4 4 0 0 1-4 4H4" />
-                    </svg>
-                </button>
-                <span>{typeof predictResults === "string" ? predictResults :
+                <div className="prediction-input-container">
+                    <label>入力</label><input className="prediction-input w-28 px-0.5 border border-slate-500" type="text" ref={predictionInputRef} onKeyDown={e => { if (e.key === 'Enter') handlePredict() }} />
+                    <button
+                        onClick={handlePredict}
+                        className="mx-1 p-1 text-slate-500 hover:text-slate-300 transition-colors"
+                        title="次の文字を予測する">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 10 4 15 9 20" />
+                            <path d="M20 4v7a4 4 0 0 1-4 4H4" />
+                        </svg>
+                    </button>
+                </div>
+                <span className="prediction-results">{typeof predictResults === "string" ? predictResults :
                     Object.entries(predictResults).map(([modelName, result]) => `${modelIcons[modelName.match(/(.*)\(.*\)/)?.[1] ?? ""]}${result}`).join(" ")}</span>
             </div>
 
@@ -303,7 +304,7 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
             `}</style>
             <div className="flex flex-row text-xs gap-1">
                 <div>
-                    <strong>学習データ</strong>
+                    <div className="training-data-label">学習データ</div>
                     <table className="training-data inner-table">
                         <thead>
                             <tr>
@@ -314,13 +315,13 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                         </thead>
                         <tbody>
                             {datasetRef.current?.train_patterns.map((row, i) => (
-                                <tr key={i}>{row.map((cell, j) => <td key={j}>{cell}</td>)}</tr>
+                                <tr key={i} className={`training-data-row-${i}`}>{row.map((cell, j) => <td key={j}>{cell}</td>)}</tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
                 <div>
-                    <strong>テストデータ</strong>
+                    <div className="test-data-label">テストデータ</div>
                     <table className="test-data inner-table">
                         <thead>
                             <tr>
