@@ -12,7 +12,8 @@ const tutorial: Tutorial = {
     {
       description: "生成AIを作ってみましょう",
       guide: [
-        { element: '#dataset-container', popover: { title: '単語の並び', description: '入力単語の並びです' } },
+        { element: '.training-data', popover: { title: '学習データ', description: '生成AIは、複数の単語の並びから次の単語を出力するように学習されたAIのことをいいます。' } },
+        { element: '.training-data', popover: { title: '学習データ', description: '生成AIは、複数の単語の並びから次の単語を出力するように学習されたAIのことをいいます。' } },
       ],
       quiz: {
         title: "問題", problems: [
@@ -79,7 +80,20 @@ const initialImportScripts: ImportScripts = IMPORT_SCRIPT_NAMES.reduce((acc, nam
   return acc;
 }, {} as ImportScripts);
 
+const MODEL_NAMES = ["fnn", "gap", "llm"] as const;
 
+function getModelIcon(name: string): string {
+  if (name.startsWith("llm")) {
+    return "Ⓛ";
+  }
+  if (name.startsWith("fnn")) {
+    return "Ⓕ";
+  }
+  if (name.startsWith("gap")) {
+    return "Ⓖ";
+  }
+  return "";
+}
 
 export default function Home() {
   console.log("LANGUAGE HOME")
@@ -192,7 +206,7 @@ export default function Home() {
               <div className="flex flex-row items-center mb-2 gap-2 bg-inherit">
                 <div className="font-semibold">計算プロセス</div>
                 <div className="bg-inherit text-sm">
-                  <label htmlFor="test-pattern-index">テストパターン</label>
+                  <label htmlFor="test-pattern-index">テストデータ</label>
                   <select className="border border-slate-500 bg-inherit" id="test-pattern-index" ref={testPatternSelectRef}
                     onChange={(e) => {
                       if (modelInsightPanelRef.current && dataset) {
@@ -207,10 +221,11 @@ export default function Home() {
               </div>
 
               <div className="flex flex-row flex-wrap gap-2 text-xs">
-                {["fnn", "gap", "llm"].map(modelName => (
+                {MODEL_NAMES.map(modelName => (
                   <ModelInsightPanel
                     key={modelName}
                     modelName={modelName}
+                    modelIcons={MODEL_NAMES.reduce((a, e) => ({ ...a, [e]: getModelIcon(e) }), {})}
                     ref={el => { if (el) modelInsightPanelRef.current[modelName] = el; }} />
                 ))}
               </div>
@@ -220,6 +235,7 @@ export default function Home() {
             <div id="dataset-container" className="right-panel h-auto flex-1 flex flex-col min-h-0 overflow-y-auto bg-inherit">
               <DatasetPanel
                 ref={datasetPanelRef}
+                modelIcons={MODEL_NAMES.reduce((a, e) => ({ ...a, [e]: getModelIcon(e) }), {})}
                 onDatasetChange={onDatasetChange} onPredict={onPredict} />
             </div>
           </div>

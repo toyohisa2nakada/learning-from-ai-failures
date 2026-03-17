@@ -6,8 +6,10 @@ type PredictionResult = { modelName: string, result: string } | string;
 interface DatasetPanelProps {
     onDatasetChange: (dataset: Readonly<Dataset>) => void;
     onPredict: (input: string) => Promise<PredictionResult>;
+    modelIcons: { [modelName: string]: string };
 }
 type DatasetType = "Homonym" | "Favorite";
+const paddingToken = '<P>';
 
 declare namespace tf {
     type Tensor2D = any;
@@ -26,9 +28,7 @@ export interface Dataset {
     vocab: { [key: string]: number };
     encode: (words: string[]) => number[];
     decode: (code: number) => string;
-    // 例: [['車道','ノイズ','ハシ','わたる'], ['食堂','ノイズ','ハシ','たべる']]
     test_patterns: string[][];
-    // 例: ["私は 猫が 好きです", "俺は 猫が 好きだ"]
     train_patterns: string[][];
     tokenize: (input: string) => { tokens: number[], errorMessage?: string };
 }
@@ -48,11 +48,9 @@ export interface DatasetPanelHandle {
     clearPredictions: () => void;
 }
 
-
-function generateDatasets({ name, train_patterns, test_patterns, mode = "next" }: { name: string, train_patterns: string[][], test_patterns: string[][], mode?: "next" | "last" }): Dataset {
+function generateDatasets({ name, train_patterns, test_patterns }: { name: string, train_patterns: string[][], test_patterns: string[][] }): Dataset {
     const maxLen = Math.max(...train_patterns.map(e => e.length));
-    const sortedWords = [...new Set(train_patterns.flat())].sort();
-    const paddingToken = '<P>';
+    const sortedWords = [...new Set(train_patterns.flat().filter(e => e !== paddingToken))].sort();
     const allWords: string[] = [paddingToken, ...sortedWords];
     const vocab: { [key: string]: number } = allWords.reduce((a, e, i) => ({ ...a, [e]: i }), {});
 
@@ -90,17 +88,11 @@ function generateDatasets({ name, train_patterns, test_patterns, mode = "next" }
     const sequences: { inputSeq: number[], targetWord: number }[] = [];
     train_patterns.forEach(words => {
         const n = words.length;
-        if (mode === "next") {
-            for (let i = 1; i < n; i++) {
-                sequences.push({ inputSeq: encode(words.slice(0, i)), targetWord: vocab[words[i]] });
-            }
-        } else if (mode === "last") {
-            sequences.push({ inputSeq: encode(words.slice(0, n - 1)), targetWord: vocab[words[n - 1]] });
-        }
+        sequences.push({ inputSeq: encode(words.slice(0, n - 1)), targetWord: vocab[words[n - 1]] });
     });
+    console.log(train_patterns);
+    console.log(sequences);
 
-    // const inputs = tf.tensor2d(sequences.map(e => e.inputSeq), [sequences.length, maxLen - 1], 'int32');
-    // const targets = tf.tensor1d(sequences.map(e => e.targetWord), 'float32');
     let train_x_backup: any = null;
     let train_y_backup: any = null;
     let tf_backup: any = null;
@@ -117,10 +109,7 @@ function generateDatasets({ name, train_patterns, test_patterns, mode = "next" }
 function generateFavoriteDatasets() {
     const objects = [["ポケモン", "ゲーム", "カレー"], ["大学"]];
     const subjects: [string, string[]][] = [["私は", ["好きです", "嫌いです"]], ["俺は", ["好きだ", "嫌いだ"]]];
-
-
     const test_patterns: string[][] = [];
-    // const correct_answers: string[] = [];
 
     const choice = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
     objects.forEach((objs, objs_i) => {
@@ -128,21 +117,20 @@ function generateFavoriteDatasets() {
         subjects.forEach(sub => {
             // 順列
             test_patterns.push([sub[0], obj, sub[1][objs_i]]);
-            // correct_answers.push(sub[1][objs_i]);
 
             // 逆順
             test_patterns.push([obj, sub[0], sub[1][objs_i]]);
-            // correct_answers.push(sub[1][objs_i]);
         })
     })
 
     const train_patterns: string[][] = [];
     objects.map((o, i) => o.map(oi => [oi, i] as [string, number])).flat().forEach(([oi, i]) => {
         subjects.forEach(([sub, verbs]) => {
+            train_patterns.push([paddingToken, sub, oi]);
             train_patterns.push([sub, oi, verbs[i]]);
         })
     });
-    return generateDatasets({ name: "Favorite", train_patterns, test_patterns, mode: "next" });
+    return generateDatasets({ name: "Favorite", train_patterns, test_patterns });
 }
 function generateHomonymDatasets() {
     const numSlots = 4; // ハシの前の語数
@@ -159,7 +147,6 @@ function generateHomonymDatasets() {
 
     const train_patterns: string[][] = [];
     const test_patterns: string[][] = [];
-    // const correct_answers: string[] = [];
 
     const shuffle = <T,>(array: T[]): T[] => [...array].sort(() => Math.random() - 0.5);
     const slotIndices: number[] = Array.from({ length: numSlots - 1 }, (_, i) => i + 1);
@@ -193,45 +180,28 @@ function generateHomonymDatasets() {
         const ctxIdx = i % contextGroups.length;
         words[Math.floor(Math.random() * numSlots)] = contextGroups[ctxIdx][Math.floor(Math.random() * contextGroups[ctxIdx].length)];
         test_patterns.push([...words, lastWord, targetWords[ctxIdx]]);
-        // correct_answers.push(targetWords[ctxIdx]);
     });
 
     // 1語目にコンテキストを入れる
     [...Array(1).keys()].map(i => findAndExtract(i % 2 === 0, i % 2 === 1)).filter(e => e !== null).forEach(seq => {
         test_patterns.push([...seq.slice(0, numSlots + 1), seq[numSlots + 1]]);
-        // correct_answers.push(seq[numSlots + 1])
 
         const ctxWord: string | undefined = seq.find(e => contextGroups.flat().includes(e))
         const ctxIdx = seq.indexOf(ctxWord!)
         const tagIdx = 0;
         [seq[tagIdx], seq[ctxIdx]] = [seq[ctxIdx], seq[tagIdx]];
         test_patterns.push([...seq.slice(0, numSlots + 1), seq[numSlots + 1]]);
-        // correct_answers.push(seq[numSlots + 1])
     });
 
-    return generateDatasets({ name: "Homonym", train_patterns, test_patterns, mode: "last" })
+    return generateDatasets({ name: "Homonym", train_patterns, test_patterns })
 }
-
 
 function getDatasetHeader(col: string[], i: number) {
     if (i === col.length - 1) return "期待される出力";
     return `入力${i + 1}`;
 }
 
-function getModelIcon(name: string): string {
-    if (name.startsWith("llm")) {
-        return "Ⓛ";
-    }
-    if (name.startsWith("fnn")) {
-        return "Ⓕ";
-    }
-    if (name.startsWith("gap")) {
-        return "Ⓖ";
-    }
-    return "";
-}
-
-const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onDatasetChange, onPredict }, ref) => {
+const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onDatasetChange, onPredict, modelIcons }, ref) => {
     const datasetRef = useRef<Dataset | null>(null);
     const evaluationCellRef = useRef<HTMLTableCellElement[]>([]);
     const evaluationResultsRef = useRef<{ [modelName: string]: HTMLDivElement }[]>([]);
@@ -259,6 +229,7 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
             if (typeof result === "string" && result.includes("not found")) {
                 setPredictResults("AIの学習を完了させると予測できます");
             } else {
+                console.log(result);
                 setPredictResults(result);
             }
         }
@@ -274,7 +245,7 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                 if (!div) return;
 
                 const textColor = result.correct_answer === result.predicted ? "#16a34a" : "#b91c1cbf";
-                div.innerHTML = `<small title="${resultSet.modelName}">${getModelIcon(resultSet.modelName)}</small><span style="color: ${textColor}">${result.predicted}</span>`;
+                div.innerHTML = `<small title="${resultSet.modelName}">${modelIcons[resultSet.modelName]}</small><span style="color: ${textColor}">${result.predicted}</span>`;
                 evaluationResultsRef.current[i][resultSet.modelName] = div;
             });
         },
@@ -295,7 +266,7 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                 <div className="font-semibold">データセットと予測結果</div>
 
                 <div className="bg-inherit">
-                    <label htmlFor="dataSelect">データ選択:</label>
+                    <label htmlFor="dataSelect">データセットの選択:</label>
                     <select className="border border-slate-500 bg-inherit" id="dataSelect" value={selected} onChange={(e) => setSelected(e.target.value as DatasetType)}>
                         <option value="Favorite">好き嫌いデータ</option>
                         <option value="Homonym">同音異義語データ</option>
@@ -316,7 +287,7 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                     </svg>
                 </button>
                 <span>{typeof predictResults === "string" ? predictResults :
-                    Object.entries(predictResults).map(([modelName, result]) => `${getModelIcon(modelName)}${result}`).join(" ")}</span>
+                    Object.entries(predictResults).map(([modelName, result]) => `${modelIcons[modelName.match(/(.*)\(.*\)/)?.[1] ?? ""]}${result}`).join(" ")}</span>
             </div>
 
             <style jsx>{`
@@ -330,10 +301,10 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                     padding: 4px;
                 }
             `}</style>
-            <div className="flex flex-row text-xs">
+            <div className="flex flex-row text-xs gap-1">
                 <div>
                     <strong>学習データ</strong>
-                    <table className="inner-table">
+                    <table className="training-data inner-table">
                         <thead>
                             <tr>
                                 {datasetRef.current?.train_patterns[0].map((_, i) => (
@@ -350,7 +321,7 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                 </div>
                 <div>
                     <strong>テストデータ</strong>
-                    <table className="inner-table">
+                    <table className="test-data inner-table">
                         <thead>
                             <tr>
                                 {datasetRef.current?.test_patterns[0].map((_, i) => (

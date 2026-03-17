@@ -14,6 +14,7 @@ const INPUT_COLORS = [
 
 interface ModelInsightPanelProps {
     modelName: string;
+    modelIcons: { [modelName: string]: string };
 }
 
 export interface ModelInsightPanelHandle {
@@ -21,7 +22,7 @@ export interface ModelInsightPanelHandle {
     updateDataset: (dataset: Dataset, test_pattern_index: number) => void;
 }
 
-const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelProps>(({ modelName }, ref) => {
+const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelProps>(({ modelName, modelIcons }, ref) => {
     const svgRef = useRef<SVGSVGElement>(null);
     const llmSvgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -263,7 +264,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
 
             {/* モデル名と入力 */}
             <div className="flex">
-                <div className="mx-8">{modelName}</div>
+                <div className="mx-4">{modelName} {modelIcons[modelName]}</div>
                 {/* 入力 */}
                 <table className="top-table">
                     <tbody>
@@ -297,7 +298,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
             {/* llm用の中間の表とsvg */}
             {modelName === "llm" && (
                 <div className="flex">
-                    <div className="mx-8 invisible">{modelName}</div>
+                    <div className="mx-4 invisible">{modelName} {modelIcons[modelName]}</div>
                     <table className="middle-top-table">
                         <tbody>
                             <tr>
