@@ -90,8 +90,6 @@ function generateDatasets({ name, train_patterns, test_patterns }: { name: strin
         const n = words.length;
         sequences.push({ inputSeq: encode(words.slice(0, n - 1)), targetWord: vocab[words[n - 1]] });
     });
-    console.log(train_patterns);
-    console.log(sequences);
 
     let train_x_backup: any = null;
     let train_y_backup: any = null;
@@ -229,7 +227,6 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
             if (typeof result === "string" && result.includes("not found")) {
                 setPredictResults("AIの学習を完了させると予測できます");
             } else {
-                console.log(result);
                 setPredictResults(result);
             }
         }

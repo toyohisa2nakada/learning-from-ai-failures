@@ -3,7 +3,7 @@
 import { useImperativeHandle, useRef, forwardRef, useEffect, useState } from 'react';
 import { type Dataset, type EvaluationResult } from '@/app/chapter/language/components/DatasetPanel';
 
-const VOCAB_TOP_N = 5;
+const VOCAB_TOP_N = 4;
 const INPUT_COLORS = [
     "rgba(228, 26, 28, 0.6)",
     "rgba(55, 126, 184, 0.6)",
