@@ -43,6 +43,7 @@ export type QuizResponseCallback = (result: QuizResponse) => void;
 // チュートリアルの構成、このデータを受け取ってStage管理を行う
 export type Tutorial = {
     stages: { description: string, quiz: Quiz, guide: Guide }[];
+    checkElements?: { [checkerName: string]: () => boolean };
 };
 
 // StageControllerのProps

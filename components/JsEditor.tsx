@@ -58,6 +58,7 @@ interface JsEditorProps {
 
 export interface JsEditorHandle {
     callExternallyCallableFunction: (params: { functionName: string, args: any[] }) => Promise<any>;
+    canCallExternallyCallableFunction: (params: { functionName: string }) => boolean;
     resetCode: () => void;
 }
 
@@ -71,10 +72,13 @@ export type FromIframeMessageData =
 
 const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = null, updateHandler, externalScripts = {}, path, externallyCallableFunctions = [] }: JsEditorProps, ref) => {
     console.log("JsEditor");
+    function canCallExternallyCallableFunction(functionName: string) {
+        return externalFunctionResults.current?.hasOwnProperty(functionName);
+    }
     useImperativeHandle(ref, () => ({
         callExternallyCallableFunction: (params) => {
             return new Promise((resolve, reject) => {
-                if (externalFunctionResults.current?.hasOwnProperty(params.functionName)) {
+                if (canCallExternallyCallableFunction(params.functionName)) {
                     const editor_output_elem = document.querySelector(".editor_output") as HTMLIFrameElement;
                     externalFunctionResults.current[params.functionName].push(resolve);
                     editor_output_elem!.contentWindow!.postMessage(params, '*');
@@ -82,6 +86,9 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = nul
                     resolve(`function '${params.functionName}' not found`);
                 }
             })
+        },
+        canCallExternallyCallableFunction: (params: { functionName: string }) => {
+            return canCallExternallyCallableFunction(params.functionName);
         },
         resetCode: () => {
             if (!editorRef.current || !defaultValue) return;

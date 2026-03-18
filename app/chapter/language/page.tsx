@@ -14,8 +14,42 @@ const tutorial: Tutorial = {
       guide: [
         { element: '.training-data-row-0', popover: { title: '学習データ', description: '「私は」を入力として、「ポケモン」が出るように学習します。<br>&lt;P&gt;は、2つの入力語のうち使わない空の部分を表しています。' } },
         { element: '.training-data-row-1', popover: { title: '学習データ', description: '次に、「私は」と前のステップの出力「ポケモン」を入力として、「好きです」が出るように学習します。<br>前の出力を次の入力に加えながら、生成AIは順番に単語を予測して文章を作ります。' } },
-        { element: '#ai-learning-start', popover: { title: 'AIが学習を開始する', description: 'ここを押してAIの学習を開始してください。' } },
-        { element: '.prediction-input-container', popover: { title: '次の文字を予測する', description: '学習が終了したらここに、「私は」と入力して横の矢印ボタンを押してください。' } },
+        {
+          element: '#ai-learning-start', popover: {
+            title: 'AIが学習を開始する',
+            description: 'ここを押してAIの学習を開始してください。',
+            onNextClick: (element, step, options) => {
+              console.log(tutorial);
+              console.log(tutorial.checkElements)
+              if (tutorial.checkElements?.['doneLearning']()) {
+                options.driver.moveNext()
+              } else {
+                if (options.state.popover) {
+                  const curText = options.state.popover.description.textContent;
+                  options.state.popover.description.textContent = curText.includes("進めません") ?
+                    "プログラムのボタンを押してみてください。" : "プログラムのボタンを押さないと進めません。";
+                }
+              }
+            }
+          }
+        },
+        {
+          element: '.prediction-input-container', popover: {
+            title: '次の文字を予測する',
+            description: '学習が終了したらここに、「私は」と入力して横の矢印ボタンを押してください。',
+            onNextClick: (element, step, options) => {
+              if (tutorial.checkElements?.['donePredict']()) {
+                options.driver.moveNext()
+              } else {
+                if (options.state.popover) {
+                  const curText = options.state.popover.description.textContent;
+                  options.state.popover.description.textContent = curText.includes("進めません") ?
+                    "「私は」を入力して矢印ボタンを押してください。" : "矢印ボタンを押さないと進めません。";
+                }
+              }
+            }
+          }
+        },
         { element: '.prediction-results', popover: { title: '予測結果', description: 'ここに予測した結果が表示されます。Ⓕは、現在のモデルの略称です。' } },
         { element: '.prediction-input-container', popover: { title: '次の文字を予測する', description: '「私は」の後に出力された文字を入力して再度矢印ボタンを押してみてください。' } },
         { element: '.prediction-results', popover: { title: '予測結果', description: 'さらに予測語が表示されて、文章が出来上がっていきます。' } },
@@ -63,7 +97,11 @@ const tutorial: Tutorial = {
         ]
       },
     },
-  ]
+  ],
+  checkElements: {
+    doneLearning: () => { return false; },
+    donePredict: () => { return false; },
+  },
 }
 
 
@@ -160,7 +198,12 @@ export default function Home() {
       setImportScripts(loadedScripts[1]);
     }).catch(error => {
       console.error('Error loading scripts:', error);
-    })
+    });
+
+    if (tutorial.checkElements) {
+      tutorial.checkElements.doneLearning = () => jsEditorRef.current?.canCallExternallyCallableFunction({ functionName: "predict" }) ?? false;
+      tutorial.checkElements.donePredict = () => document.querySelector(".prediction-results")?.textContent?.startsWith("Ⓕ") ?? false;
+    }
   }, []);
 
 
