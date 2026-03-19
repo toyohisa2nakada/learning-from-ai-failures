@@ -271,7 +271,7 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                 </div>
             </div>
 
-            <div className="flex flex-row">
+            <div className="prediction-container flex flex-row">
                 <div className="prediction-input-container">
                     <label>入力</label><input className="prediction-input w-28 px-0.5 border border-slate-500" type="text" ref={predictionInputRef} onKeyDown={e => { if (e.key === 'Enter') handlePredict() }} />
                     <button
@@ -330,7 +330,7 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                         </thead>
                         <tbody>
                             {datasetRef.current?.test_patterns.map((row, i) => (
-                                <tr key={i}>
+                                <tr key={i} className={`test-data-row-${i}`}>
                                     {row.map((cell, j) => <td key={j}>{cell}</td>)}
                                     <td ref={el => {
                                         if (el) {

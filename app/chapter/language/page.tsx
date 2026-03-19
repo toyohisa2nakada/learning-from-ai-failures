@@ -13,7 +13,7 @@ const tutorial: Tutorial = {
       description: "生成AIを作ってみましょう",
       guide: [
         { element: '.training-data-row-0', popover: { title: '学習データ', description: '「私は」を入力として、「ポケモン」が出るように学習します。<br>&lt;P&gt;は、2つの入力語のうち使わない空の部分を表しています。' } },
-        { element: '.training-data-row-1', popover: { title: '学習データ', description: '次に、「私は」と前のステップの出力「ポケモン」を入力として、「好きです」が出るように学習します。<br>前の出力を次の入力に加えながら、生成AIは順番に単語を予測して文章を作ります。' } },
+        { element: '.training-data-row-1', popover: { title: '学習データ', description: '「ポケモン」と出力されたあと、その出力を次の入力として使い、「好きです」と続くようにAIを学習させます。' } },
         {
           element: '#ai-learning-start', popover: {
             title: 'AIが学習を開始する',
@@ -51,8 +51,19 @@ const tutorial: Tutorial = {
           }
         },
         { element: '.prediction-results', popover: { title: '予測結果', description: 'ここに予測した結果が表示されます。Ⓕは、現在のモデルの略称です。' } },
-        { element: '.prediction-input-container', popover: { title: '次の文字を予測する', description: '「私は」の後に出力された文字を入力して再度矢印ボタンを押してみてください。' } },
+        {
+          element: '.prediction-container', popover: {
+            title: '次の文字を予測する',
+            description: '「私は」の後に出力された文字を入力して再度矢印ボタンを押してみてください。Ⓕは不要です。'
+          }
+        },
         { element: '.prediction-results', popover: { title: '予測結果', description: 'さらに予測語が表示されて、文章が出来上がっていきます。' } },
+        {
+          element: '.test-data-row-0', popover: {
+            title: 'テストデータ',
+            description: 'テストデータには、AIが学習していないデータが含まれています。予測結果が緑色は正解、赤は不正解を表しています。'
+          }
+        },
       ],
       quiz: {
         title: "問題", problems: [
