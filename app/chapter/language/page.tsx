@@ -76,11 +76,11 @@ const tutorial: Tutorial = {
       },
     },
     {
-      description: "語順の平均をとってみよう",
+      description: "Feed forward neural network (fnn)を理解する",
       guide: [
-        { element: '.fnn', popover: { title: '単語の並び', description: '入力単語の並びです' } },
-        { element: '.gap', popover: { title: '単語の並び', description: '入力単語の並びです' } },
-        { element: '.llm', popover: { title: '単語の並び', description: '入力単語の並びです' } },
+        { element: '.fnn', popover: { title: '機械学習の種類(モデル)', description: '機械学習のモデルは3種類用意してあり、今回はfnnを使用しました。' } },
+        { element: '.model-insight-fnn', popover: { title: 'fnnの構造', description: 'このfnnは、2つの入力値を受け取り、1つの出力値を返すシンプルな構造をしています。' } },
+        { element: '.model-insight-fnn .bottom-table', popover: { title: '出力', description: '' } },
       ],
       quiz: {
         title: "問題", problems: [

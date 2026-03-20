@@ -249,7 +249,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
 
 
     return (
-        <div ref={containerRef} className="text-s bg-slate-800/30">
+        <div ref={containerRef} className={`model-insight-${modelName} text-s bg-slate-800/30`}>
             {/* 幅計測用の非表示スパン（実際のフォントサイズで測定するためDOMに配置） */}
             <span ref={measureSpanRef} style={{ visibility: 'hidden', position: 'absolute', whiteSpace: 'nowrap', fontSize: 'inherit' }} />
             <style jsx>{`
@@ -292,7 +292,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
             </div>
 
             {/* 出力への矢印 */}
-            <svg ref={svgRef} id="arrow-svg" viewBox={`0 0 ${containerWidth} 30`} style={{ height: '30px', width: '100%', display: 'block' }}>
+            <svg ref={svgRef} className="arrow-svg" viewBox={`0 0 ${containerWidth} 30`} style={{ height: '30px', width: '100%', display: 'block' }}>
             </svg>
 
             {/* llm用の中間の表とsvg */}
@@ -325,14 +325,14 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
                 </div>
             )}
             {modelName === "llm" && (
-                <svg ref={llmSvgRef} id="llm-arrow-svg" viewBox={`0 0 ${containerWidth} 20`} style={{ height: '20px', width: '100%', display: 'block' }}>
+                <svg ref={llmSvgRef} className="llm-arrow-svg" viewBox={`0 0 ${containerWidth} 20`} style={{ height: '20px', width: '100%', display: 'block' }}>
                 </svg>
             )}
             {modelName === "llm" && (
                 <table className="middle-bottom-table">
                     <tbody>
                         <tr>
-                            <td id="word-単語">単語</td>
+                            <td>単語</td>
                             {datasetState?.dataset.test_patterns[datasetState.test_pattern_index].slice(-2, -1).map((word, index) => {
                                 return (<td key={index}
                                     ref={(el) => {
@@ -356,7 +356,7 @@ const ModelInsightPanel = forwardRef<ModelInsightPanelHandle, ModelInsightPanelP
             <table className="bottom-table">
                 <tbody>
                     <tr>
-                        <td id="word-単語">単語</td>
+                        <td>単語</td>
                         {[...Array(VOCAB_TOP_N).keys()].map((i) => {
                             const word = Object.keys(datasetState?.dataset.vocab ?? {})[i] || "?";
                             return (
