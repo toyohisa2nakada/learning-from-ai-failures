@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useRef, useState } from 'react';
 
 interface EditorToggleButtonsProps {
     programmingMode: 'manual' | 'programming';
-    onChangeMode: (mode: 'manual' | 'programming') => void;
+    onChangeMode?: (mode: 'manual' | 'programming') => void;
     onReset: () => void;
 }
 
@@ -22,7 +22,7 @@ const EditorToggleButtons = forwardRef<EditorToggleButtonsHandle, EditorToggleBu
         if (id === 'programming_detail' && programmingMode === 'programming') {
             setDetailMenuOpen(true);
         } else {
-            onChangeMode(id.split('_')[0] as 'manual' | 'programming');
+            onChangeMode?.(id.split('_')[0] as 'manual' | 'programming');
         }
     }
 

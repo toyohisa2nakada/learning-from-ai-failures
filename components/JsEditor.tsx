@@ -49,11 +49,12 @@ const HTML_TEMPLATE = `
 </html>`.replace(/[\r\n\t]+/g, "");
 
 interface JsEditorProps {
+    path?: string;
     defaultValue?: string | null;
     updateHandler?: { onUpdate: (data: any) => void; messageType: string; }[];
     externalScripts?: Record<string, string | object | null> | (() => Record<string, string | object | null>);
-    path?: string;
-    externallyCallableFunctions?: string[],
+    externallyCallableFunctions?: string[];
+    decorationSpecs?: { [text: string]: string };
 }
 
 export interface JsEditorHandle {
@@ -70,7 +71,14 @@ export type FromIframeMessageData =
     | { type: 'externallyCallableFunctionResult'; values: { functionName: string, result: any } }
     | { type: string & {}; values?: any }; // その他の動的なメッセージ（updateHandlerなど）用
 
-const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = null, updateHandler, externalScripts = {}, path, externallyCallableFunctions = [] }: JsEditorProps, ref) => {
+const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({
+    path,
+    defaultValue = null,
+    updateHandler,
+    externalScripts = {},
+    externallyCallableFunctions = [],
+    decorationSpecs = {}
+}: JsEditorProps, ref) => {
     console.log("JsEditor");
     function canCallExternallyCallableFunction(functionName: string) {
         return externalFunctionResults.current?.hasOwnProperty(functionName);
@@ -91,13 +99,13 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = nul
             return canCallExternallyCallableFunction(params.functionName);
         },
         resetCode: () => {
-            if (!editorRef.current || !defaultValue) return;
+            if (!editor || !defaultValue) return;
             const storageKey = `jseditor-${path}`;
             localStorage.removeItem(storageKey);
-            editorRef.current.setValue(defaultValue);
+            editor.setValue(defaultValue);
         }
     }));
-    const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+    const [editor, setEditor] = useState<editor.IStandaloneCodeEditor | null>(null);
     const workerRef = useRef<Worker | null>(null);
     const workerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const statusRef = useRef<HTMLDivElement>(null);
@@ -105,22 +113,6 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = nul
     const buttonLabelRef = useRef<HTMLButtonElement>(null);
     const externalFunctionResults = useRef<{ [functionName: string]: ((value: any) => void)[] }>({});
     const [initialValue, setInitialValue] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (defaultValue === null) return;
-
-        const storageKey = `jseditor-${path}`;
-        const savedData = path ? localStorage.getItem(storageKey) : null;
-
-        if (savedData) {
-            setInitialValue(savedData);
-        } else {
-            setInitialValue(defaultValue);
-            // if (path) {
-            //     localStorage.setItem(storageKey, defaultValue);
-            // }
-        }
-    }, [defaultValue, path]);
 
     function injectImportmap(htmlString: string, files: Record<string, string | object>, targetObject?: any): string {
         // '//'のコメントをとる
@@ -176,15 +168,51 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = nul
             // const extJsCode = { 'trainingData.js': `export const trainingData=${JSON.stringify(getCurrentTrainingDataType())};` };
             const extJsCode = { ...jsEditorExtJsCode, ...(externalScripts instanceof Function ? externalScripts() : externalScripts) };
 
-            const htmlString = injectImportmap(HTML_TEMPLATE.replace('__EDITOR_VALUE__', editorRef.current?.getValue() || ""), extJsCode as Record<string, string | object>, editor_output_elem);
+            const htmlString = injectImportmap(HTML_TEMPLATE.replace('__EDITOR_VALUE__', editor?.getValue() || ""), extJsCode as Record<string, string | object>, editor_output_elem);
             const { html: inlined_html, insertions } = inlineHTML(htmlString, extJsCode as Record<string, string | object>);
             const htmlStringWithErrorHandler = inlined_html.replace(/(<html[^>]*>)/i, `$1${BUILD_IFRAME_ERROR_HANDLER_SCRIPT}`);
 
             if (buttonLabelRef.current) buttonLabelRef.current.textContent = BUTTON_LABELS.preparing;
             editor_output_elem!.srcdoc = htmlStringWithErrorHandler;
         });
-        workerRef.current.postMessage({ code: editorRef.current!.getValue() })
+        workerRef.current.postMessage({ code: editor!.getValue() })
     }
+
+    // デコレーションの適用
+    useEffect(() => {
+        if (!editor || !Object.keys(decorationSpecs).length) return;
+        const model = editor.getModel();
+        if (!model) return;
+        const newDecorations = Object.entries(decorationSpecs).flatMap(([text, className]) => {
+            const matches = model.findMatches(text, true, false, true, null, true);
+
+            return matches.map(match => ({
+                range: match.range,
+                options: {
+                    inlineClassName: className,
+                    stickiness: 1
+                }
+            }));
+        });
+        const collection = editor.createDecorationsCollection(newDecorations);
+        return () => {
+            collection.clear();
+        };
+    }, [editor, decorationSpecs]);
+
+    // 初期レンダリング時にEditorに表示するコードを決定する
+    useEffect(() => {
+        if (defaultValue === null) return;
+
+        const storageKey = `jseditor-${path}`;
+        const savedData = path ? localStorage.getItem(storageKey) : null;
+
+        if (savedData) {
+            setInitialValue(savedData);
+        } else {
+            setInitialValue(defaultValue);
+        }
+    }, [defaultValue, path]);
 
     // iframeからのメッセージの取得
     useEffect(() => {
@@ -237,7 +265,7 @@ const JsEditor = forwardRef<JsEditorHandle, JsEditorProps>(({ defaultValue = nul
                     height="100%"
                     defaultLanguage="javascript"
                     theme="vs-dark"
-                    onMount={(editor, monaco) => editorRef.current = editor}
+                    onMount={(editor) => setEditor(editor)}
                     options={{
                         fontSize: 12,
                         lineNumbers: 'off',

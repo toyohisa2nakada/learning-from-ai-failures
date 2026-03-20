@@ -61,7 +61,7 @@ const tutorial: Tutorial = {
         {
           element: '.test-data-row-0', popover: {
             title: 'テストデータ',
-            description: 'テストデータには、AIが学習していないデータが含まれています。予測結果が緑色は正解、赤は不正解を表しています。'
+            description: 'テストデータとは、AIの学習を評価するためのデータです。テストデータには、AIが学習していないデータが含まれています。予測結果が緑色は正解、赤は不正解を表しています。'
           }
         },
       ],
@@ -78,7 +78,9 @@ const tutorial: Tutorial = {
     {
       description: "語順の平均をとってみよう",
       guide: [
-        { element: '#dataset-container', popover: { title: '単語の並び', description: '入力単語の並びです' } },
+        { element: '.fnn', popover: { title: '単語の並び', description: '入力単語の並びです' } },
+        { element: '.gap', popover: { title: '単語の並び', description: '入力単語の並びです' } },
+        { element: '.llm', popover: { title: '単語の並び', description: '入力単語の並びです' } },
       ],
       quiz: {
         title: "問題", problems: [
@@ -233,20 +235,19 @@ export default function Home() {
               <div className="text-base font-bold mb-3">ニューラルネットワークの構造</div>
               <EditorToggleButtons
                 programmingMode="programming"
-                onChangeMode={() => { }}
                 onReset={() => { jsEditorRef.current?.resetCode() }}
               />
             </div>
             <JsEditor
               path="chapter/language/main.js"
+              defaultValue={mainScript}
+              decorationSpecs={{ "\"fnn\"": "fnn", "\"gap\"": "gap", "\"llm\"": "llm" }}
               updateHandler={[
                 { onUpdate: onEvaluationUpdate, messageType: "evaluation" },
                 { onUpdate: onLearningStatusUpdate, messageType: "learning-status" },
-                // { onUpdate: (result) => { console.log("page.tsx result", result) }, messageType: "functionResult" },
               ]}
               externalScripts={({ ...importScripts, 'dataset.js': dataset })}
               externallyCallableFunctions={["predict"]}
-              defaultValue={mainScript}
               ref={jsEditorRef}
             />
           </div>
