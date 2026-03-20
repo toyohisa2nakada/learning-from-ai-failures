@@ -80,23 +80,19 @@ const tutorial: Tutorial = {
       guide: [
         { element: '.fnn', popover: { title: '機械学習の種類(モデル)', description: '機械学習のモデルは3種類用意してあり、今回はfnnを使用しました。' } },
         { element: '.model-insight-fnn', popover: { title: 'fnnの構造', description: 'このfnnは、2つの入力値を受け取り、1つの出力値を返すシンプルな構造をしています。' } },
-        { element: '.model-insight-fnn .bottom-table', popover: { title: '出力', description: '' } },
+        { element: '.model-insight-fnn .bottom-table', popover: { title: '出力', description: '出力は1つの数値で、その値に最も近い単語が予測結果となります。' } },
       ],
       quiz: {
         title: "問題", problems: [
-          { question: "バイアスを移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: [1] },
-          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
-          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
-          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
-          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
-          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
+          { question: "fnnが失敗するテストケースはどのようなデータが多いですか？", choices: ["入力1に主語（私は、俺は）が入るとき", "入力1に目的語（カレー、大学）が入るとき"], correctIndex: 0 },
+          { question: "fnnが失敗するのはなぜだと思いますか？", choices: ["入力1と2が入れ替わるのに対応できないから", "カレー、大学は学習データに無いから"], correctIndex: 0 },
         ]
       },
     },
     {
-      description: "どの語に注目するかを学習する",
+      description: "入力を平均する",
       guide: [
-        { element: '#dataset-container', popover: { title: '単語の並び', description: '入力単語の並びです' } },
+        { element: '.gap', popover: { title: 'Global Average Pooling', description: 'この gap というモデルは現在はコメントアウトされています。// を消して有効化してください。' } },
       ],
       quiz: {
         title: "問題", problems: [
