@@ -81,27 +81,66 @@ const tutorial: Tutorial = {
         { element: '.fnn', popover: { title: '機械学習の種類(モデル)', description: '機械学習のモデルは3種類用意してあり、今回はfnnを使用しました。' } },
         { element: '.model-insight-fnn', popover: { title: 'fnnの構造', description: 'このfnnは、2つの入力値を受け取り、1つの出力値を返すシンプルな構造をしています。' } },
         { element: '.model-insight-fnn .bottom-table', popover: { title: '出力', description: '出力は1つの数値で、その値に最も近い単語が予測結果となります。' } },
+        { element: '.arrow-svg', popover: { title: 'エッジ', description: '入力語と出力語の間の線がエッジです。オレンジは確率を上げる、水色は確率を下げることを表しています。' } },
+        { element: () => ((document.querySelector('#quiz-container') as HTMLElement)?.offsetParent && document.querySelector('#quiz-container'))! || document.querySelector('#start-quiz')!, popover: { title: '次のクイズ', description: 'ここまでの内容で次のクイズが用意されています。' } },
       ],
       quiz: {
         title: "問題", problems: [
-          { question: "fnnが失敗するテストケースはどのようなデータが多いですか？", choices: ["入力1に主語（私は、俺は）が入るとき", "入力1に目的語（カレー、大学）が入るとき"], correctIndex: 0 },
-          { question: "fnnが失敗するのはなぜだと思いますか？", choices: ["入力1と2が入れ替わるのに対応できないから", "カレー、大学は学習データに無いから"], correctIndex: 0 },
+          { question: "目的語（例えばカレー）が同じでも、主語が「私は」と「俺は」では、どう出力が変わりますか？", choices: ["出力は変わらない", "「私は」のときは予測が外れて失敗する", "「私は」のときは語尾が「です」、「俺は」のときは「だ」になる"], correctIndex: 2 },
+          { question: "データセットと予測結果の入力欄に「彼は」という学習データに登場しない語を入力するとどうなりますか？", choices: ["目的語が適当に選ばれて出力される", "未知の語が含まれているというエラーになる（学習データに無い語は使用できない）"], correctIndex: 1 },
+          { question: "データセットと予測結果の入力欄に「私はポケモン好きです」の3語を入力したとき、出力はどうなりますか？", choices: ["「好きです」が「好きだ」に変わる", "語数が多いというエラーになる（入力語は最大で2語までである）"], correctIndex: 1 },
+          { question: "テストケースの中で、fnnが失敗するはどのようなときですか？", choices: ["入力1に主語（私は、俺は）が入るとき", "入力1に目的語（カレー、大学）が入るとき"], correctIndex: 1 },
+          { question: "fnnが失敗するのはなぜでしょうか？", choices: ["学習データでは主語、目的語の順で並んでいて、テストデータではその語順が逆転しているから", "カレー、大学といった目的語は学習データに無いから"], correctIndex: 0 },
         ]
       },
     },
     {
       description: "入力を平均する",
       guide: [
-        { element: '.gap', popover: { title: 'Global Average Pooling', description: 'この gap というモデルは現在はコメントアウトされています。// を消して有効化してください。' } },
+        { element: '.fnn', popover: { title: 'fnnの問題点', description: 'fnnの問題点は、入力の順序が変わると対応できないことでした。' } },
+        {
+          element: '.gap', popover: {
+            title: 'Global Average Pooling',
+            description: '次に、この gap というモデルを試します。gapは、global average poolingの略です。<br><br>まず // を消してコメントアウトを外してください。<br><br>そのあとで「AIが学習する」を押してください。'
+          }
+        },
+        { element: () => ((document.querySelector('#quiz-container') as HTMLElement)?.offsetParent && document.querySelector('#quiz-container'))! || document.querySelector('#start-quiz')!, popover: { title: '次のクイズ', description: 'ここまでの内容で次のクイズが用意されています。' } },
       ],
       quiz: {
         title: "問題", problems: [
-          { question: "バイアスを移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: [1] },
-          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
-          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
-          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
-          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
-          { question: "重みw1を移動すると個別グラフはどのように動きますか", choices: ["上下に移動する", "左右に移動する", "傾きが変わる"], correctIndex: 2 },
+          { question: "計算プロセスの図、データセットを見て、fnnとgapの違いを説明してください。", choices: ["gapは入力語を平均して1つにしてから次の語を予測している", "gapは語順を入れ替えたデータを学習している"], correctIndex: 0 },
+          { question: "データセットと予測結果において、Ⓖで表されるgapの結果はfnnと比べてどういう特徴がありますか？", choices: ["「好き」のときに予測に成功している", "語尾が「です」のときに予測に成功している", "語順が変わるときに予測に成功している"], correctIndex: 2 },
+        ]
+      },
+    },
+    {
+      description: "Global Average Pooling (gap)を理解する",
+      guide: [
+        { element: '#dataSelect', popover: { title: 'gapの問題点', description: 'ここのデータセットを「同音異義語データ」に変えてください。' } },
+        { element: () => ((document.querySelector('#quiz-container') as HTMLElement)?.offsetParent && document.querySelector('#quiz-container'))! || document.querySelector('#start-quiz')!, popover: { title: '次のクイズ', description: 'ここまでの内容で次のクイズが用意されています。' } },
+      ],
+      quiz: {
+        title: "問題", problems: [
+          { question: "gapの問題点は？", choices: ["語が多いと注目すべき語が埋もれてしまう", ""], correctIndex: 0 },
+        ]
+      },
+    },
+    {
+      description: "どの語に注目するのかを学習する",
+      guide: [
+        { element: '.gap', popover: { title: 'fnnの問題点', description: 'fnnの問題点は、入力の順序が変わると対応できないことでした。' } },
+        {
+          element: '.llm', popover: {
+            title: 'Large language model (llm)',
+            description: '次に、この llm というモデルを試します。llmは、large language modelの略です。<br><br>まず // を消してコメントアウトを外してください。<br><br>そのあとで「AIが学習する」を押してください。'
+          }
+        },
+        { element: () => ((document.querySelector('#quiz-container') as HTMLElement)?.offsetParent && document.querySelector('#quiz-container'))! || document.querySelector('#start-quiz')!, popover: { title: '次のクイズ', description: 'ここまでの内容で次のクイズが用意されています。' } },
+      ],
+      quiz: {
+        title: "問題", problems: [
+          { question: "計算プロセスの図、データセットを見て、llmの特徴を説明してください。", choices: ["", ""], correctIndex: 0 },
+          { question: "データセットと予測結果において、Ⓛで表されるllmの結果はfnn,gapと比べてどういう特徴がありますか？", choices: ["「好き」のときに予測に成功している", "語尾が「です」のときに予測に成功している", "語順が変わるときに予測に成功している"], correctIndex: 2 },
         ]
       },
     },

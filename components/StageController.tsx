@@ -18,7 +18,7 @@ import UnreadBadge from "@/lib/UnreadBadge";
 
 // 画面説明のための情報
 export type Guide = {
-    element: string;
+    element: Element | string | (() => Element);
     popover: Popover;
 }[];
 
@@ -260,7 +260,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
 
             const driverObj = driver({
                 steps: [
-                    { element: quizCheckButtonRef.current!, popover: { title: "次のクイズ", description: "ここを押すと次のクイズが表示されます" } },
+                    { element: "#start-quiz", popover: { title: "次のクイズ", description: "ここを押すと次のクイズが表示されます" } },
                     { element: "#start-guide", popover: { title: "説明の更新", description: "また説明も更新されます。" } },
                 ],
             });

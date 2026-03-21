@@ -44,12 +44,7 @@ const tutorial: Tutorial = {
             description: "また、黄色の点（教師データ）は4種類あり、変更することができます。"
           }
         },
-        {
-          element: "#start-quiz", popover: {
-            title: "課題",
-            description: "色々と試してから、クイズに挑戦してみてください！"
-          }
-        },
+        { element: () => ((document.querySelector('#quiz-container') as HTMLElement)?.offsetParent && document.querySelector('#quiz-container'))! || document.querySelector('#start-quiz')!, popover: { title: 'クイズ', description: '色々と試してから、クイズに挑戦してみてください！' } },
       ],
       quiz: {
         title: "問題", problems: [
