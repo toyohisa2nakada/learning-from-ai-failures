@@ -54,7 +54,7 @@ const tutorial: Tutorial = {
         {
           element: '.prediction-container', popover: {
             title: '次の文字を予測する',
-            description: '「私は」の後に出力された文字を入力して再度矢印ボタンを押してみてください。Ⓕは不要です。'
+            description: '「私は」の後に出力された文字を入力して再度矢印ボタンを押してみてください。"Ⓕ"の入力は不要です。'
           }
         },
         { element: '.prediction-results', popover: { title: '予測結果', description: 'さらに予測語が表示されて、文章が出来上がっていきます。' } },
@@ -104,12 +104,13 @@ const tutorial: Tutorial = {
             description: '次に、この gap というモデルを試します。gapは、global average poolingの略です。<br><br>まず // を消してコメントアウトを外してください。<br><br>そのあとで「AIが学習する」を押してください。'
           }
         },
-        { element: () => ((document.querySelector('#quiz-container') as HTMLElement)?.offsetParent && document.querySelector('#quiz-container'))! || document.querySelector('#start-quiz')!, popover: { title: '次のクイズ', description: 'ここまでの内容で次のクイズが用意されています。' } },
+        { element: () => ((document.querySelector('#quiz-container') as HTMLElement)?.offsetParent && document.querySelector('#quiz-container'))! || document.querySelector('#start-quiz')!, popover: { title: '次のクイズ', description: 'ここまでの内容で次のクイズが用意されています。 ' } },
       ],
       quiz: {
         title: "問題", problems: [
-          { question: "計算プロセスの図、データセットを見て、fnnとgapの違いを説明してください。", choices: ["gapは入力語を平均して1つにしてから次の語を予測している", "gapは語順を入れ替えたデータを学習している"], correctIndex: 0 },
-          { question: "データセットと予測結果において、Ⓖで表されるgapの結果はfnnと比べてどういう特徴がありますか？", choices: ["「好き」のときに成功しやすい", "語尾が「です」のときに成功しやすい", "語順が変わるときに成功しやすい"], correctIndex: 2 },
+          { question: "計算プロセスの図、データセットを見て、fnnに対してgapの特徴を表しているものをすべて選択してください。", choices: ["gapは入力語を平均して1つにしてから次の語を予測している", "gapは語順を入れ替えたデータを学習している", "入力から予測する出力への線の数が少ないので計算コストが低い"], correctIndex: [0, 2] },
+          { question: "平均という計算の特徴は何でしょうか？", choices: ["入力の順序が変わっても結果は変わらない (a+b)/2 == (b+a)/2", "入力の順序が変わると結果が変わる (a+b)/2 != (b+a)/2"], correctIndex: 0 },
+          { question: "データセットと予測結果において、Ⓖで表されるgapの結果はfnnと比べてどういう特徴がありますか？", choices: ["「好き」のときにfnnより成功しやすい", "語尾が「です」のときにfnnより成功しやすい", "語順が変わるときにfnnより成功しやすい"], correctIndex: 2 },
         ]
       },
     },
@@ -128,9 +129,9 @@ const tutorial: Tutorial = {
             ], correctIndex: 0
           },
           {
-            question: "gapの短所は何だと思いますか？", choices: [
-              "入力語の平均をとるため、予測のために使わない入力語が増えると、重要な語が相対的に薄まり正解を外しやすくなる。",
-              "語順を記録するため、未知の並び順のデータに対しては正解できない。"
+            question: "gapであっても対応できない入力語の組み合わせは？", choices: [
+              "同音異義語のデータセットのように、予測に関係ない語が入力されると、正解を外しやすくなる。",
+              "同音異義語のデータセットのように、カタカナの語が入力されると、正解を外しやすくなる。"
             ], correctIndex: 0
           },
         ]
@@ -139,7 +140,7 @@ const tutorial: Tutorial = {
     {
       description: "どの語に注目するのかを学習する",
       guide: [
-        { element: '.gap', popover: { title: 'fnnの問題点', description: 'fnnの問題点は、入力の順序が変わると対応できないことでした。' } },
+        { element: '.gap', popover: { title: 'gapの問題点', description: 'gapの問題点は、予測に関係ない語が入力されると、正解を外しやすくなることでした。' } },
         {
           element: '.llm', popover: {
             title: 'Large language model (llm)',
