@@ -178,13 +178,25 @@ const tutorial: Tutorial = {
       },
     },
     {
-      description: "どの語に注目するのかを学習する",
+      description: "どの語に注目するのかを学習する（Attentionを理解する）",
       guide: [
         { element: '.gap', popover: { title: 'gapの問題点', description: 'gapの問題点は、予測に関係ない語が入力されると、正解を外しやすくなることでした。' } },
         {
           element: '.llm', popover: {
             title: 'Large language model (llm)',
             description: '次に、この llm というモデルを試します。llmは、large language modelの略です。<br><br>まず // を消してコメントアウトを外してください。<br><br>そのあとで「AIが学習する」を押してください。'
+          }
+        },
+        {
+          element: '.model-insight-llm', popover: {
+            title: 'llmモデル',
+            description: 'llmモデルはfnn, gapとは違い、'
+          }
+        },
+        {
+          element: '.llm', popover: {
+            title: '最後の一語を変換する',
+            description: ''
           }
         },
         { element: () => ((document.querySelector('#quiz-container') as HTMLElement)?.offsetParent && document.querySelector('#quiz-container'))! || document.querySelector('#start-quiz')!, popover: { title: '次のクイズ', description: 'ここまでの内容で次のクイズが用意されています。' } },
