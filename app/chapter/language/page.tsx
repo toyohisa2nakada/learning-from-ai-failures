@@ -117,13 +117,53 @@ const tutorial: Tutorial = {
     {
       description: "Global Average Pooling (gap)を理解する",
       guide: [
-        { element: '#dataSelect', popover: { title: 'gapの問題点', description: 'ここのデータセットを「同音異義語データ」に変えてください。' } },
+        {
+          element: '#dataSelect', popover: {
+            title: 'データセットの変更',
+            description: 'ここのデータセットを「同音異義語データ」に変えてください。',
+            onNextClick: (element, step, options) => {
+              if (tutorial.checkElements?.['selectedDataset']()) {
+                options.driver.moveNext()
+              } else {
+                if (options.state.popover) {
+                  const curText = options.state.popover.description.textContent;
+                  options.state.popover.description.textContent = curText.includes("進めません") ?
+                    "ここのデータセットを「同音異義語データ」に変えてください。" : "「同音異義語データ」に変更しないと進めません";
+                }
+              }
+            }
+          }
+        },
+        {
+          element: '.training-data-row-0', popover: {
+            title: '「橋」と「箸」を区別する',
+            description: '「ハシ」は、入力語の内容によって意味が変わり、入力語に道を連想する語があれば「橋」、食を連想する語があれば「箸」と解釈され、それに応じて次の語を「わたる」か「たべる」のどちらかに決めます。',
+          }
+        },
+        {
+          element: '.training-data-row-1', popover: {
+            title: '1文字の入力語',
+            description: '「山」「音」などの1文字はノイズとして予測には影響を与えません。道と食を連想する語は学習時に一緒に入力されないようにしています。',
+          }
+        },
+        {
+          element: '.training-data-row-2', popover: {
+            title: '不明のデータ',
+            description: '道と食を連想させる語がない場合には、「不明」と出力するようにします。不明のときの入力語は、「わたる」「たべる」のときと異なるものを使っています。これは少ない学習データでノイズが正しくノイズとして機能するためのものです。',
+          }
+        },
+        {
+          element: '.test-data-row-0', popover: {
+            title: 'テストデータ',
+            description: 'テストデータは、「不明」のときのノイズ語と、道と食を連想させる語で構成されています。学習データには出現しない組み合わせです。これでも正しく「わたる」「たべる」を予測できるようにすることが目的です。',
+          }
+        },
         { element: () => ((document.querySelector('#quiz-container') as HTMLElement)?.offsetParent && document.querySelector('#quiz-container'))! || document.querySelector('#start-quiz')!, popover: { title: '次のクイズ', description: 'ここまでの内容で次のクイズが用意されています。' } },
       ],
       quiz: {
         title: "問題", problems: [
           {
-            question: "fnnに対してのgapの長所は何だと思いますか？", choices: [
+            question: "gapの長所は、fnnと比べた時に何だと思いますか？", choices: [
               "入力語の平均をとるため、学習データにない「逆順」などの未知の並び順に対しても、正解できる。",
               "入力語の語順を保存して学習するため、未知の並び順に対しても、学習時のパターンに当てはめて正解できる。",
             ], correctIndex: 0
@@ -165,6 +205,7 @@ const tutorial: Tutorial = {
   checkElements: {
     doneLearning: () => { return false; },
     donePredict: () => { return false; },
+    selectedDataset: () => { return false; }
   },
 }
 
@@ -267,6 +308,7 @@ export default function Home() {
     if (tutorial.checkElements) {
       tutorial.checkElements.doneLearning = () => jsEditorRef.current?.canCallExternallyCallableFunction({ functionName: "predict" }) ?? false;
       tutorial.checkElements.donePredict = () => document.querySelector(".prediction-results")?.textContent?.startsWith("Ⓕ") ?? false;
+      tutorial.checkElements.selectedDataset = () => (document.querySelector("#dataSelect") as HTMLSelectElement)?.value === "Homonym";
     }
   }, []);
 

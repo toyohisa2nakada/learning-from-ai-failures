@@ -159,7 +159,9 @@ function generateHomonymDatasets() {
     // 2. ノイズのみのデータの生成 (128個)
     for (let i = 0; i < numDataPerType; i++) {
         let words = shuffle([...contextNoise, ...noContextNoise]).slice(0, numSlots);
-        train_patterns.push([...words, lastWord, targetWords[targetWords.length - 1]]);
+        // 説明のために間に入れる
+        train_patterns.splice(i * 3 + 2, 0, [...words, lastWord, targetWords[targetWords.length - 1]]);
+        // train_patterns.push([...words, lastWord, targetWords[targetWords.length - 1]]);
     }
 
     // contextGroupsにある語を持つレコードを見つける
