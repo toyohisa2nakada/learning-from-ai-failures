@@ -170,7 +170,7 @@ const tutorial: Tutorial = {
           },
           {
             question: "gapであっても対応できない入力語の組み合わせは？", choices: [
-              "同音異義語のデータセットのように、予測に関係ない語が入力されると、正解を外しやすくなる。",
+              "同音異義語のデータセットのように、学習に使っていない語が入力されると、正解を外しやすくなる。",
               "同音異義語のデータセットのように、カタカナの語が入力されると、正解を外しやすくなる。"
             ], correctIndex: 0
           },
@@ -190,13 +190,13 @@ const tutorial: Tutorial = {
         {
           element: '.model-insight-llm', popover: {
             title: 'llmモデル',
-            description: 'llmモデルはfnn, gapとは違い、'
+            description: 'llmはfnnやgapのようにすべての入力語をそのまま使って次の語を決めるのではなく、文全体の情報が反映された入力語の最後の単語の表現を使って次の言葉を予測します。最後の単語を変換する際に、どの入力語に注目するかを学ぶのがattentionという機構です。図ではオレンジの線は次の単語の確率を上げ、水色の線は下げる方向に働きます。'
           }
         },
         {
-          element: '.llm', popover: {
-            title: '最後の一語を変換する',
-            description: ''
+          element: '.model-insight-llm', popover: {
+            title: '出力語',
+            description: 'そして、その変換された最後の単語の表現に対して、意味的に近い単語が「検索」され、その中から次の言葉として選ばれます。'
           }
         },
         { element: () => ((document.querySelector('#quiz-container') as HTMLElement)?.offsetParent && document.querySelector('#quiz-container'))! || document.querySelector('#start-quiz')!, popover: { title: '次のクイズ', description: 'ここまでの内容で次のクイズが用意されています。' } },
@@ -205,11 +205,13 @@ const tutorial: Tutorial = {
         title: "問題", problems: [
           {
             question: "計算プロセスの図より、llmの特徴を示すものをすべて選択してください。", choices: [
-              "",
-              ""
-            ], correctIndex: [0]
+              "確率を下げる方に働く水色の線だけで構成される。",
+              "入力語を計算しやすいように順番を入れ替えている。",
+              "fnnやgapと違い、最後の入力語を変換して、その変換後に最も近い語を出力する。",
+            ], correctIndex: [2]
           },
-          { question: "データセットと予測結果において、Ⓛで表されるllmの結果はfnn,gapと比べてどういう特徴がありますか？", choices: ["「好き」のときに予測に成功している", "語尾が「です」のときに予測に成功している", "語順が変わるときに予測に成功している"], correctIndex: 2 },
+          { question: "データセットと予測結果において、Ⓛで表されるllmの結果はfnn,gapと比べてどういう特徴がありますか？", choices: [
+            "「好き」のときに予測に成功している", "語尾が「です」のときに予測に成功している", "語順が変わるときに予測に成功している"], correctIndex: 2 },
         ]
       },
     },
