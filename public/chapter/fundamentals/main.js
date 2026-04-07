@@ -3,7 +3,7 @@ const config = {
     units: 2,
     useBias: true,
     LearningRate: 0.05,
-    epochs: 500,
+    epochs: 200,
 };
 
 import { trainingData } from "trainingData.js";
