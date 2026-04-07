@@ -337,7 +337,9 @@ const DatasetPanel = forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ onData
                                     <td ref={el => {
                                         if (el) {
                                             evaluationCellRef.current[i] = el as HTMLTableCellElement;
-                                            evaluationResultsRef.current[i] = {};
+                                            if (!evaluationResultsRef.current[i]) {
+                                                evaluationResultsRef.current[i] = {};
+                                            }
                                         }
                                     }}></td>
                                 </tr>
