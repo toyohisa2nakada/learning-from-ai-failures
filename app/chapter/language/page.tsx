@@ -67,7 +67,7 @@ const tutorial: Tutorial = {
       ],
       quiz: {
         title: "問題", problems: [
-          { question: "学習データにある「<P>」という記号は、何を表していますか？", choices: ["2つの入力語のうち、使わない空の部分", "AIが予測に成功したことを示す「Pass」の略称", "プログラムの実行を一時停止（Pause）させるコマンド"], correctIndex: 0 },
+          { question: "学習データにある「<P>」という記号は、何を表していますか？", choices: ["入力語のうち、使わない空の部分", "AIが予測に成功したことを示す「Pass」の略称", "プログラムの実行を一時停止（Pause）させるコマンド"], correctIndex: 0 },
           { question: "入力欄の一部が「<P>（使わない入力）」で埋められているのはなぜだと思いますか？", choices: ["一度に読み込むデータの枠が決まっており、空いたスペースを埋める必要があるため", "入力データが多すぎるとAIのメモリが不足し、計算が止まってしまうのを防ぐため", "将来的に新しい単語を追加したくなったときのために、予約席として空けておくため"], correctIndex: 0 },
           { question: "AIにおける「学習」とは、具体的にどのような工程を指しますか？", choices: ["構築されたルールを使って、新しい入力データに対する答えを計算する工程", "入力データと正解データのパターンを読み込み、ルールや知識を自ら構築する工程", "AIが計算ミスをしないように、人間がすべてのプログラムコードを手書きする工程"], correctIndex: 1 },
           { question: "AIにおける「予測」とは、具体的にどのような工程を指しますか？", choices: ["構築されたルールを使って、新しい入力データに対する答えを計算する工程", "入力データと正解データのパターンを読み込み、ルールや知識を自ら構築する工程", "AIが計算ミスをしないように、人間がすべてのプログラムコードを手書きする工程"], correctIndex: 0 },
@@ -340,7 +340,7 @@ export default function Home() {
           {/* プログラム */}
           <div className="left-panel flex flex-col" style={{ width: `${leftWidth}%`, flexShrink: 0 }} >
             <div className="flex justify-between items-center">
-              <div className="text-base font-bold mb-3">ニューラルネットワークの構造</div>
+              <div className="text-base font-bold mb-0">ニューラルネットワークの構造</div>
               <EditorToggleButtons
                 programmingMode="programming"
                 onReset={() => { jsEditorRef.current?.resetCode() }}
