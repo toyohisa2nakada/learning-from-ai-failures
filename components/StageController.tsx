@@ -260,7 +260,7 @@ const StageControllerPanel = forwardRef<StageControllerHandle, StageControllerPr
 
             const driverObj = driver({
                 steps: [
-                    { element: "#start-quiz", popover: { title: "次のクイズ", description: "ここを押すと次のクイズが表示されます" } },
+                    { element: quizCheckButtonRef.current!, popover: { title: "次のクイズ", description: "ここを押すと次のクイズが表示されます" } },
                     { element: "#start-guide", popover: { title: "説明の更新", description: "また説明も更新されます。" } },
                 ],
             });
