@@ -138,6 +138,8 @@ function createSimpleLLM({ vocabSize, inputDim, numHeads, keyDim, learningRate, 
 
 // rnn (実験用)
 function createSimpleRNN({ vocabSize, inputDim, keyDim, learningRate, type, encodingType }) {
+    // このRNNを試す場合、config.modelNamesに"rnn"を追加する。計算プロセスは表示されないが、予測結果は表示される。
+    // 
     // AIの歴史では、自然言語処理の系列データにはGlobal Average Pooling（GAP）ではなく、RNNが広く利用されてきた。
     // 一方、GAPは全結合層を置き換えることでパラメータ数を削減するためによく利用される手法である。
     // 本実装では、語順を考慮しないタスクであれば、RNNのように過去の情報を保持するよりも、平均を取るGAPの方が構造が単純で理解しやすいと考え、FNN → GAP → LLM（Attention）の構成を採用している。

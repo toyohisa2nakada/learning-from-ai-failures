@@ -210,8 +210,10 @@ const tutorial: Tutorial = {
               "fnnやgapと違い、最後の入力語を変換して、その変換後に最も近い語を出力する。",
             ], correctIndex: [2]
           },
-          { question: "データセットと予測結果において、Ⓛで表されるllmの結果はfnn,gapと比べてどういう特徴がありますか？", choices: [
-            "「好き」のときに予測に成功している", "語尾が「です」のときに予測に成功している", "語順が変わるときに予測に成功している"], correctIndex: 2 },
+          {
+            question: "データセットと予測結果において、Ⓛで表されるllmの結果はfnn,gapと比べてどういう特徴がありますか？", choices: [
+              "「好き」のときに予測に成功している", "語尾が「です」のときに予測に成功している", "語順が変わるときに予測に成功している"], correctIndex: 2
+          },
         ]
       },
     },
@@ -391,7 +393,7 @@ export default function Home() {
               </div>
 
               <div className="flex flex-row flex-wrap gap-2 text-xs">
-                {MODEL_NAMES.map(modelName => (
+                {MODEL_NAMES.filter(modelName => modelName !== "rnn").map(modelName => (
                   <ModelInsightPanel
                     key={modelName}
                     modelName={modelName}
