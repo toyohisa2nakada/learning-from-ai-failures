@@ -242,7 +242,7 @@ const initialImportScripts: ImportScripts = IMPORT_SCRIPT_NAMES.reduce((acc, nam
   return acc;
 }, {} as ImportScripts);
 
-const MODEL_NAMES = ["fnn", "gap", "llm"] as const;
+const MODEL_NAMES = ["fnn", "gap", "llm", "rnn"] as const;
 
 function getModelIcon(name: string): string {
   if (name.startsWith("llm")) {
@@ -253,6 +253,9 @@ function getModelIcon(name: string): string {
   }
   if (name.startsWith("gap")) {
     return "Ⓖ";
+  }
+  if (name.startsWith("rnn")) {
+    return "Ⓡ";
   }
   return "";
 }
@@ -281,7 +284,7 @@ export default function Home() {
   }
   function onEvaluationUpdate(resultSet: { modelName: string, results: EvaluationResult[] }) {
     datasetPanelRef.current?.updatePredictions(resultSet);
-    modelInsightPanelRef.current[resultSet.modelName].updateModelInsight(resultSet);
+    modelInsightPanelRef.current[resultSet.modelName]?.updateModelInsight(resultSet);
   }
   function onLearningStatusUpdate(status: string) {
     if (status === "started") {

@@ -16,6 +16,7 @@ function setModels({ learningRate = 0.001, verbose = true } = {}) {
         fnn: { fn: createSimpleFNN, params: { type: "ful" } },
         gap: { fn: createSimpleGAP, params: { type: "ful" } },
         llm: { fn: createSimpleLLM, params: { type: "nor", numHeads: 8 } },
+        rnn: { fn: createSimpleRNN, params: {} },
     };
 
     const models = config.modelNames.map(name => {
@@ -134,6 +135,40 @@ function createSimpleLLM({ vocabSize, inputDim, numHeads, keyDim, learningRate, 
     });
     return { model, options: { MultiHeadAttention: mha } };
 }
+
+// rnn (実験用)
+function createSimpleRNN({ vocabSize, inputDim, keyDim, learningRate, type, encodingType }) {
+    // AIの歴史では、自然言語処理の系列データにはGlobal Average Pooling（GAP）ではなく、RNNが広く利用されてきた。
+    // 一方、GAPは全結合層を置き換えることでパラメータ数を削減するためによく利用される手法である。
+    // 本実装では、語順を考慮しないタスクであれば、RNNのように過去の情報を保持するよりも、平均を取るGAPの方が構造が単純で理解しやすいと考え、FNN → GAP → LLM（Attention）の構成を採用している。
+    // このクラスは、その比較のためにRNN版を実装したものである。
+    //
+    // 入力テンソルは [batch, inputDim] である。inputDim は入力系列長を表し、例えば好き嫌いデータでは2、同音異義語データでは5となる。
+    // この入力を [batch, inputDim, embDim] に変換してRNNへ入力する。embDim は、Embedding層を使用する場合はEmbeddingの出力次元、使用しない場合はOne-Hotベクトルの次元となる。
+    //
+    // RNNは各時刻の出力を返すため、出力テンソルは [batch, inputDim, vocab] となる。ここで vocab は語彙数であり、各要素は次の単語候補に対するlogits（スコア）である。
+    // 単語予測では最後の時刻の出力のみを利用するため、[batch, inputDim, vocab] から最後の時刻を取り出し、[batch, vocab] にスライスする。
+    //
+    // この logits にSoftmaxを適用し、最も確率の高い単語を予測結果とする。
+
+    const input = tf.input({ shape: [inputDim], dtype: "int32", name: "char_input" });
+    // [Batch, inputDim, embDim]
+    let charEmbed = encodingType === "embedding" ? tf.layers.embedding({ inputDim: vocabSize, outputDim: keyDim, maskZero: true }).apply(input) : new OneHotLayer({ numClasses: vocabSize }).apply(input);
+
+    // [Batch, inputDim, vocabSize (units)]
+    const rnn = tf.layers.simpleRNN({ units: vocabSize, returnSequences: true }).apply(charEmbed);
+    const last_output = (new SliceLayer({ startIndex: charEmbed.shape[1] - 1 })).apply(rnn);
+    const logits = tf.layers.flatten().apply(last_output);
+    const output = tf.layers.activation({ activation: "softmax" }).apply(logits);
+    const model = tf.model({ inputs: input, outputs: output, name: `rnn(${type})` });
+    model.compile({
+        optimizer: tf.train.adam(learningRate),
+        loss: "sparseCategoricalCrossentropy",
+        metrics: ["accuracy"],
+    })
+    return { model, options: {} };
+}
+
 
 function evaluateModel({ model, options, dataset }) {
     return tf.tidy(() => {
