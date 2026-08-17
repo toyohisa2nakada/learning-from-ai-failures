@@ -75,6 +75,30 @@ async function getPokemonData(pokemonNames: string[], learningDataSize: [number,
     return pokemonData;
 }
 
+async function getLocalData(filenames: string[], learningDataSize: [number, number]): Promise<ImageOption[]> {
+    const localData: ImageOption[] = [];
+    for (const filename of filenames) {
+        // 先頭の斜線を除去してID用に抽出（例: "chapter/image-generation/frog.png" -> "frog.png"）
+        const idName = filename.split('/').pop() || filename;
+
+        const spriteMat = await getMat(filename, learningDataSize);
+        if (spriteMat === null) {
+            console.error("Failed to get mat for local image", filename);
+            continue;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.id = idName;
+        cv.imshow(canvas, spriteMat);
+        spriteMat.delete();
+
+        localData.push({
+            value: idName,
+            label: idName,
+            icon: canvas,
+        });
+    }
+    return localData;
+}
 
 const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ imageSelected0, imageSelected1, onImageSelectChange }, ref) => {
     const [imageOptions, setImageOptions] = useState<ImageOption[]>([]);
@@ -104,16 +128,22 @@ const DatasetPanel = React.forwardRef<DatasetPanelHandle, DatasetPanelProps>(({ 
 
     useEffect(() => {
         (async () => {
+            const localData = await getLocalData(
+                ['/chapter/image-generation/tadpole.png', '/chapter/image-generation/frog.png'],
+                LEARNING_DATA_SIZE
+            );
             // ポケモン名は以下の英語名称を使用する。
             // https://wiki.xn--rckteqa2e.com/wiki/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%81%AE%E5%A4%96%E5%9B%BD%E8%AA%9E%E5%90%8D%E4%B8%80%E8%A6%A7
             const pokemonData = await getPokemonData(['pikachu', 'raichu', 'bulbasaur', 'mewtwo'], LEARNING_DATA_SIZE)
-            const options = pokemonData.map((pokemon) => {
-                return {
+
+            const options = [
+                ...localData,
+                ...pokemonData.map((pokemon) => ({
                     value: pokemon.name,
                     label: pokemon.name,
                     icon: pokemon.canvas,
-                };
-            });
+                }))
+            ];
             setImageOptions(options);
             if (options.length >= 2) {
                 onImageSelectChange(0, options[0]);
