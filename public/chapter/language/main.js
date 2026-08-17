@@ -116,8 +116,8 @@ function createSimpleLLM({ vocabSize, inputDim, numHeads, keyDim, learningRate, 
     const mha = new MultiHeadAttention({ keyDim, numHeads, type });
 
     const attn = mha.apply([charEmbed, charEmbed, charEmbed]);
-    const drop = tf.layers.dropout({ rate: 0.2 }).apply(attn);
-    const lastAttn = (new SliceLayer({ startIndex: charEmbed.shape[1] - 1 })).apply(drop);
+    // const drop = tf.layers.dropout({ rate: 0.2 }).apply(attn);
+    const lastAttn = (new SliceLayer({ startIndex: charEmbed.shape[1] - 1 })).apply(attn);
 
     const lastEmbed = (new SliceLayer({ startIndex: charEmbed.shape[1] - 1 })).apply(charEmbed);
     const added = tf.layers.add().apply([lastAttn, lastEmbed])
