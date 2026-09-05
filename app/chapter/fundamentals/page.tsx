@@ -7,6 +7,7 @@ import { useDoubleResizer } from '@/lib/hooks/useDoubleResizer';
 import { type Tutorial } from "@/components/StageController";
 import StageControllerPanel from "@/components/StageController";
 import EditorToggleButtons from "@/components/EditorToggleButtons";
+import { useTranslation } from "@/components/TranslationProvider";
 
 
 const tutorial: Tutorial = {
@@ -277,6 +278,7 @@ const SCRIPT_BASE_PATH = '/chapter/fundamentals/';
 
 export default function Home() {
   console.log("HOME")
+  const translated = useTranslation();
 
   // 教師データ
   const trainingDataTypeRef = useRef<HTMLSelectElement>(null);
@@ -379,6 +381,7 @@ export default function Home() {
     jsEditorRef.current?.resetCode();
   }
 
+
   // 初期表示
   useEffect(() => {
     const range: Record<string, number> = getRangeParams();
@@ -402,7 +405,7 @@ export default function Home() {
         labels: xData.map(x => x.toFixed(2)), // X軸ラベルは表示用に固定
         datasets: [
           {
-            label: 'グラフ1 (G1)',
+            label: translated ? 'Graph 1 (G1)' : 'グラフ1 (G1)',
             data: y1Only, // Y値の配列
             borderColor: '#f472b6',
             tension: 0.2,
@@ -410,7 +413,7 @@ export default function Home() {
             fill: false
           },
           {
-            label: 'グラフ2 (G2)',
+            label: translated ? 'Graph 2 (G2)' : 'グラフ2 (G2)',
             data: y2Only, // Y値の配列
             borderColor: '#38bdf8',
             tension: 0.2,
@@ -433,7 +436,7 @@ export default function Home() {
         // 合成関数のLine Chartデータセット
         datasets: [
           {
-            label: '加算結果 (G1 + G2)',
+            label: translated ? 'Sum Result (G1 + G2)' : '加算結果 (G1 + G2)',
             data: ySumData, // {x: X, y: Y} の配列
             borderColor: '#22c55e',
             borderWidth: 3,
@@ -444,7 +447,7 @@ export default function Home() {
           },
           // Scatterプロットのデータセット
           {
-            label: '教師データ',
+            label: translated ? 'Target Label' : '教師データ',
             data: currentScatterPoints.current!, // 動的に更新される変数を使用
             type: 'scatter', // 散布図として描画
             backgroundColor: '#facc15', // オレンジ色
@@ -475,7 +478,7 @@ export default function Home() {
       .catch(error => {
         console.error('Error loading scripts:', error);
       })
-  }, []);
+  }, [translated]);
 
 
   // 重み部分のinput

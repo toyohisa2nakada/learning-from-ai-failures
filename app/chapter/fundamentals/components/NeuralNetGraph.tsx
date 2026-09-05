@@ -1,7 +1,9 @@
 "use client";
-
+import { useTranslation } from "@/components/TranslationProvider";
 
 export default function NeuralNetGraph() {
+    const translated = useTranslation();
+
     return (
         <div className="flex flex-col h-full min-h-0">
             <div className="text-xs shrink-0 mb-2">
@@ -51,20 +53,16 @@ export default function NeuralNetGraph() {
 
                     <circle cx="250" cy="50" r="15" fill="#065f46" stroke="#22c55e" strokeWidth="1.5" />
 
-                    <text x="50" y="32" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#e2e8f0">入力
-                        x</text>
+                    <text x="50" y="32" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#e2e8f0">{translated ? "Input x" : "入力 x"}</text>
                     <text x="50" y="72" textAnchor="middle" fontSize="8" fontWeight="bold"
-                        fill="#e2e8f0">バイアス</text>
+                        fill="#e2e8f0">{translated ? "Bias" : "バイアス"}</text>
 
                     <text x="150" y="27" textAnchor="middle" fontSize="8" fontWeight="bold"
-                        fill="#e2e8f0">ニューロン
-                        1</text>
+                        fill="#e2e8f0">{translated ? "Neuron 1" : "ニューロン 1"}</text>
                     <text x="150" y="77" textAnchor="middle" fontSize="8" fontWeight="bold"
-                        fill="#e2e8f0">ニューロン
-                        2</text>
+                        fill="#e2e8f0">{translated ? "Neuron 2" : "ニューロン 2"}</text>
 
-                    <text x="250" y="52" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#e2e8f0">出力
-                        y</text>
+                    <text x="250" y="52" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#e2e8f0">{translated ? "Output y" : "出力 y"}</text>
                 </svg>
             </div>
             <div className="shrink-0 mt-2">

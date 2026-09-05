@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
+import TranslationProvider from "@/components/TranslationProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,8 +33,10 @@ export default function RootLayout({
         {/* JsEditorの中で使用するtfjsはiframeで実行されるため、キャッシュされるようにnode moduleではなくscript srcで読み込む */}
         <Script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js" strategy="beforeInteractive" />
         <div className="w-full px-3 py-3 h-screen grid grid-rows-[auto_1fr] gap-1 bg-inherit">
-          <Header />
-          {children}
+          <TranslationProvider>
+            <Header />
+            {children}
+          </TranslationProvider>
         </div>
       </body>
     </html>

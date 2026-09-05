@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useRef } from 'react';
+import { useTranslation } from "@/components/TranslationProvider";
+
 
 /**
  * drawNetwork
@@ -10,7 +12,7 @@ import { useEffect, useRef } from 'react';
  * @param {number[]} options.output - 出力画像サイズ [width, height]
  * @returns {SVGElement}
  */
-function drawNetwork({ input, bias, unit, output }: { input: number, bias: boolean, unit: number, output: number[] }): SVGSVGElement {
+function drawNetwork({ input, bias, unit, output, translated }: { input: number, bias: boolean, unit: number, output: number[], translated: boolean }): SVGSVGElement {
     const [outW, outH] = output;
 
     // ── レイアウト定数 ──────────────────────────────────────
@@ -167,7 +169,7 @@ function drawNetwork({ input, bias, unit, output }: { input: number, bias: boole
             stroke: 'rgba(255,255,255,0.85)',
             'stroke-width': '1.8'
         }));
-        hiddenG.appendChild(txt(`ニューロン${Number(i) + 1}`, {
+        hiddenG.appendChild(txt(translated ? `Neuron ${Number(i) + 1}` : `ニューロン${Number(i) + 1}`, {
             x: X_HIDDEN, y: hiddenYs[i],
             fill: 'rgba(255,255,255,0.85)',
             'font-size': 8,
@@ -183,7 +185,7 @@ function drawNetwork({ input, bias, unit, output }: { input: number, bias: boole
         const y = inputYs[i];
         const isBias = bias && i === inputNodes - 1;
         const r = isBias ? BIAS_R : NODE_R;
-        const label = isBias ? 'バイアス' : '入力';
+        const label = isBias ? (translated ? 'Bias' : 'バイアス') : (translated ? 'Input' : '入力');
         const fontSize = isBias ? '10' : '11';
 
         inputG.appendChild(el('circle', {
@@ -233,15 +235,16 @@ function drawNetwork({ input, bias, unit, output }: { input: number, bias: boole
     return svg;
 }
 export default function NeuralNetGraph() {
+    const translated = useTranslation();
     const svgRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (svgRef.current && !svgRef.current.hasChildNodes()) {
             svgRef.current.appendChild(drawNetwork({
-                input: 1, bias: true, unit: 4, output: [48, 48]
+                input: 1, bias: true, unit: 4, output: [48, 48], translated
             }));
         }
-    }, []);
+    }, [translated]);
     return (
         <div className="flex flex-col h-full min-h-0">
             <div className="text-xs shrink-0 mb-2">
