@@ -1,0 +1,24 @@
+﻿variable,group,item_ja,item_en,reported_in_paper
+Q01,learning,教材の内容を理解することができた,I was able to understand the content of the material,yes
+Q02,learning,AI（ニューラルネットワーク）に関する知識が深まった,My knowledge of AI (neural networks) deepened,yes
+Q03,learning,学習前と比べて理解が向上したと感じる,I feel my understanding improved compared with before,yes
+Q04,learning,学んだ内容を他者に説明できると思う,I think I could explain what I learned to others,yes
+Q05,usability,操作方法は分かりやすかった,The operation was easy to understand,yes
+Q06,usability,画面構成は見やすかった,The screen layout was easy to read,yes
+Q07,usability,学習の進め方に迷うことは少なかった,I was rarely unsure how to proceed,yes
+Q08,usability,スムーズに学習を進めることができた,I was able to proceed smoothly,yes
+Q09,motivation,学習内容に興味を持つことができた,I became interested in the learning content,yes
+Q10,motivation,学習を続けたいと感じた,I felt I wanted to continue learning,yes
+Q11,motivation,クイズや構成が学習意欲を高めた,The quizzes and structure raised my motivation,yes
+Q12,motivation,学習体験は楽しいと感じた,I found the learning experience enjoyable,yes
+Q13,usefulness,この教材は役に立つと感じた,I felt this material is useful,yes
+Q14,usefulness,今後の学習や活動に活かせると思う,I think I can apply it to future learning and activities,yes
+Q15,usefulness,他の人にも勧めたいと思う,I would recommend it to others,yes
+Q16,ai_literacy,AIの基本的な仕組みを理解できた,I was able to understand the basic mechanism of AI,no
+Q17,ai_literacy,AIの得意・不得意について理解できた,I was able to understand what AI is good and bad at,no
+Q18,ai_literacy,AIの限界やリスクについて理解できた,I was able to understand the limits and risks of AI,no
+Q19,ai_literacy,AIの結果を鵜呑みにせず判断する重要性を理解した,I understood the importance of not accepting AI output uncritically,no
+comment_good,free_text,この学習用Webサイトの良かった点があれば教えてください,Good points of the learning website,yes
+comment_improve,free_text,この学習用Webサイトの改善してほしい点があれば教えてください,Points to improve,yes
+comment_other,free_text,この学習用Webサイトについて、その他、気づいたことや意見があればご記入ください,Other comments,yes
+(scale),,非常にそう思う / ややそう思う / どちらともいえない / あまりそう思わない / 全くそう思わない / 空欄=無回答,Strongly agree / Agree / Neutral / Disagree / Strongly disagree / blank = no response,
